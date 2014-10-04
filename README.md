@@ -5,14 +5,14 @@ Statusengine
 
 
 Requirements
-============
+--------------
 Nagios 4 or Naemon
 MySQL server
 PHP 5.4 or greater
 Ubuntu 14.04 LTS
 
 Licence
-============
+--------------
 Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>
 
 Statusengine is free software; you can redistribute it and/or
