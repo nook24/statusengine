@@ -18,7 +18,7 @@ Installation
 chmod +x install.sh
 ./install.sh
 ```
-2. Set your username and passwort of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
+2. Set your username and password of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
 ```php
 	public $legacy = array(
 		'datasource' => 'Database/Mysql',
@@ -48,7 +48,7 @@ Migrate to Statusengine
 chmod +x install.sh
 ./install.sh
 ```
-2. Set your username and passwort of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
+2. Set your username and password of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
 ```php
 	public $legacy = array(
 		'datasource' => 'Database/Mysql',
