@@ -19,9 +19,57 @@ chmod +x install.sh
 ./install.sh
 ```
 2. Set your username and passwort of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
+```php
+	public $legacy = array(
+		'datasource' => 'Database/Mysql',
+		'persistent' => false,
+		'host' => 'localhost',
+		'login' => 'nagios',
+		'password' => '12345',
+		'database' => 'nagios',
+		'prefix' => 'nagios_',
+		//'encoding' => 'utf8',
+	);
+```
+3. Create database (using CahePHP shell)
+```bash
+/opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema.php --connection legacy
+```
 
-3. Start Statusengine in legacy mode:
- /opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w
+4. Start Statusengine in legacy mode:
+```bash
+/opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w
+```
+
+Migrate to Statusengine
+--------------
+1. Clone repository
+```bash
+chmod +x install.sh
+./install.sh
+```
+2. Set your username and passwort of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
+```php
+	public $legacy = array(
+		'datasource' => 'Database/Mysql',
+		'persistent' => false,
+		'host' => 'localhost',
+		'login' => 'nagios',
+		'password' => '12345',
+		'database' => 'nagios',
+		'prefix' => 'nagios_',
+		//'encoding' => 'utf8',
+	);
+```
+
+3. Upgrade database with CakePHP schema shell:
+```bash
+/opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema.php --connection legacy
+```
+4. Start Statusengine in legacy mode:
+```bash
+/opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w
+```
 
 Licence
 --------------
