@@ -6,7 +6,7 @@ Statusengine
 
 Requirements
 --------------
-- *Nagios 4* or *Naemon*
+- **Nagios 4** or **Naemon**
 - MySQL server
 - PHP 5.4 or greater
 - Ubuntu 14.04 LTS
