@@ -14,9 +14,10 @@ Requirements
 Installation
 --------------
 1. Clone repository
- chmod +x install.sh
- ./install.sh
-
+```bash
+chmod +x install.sh
+./install.sh
+```
 2. Set your username and passwort of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
 
 3. Start Statusengine in legacy mode:
