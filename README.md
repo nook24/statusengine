@@ -31,7 +31,7 @@ chmod +x install.sh
 		//'encoding' => 'utf8',
 	);
 ```
-3. Create database (using CahePHP shell)
+3. Create database (using CakePHP shell)
 ```bash
 /opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema.php --connection legacy
 ```
