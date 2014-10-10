@@ -121,7 +121,7 @@ class StatusengineLegacyShell extends AppShell{
 		//We only start dumping objects to the db if this is true.
 		//If you kill the script while it dumps data, you may be have problems on restart statusengine.
 		//If you killed it on dump, restart statusengine and restart nagios
-		$this->dumpObjects = false;
+		$this->dumpObjects = true;
 		
 	}
 	
@@ -250,7 +250,7 @@ class StatusengineLegacyShell extends AppShell{
 			
 			//Command object
 			case OBJECT_COMMAND:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$this->Command->create();
@@ -286,7 +286,7 @@ class StatusengineLegacyShell extends AppShell{
 			
 			//Timeperiod object
 			case OBJECT_TIMEPERIOD:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$this->Timeperiod->create();
@@ -352,7 +352,7 @@ class StatusengineLegacyShell extends AppShell{
 			
 			//Contact object
 			case OBJECT_CONTACT:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$this->Contact->create();
@@ -457,7 +457,7 @@ class StatusengineLegacyShell extends AppShell{
 			
 			//Contactgroup object
 			case OBJECT_CONTACTGROUP:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$this->Contactgroup->create();
@@ -506,7 +506,7 @@ class StatusengineLegacyShell extends AppShell{
 
 			//Host object
 			case OBJECT_HOST:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$this->Host->create();
@@ -640,7 +640,7 @@ class StatusengineLegacyShell extends AppShell{
 				break;
 
 			case OBJECT_HOSTGROUP:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$this->Hostgroup->create();
@@ -689,7 +689,7 @@ class StatusengineLegacyShell extends AppShell{
 			
 			//Service object
 			case OBJECT_SERVICE:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$this->Service->create();
@@ -861,7 +861,7 @@ class StatusengineLegacyShell extends AppShell{
 				break;
 	
 			case OBJECT_SERVICEGROUP:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$this->Servicegroup->create();
@@ -908,7 +908,7 @@ class StatusengineLegacyShell extends AppShell{
 				break;
 				
 			case OBJECT_HOSTESCALATION:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				//$this->Hostescalation->create();
@@ -971,7 +971,7 @@ class StatusengineLegacyShell extends AppShell{
 				break;
 
 			case OBJECT_SERVICEESCALATION:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$data = [
@@ -1035,7 +1035,7 @@ class StatusengineLegacyShell extends AppShell{
 				break;
 				
 			case OBJECT_HOSTDEPENDENCY:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$data = [
@@ -1074,7 +1074,7 @@ class StatusengineLegacyShell extends AppShell{
 				break;
 				
 			case OBJECT_SERVICEDEPENDENCY:
-				if($this->dumpObjects === true){
+				if($this->dumpObjects === false){
 					break;
 				}
 				$data = [

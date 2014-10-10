@@ -40,6 +40,7 @@ if grep -q DISTRIB_CODENAME=trusty /etc/lsb-release; then
 	cp statusengine.o /opt/statusengine/
 	cd ../../
 	cp -r cakephp /opt/statusengine/
+	chmod +x /opt/statusengine/cakephp/app/Console/cake
 	echo "Installation done..."
 	echo "Set broker_module=/opt/statusengine/statusengine.o in your config"
 	echo "Set the right MySQL username and passwort in cakephp/app/Config/database.php"
