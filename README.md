@@ -11,6 +11,17 @@ Requirements
 - PHP 5.4 or greater
 - Ubuntu 14.04 LTS
 
+Installation
+--------------
+1. Clone repository
+ chmod +x install.sh
+ ./install.sh
+
+2. Set your username and passwort of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
+
+3. Start Statusengine in legacy mode:
+ /opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w
+
 Licence
 --------------
 Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>
