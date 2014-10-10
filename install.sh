@@ -34,7 +34,7 @@
 if grep -q DISTRIB_CODENAME=trusty /etc/lsb-release; then
 	apt-get update
 	apt-get install gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5 php5-cli php5-dev libjson-c-dev manpages-dev build-essential
-	cd src
+	cd statusengine/src
 	LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
 	mkdir -p /opt/statusengine
 	cp statusengine.o /opt/statusengine/
