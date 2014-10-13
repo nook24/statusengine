@@ -1320,7 +1320,7 @@ class StatusengineLegacyShell extends AppShell{
 				'latency' => $payload->servicecheck->latency,
 				'return_code' => $payload->servicecheck->return_code,
 				'output' => $payload->servicecheck->output,
-				//'long_output' => $payload->servicecheck->long_output,
+				'long_output' => $payload->servicecheck->long_output,
 				'perfdata' => $payload->servicecheck->perf_data,
 			]
 		];
@@ -1371,7 +1371,7 @@ class StatusengineLegacyShell extends AppShell{
 				'latency' => $payload->hostcheck->latency,
 				'return_code' => $payload->hostcheck->return_code,
 				'output' => $payload->hostcheck->output,
-				//'long_output' => $payload->hostcheck->long_output,
+				'long_output' => $payload->hostcheck->long_output,
 				'perfdata' => $payload->hostcheck->perf_data,
 			]
 		];
