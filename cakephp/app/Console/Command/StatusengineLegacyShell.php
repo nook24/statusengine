@@ -2380,6 +2380,7 @@ class StatusengineLegacyShell extends AppShell{
 	}
 	
 	public function saveParentServices(){
+		$this->Logfile->clog(var_export($this->createParentServices, true));
 		foreach($this->createParentServices as $service_id => $servicesArray){
 			foreach($servicesArray as $serviceArray){
 				$this->Parentservice->create();
@@ -2390,7 +2391,8 @@ class StatusengineLegacyShell extends AppShell{
 						'parent_service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $serviceArray['host_name'], $serviceArray['description'])
 					]
 				];
-				$this->Parentservice->save($data);
+				//FIX ME Integrity constraint violation: 1062 Duplicate entry '5-40' for key 'instance_id'
+				//$this->Parentservice->save($data);
 			}
 		}
 	}
