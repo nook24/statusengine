@@ -745,7 +745,7 @@ class StatusengineLegacyShell extends AppShell{
 				}
 				//$this->Service->create();
 				
-				$objectId = $this->objectIdFromCache($payload->object_type, $payload->host_name, $payload->description);
+				$objectId = $this->objectIdFromCache(OBJECT_SERVICE, $payload->host_name, $payload->description);
 				
 				/*
 				 * NOTICE
@@ -783,15 +783,15 @@ class StatusengineLegacyShell extends AppShell{
 				//	]
 				//];
 				//$result = $this->Objects->save($data);
-				
+
 				if($objectId === null){
 					$data = [
 						'Objects' => [
+							'instance_id' => $this->instance_id,
 							'objecttype_id' => $payload->object_type,
 							'name1' => $payload->host_name,
 							'name2' => $payload->description,
 							'is_active' => 1,
-							'instance_id' => $this->instance_id,
 						]
 					];
 					//Insert new record
@@ -799,21 +799,19 @@ class StatusengineLegacyShell extends AppShell{
 				}else{
 					$data = [
 						'Objects' => [
+							'object_id' => $objectId,
+							'instance_id' => $this->instance_id,
 							'objecttype_id' => $payload->object_type,
 							'name1' => $payload->host_name,
 							'name2' => $payload->description,
 							'is_active' => 1,
-							'object_id' => $objectId,
-							'instance_id' => $this->instance_id,
 						]
 					];
 					//Update + on duplicate key update
 					$this->Objects->rawSave([$data], false);
 				}
 				
-				
 				//$objectId = $result['Objects']['object_id'];
-				
 		
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $objectId, $payload->host_name, $payload->description);
@@ -1405,8 +1403,8 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		$payload = json_decode($job->workload());
 		$service_object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->servicecheck->host_name, $payload->servicecheck->service_description);
-		
 		if($service_object_id === null){
+			//$this->Logfile->clog(var_export($this->objectCache ,true));
 			return;
 		}
 		
@@ -2223,6 +2221,9 @@ class StatusengineLegacyShell extends AppShell{
 			'recursive' => -1 //drops associated data, so we dont get an memory limit error, while processing big data ;)
 		]);
 		foreach($objects as $object){
+			/*if($object['Objects']['objecttype_id'] == OBJECT_SERVICE){
+				debug($object);
+			}*/
 			$this->objectCache[$object['Objects']['objecttype_id']][$object['Objects']['name1'].$object['Objects']['name2']] = [
 				'name1' => $object['Objects']['name1'],
 				'name2' => $object['Objects']['name2'],
@@ -2246,6 +2247,17 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return int    object_id
 	 */
 	public function objectIdFromCache($objecttype_id, $name1, $name2 = null, $default = null){
+		if(isset($this->objectCache[$objecttype_id][$name1.$name2]['object_id'])){
+			return $this->objectCache[$objecttype_id][$name1.$name2]['object_id'];
+		}
+		
+		return $default;
+	}
+	
+	public function objectIdFromCacheDebug($objecttype_id, $name1, $name2 = null, $default = null){
+		$this->Logfile->clog('name1: '.$name1);
+		$this->Logfile->clog('name1: '.$name2);
+		$this->Logfile->clog('isset: '.(int)isset($this->objectCache[$objecttype_id][$name1.$name2]['object_id']));
 		if(isset($this->objectCache[$objecttype_id][$name1.$name2]['object_id'])){
 			return $this->objectCache[$objecttype_id][$name1.$name2]['object_id'];
 		}
@@ -2564,6 +2576,7 @@ class StatusengineLegacyShell extends AppShell{
 				
 				$this->Logfile->clog('Build up new objects cache');
 				$this->buildObjectsCache();
+				//$this->Logfile->clog(var_export($this->objectCache, true));
 				
 				$this->Logfile->clog('Build up new hoststatus cache');
 				$this->buildHoststatusCache();
@@ -2575,7 +2588,7 @@ class StatusengineLegacyShell extends AppShell{
 				$this->childWork();
 			}
 			pcntl_signal_dispatch();
-			//usleep(250000);
+			usleep(250000);
 		}
 	}
 	
