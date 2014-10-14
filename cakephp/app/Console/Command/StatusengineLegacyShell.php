@@ -105,6 +105,16 @@ class StatusengineLegacyShell extends AppShell{
 		'Legacy.Dbversion'
 	];
 	
+	/**
+	 * StatusengineLegacyShell's construct
+	 *
+	 * Will set some needed class variables and constants.
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function __construct(){
 		parent::__construct();
 		$this->instance_id = 1;
@@ -123,8 +133,21 @@ class StatusengineLegacyShell extends AppShell{
 		//If you killed it on dump, restart statusengine and restart nagios
 		$this->dumpObjects = true;
 		
+		$this->fakeLastInsertId = 1;
+		
 	}
 	
+	/**
+	 * CakePHP's option parser
+	 *
+	 * Parse the parameters, if the user enter some (example: -w or --help)
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 * @link http://book.cakephp.org/2.0/en/console-and-shells.html#configuring-an-option-parser-with-the-fluent-interface
+	 *
+	 * @return $parser Object
+	 */
 	public function getOptionParser(){
 		$parser = parent::getOptionParser();
 		$parser->addOptions([
@@ -133,6 +156,14 @@ class StatusengineLegacyShell extends AppShell{
 		return $parser;
 	}
 	
+	/**
+	 * Gets called if a user run the shell over Console/cake statusengine_legacy
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function main(){
 		Configure::load('Statusengine');
 		$this->Logfile->init();
@@ -168,11 +199,30 @@ class StatusengineLegacyShell extends AppShell{
 		
 	}
 	
+	/**
+	 * This disable (set is_atvice to 0) in objects table
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function disableAll(){
 		//Disable every object in objects, because nagios was restared
 		$this->Objects->updateAll(['Objects.is_active' => 0]);
 	}
 	
+	/**
+	 * Dump all objects to the DB
+	 *
+	 * If there are entries in gearmands Q objects, this function will process them
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param Gearmans $job object
+	 * @return void
+	 */
 	public function dumpObjects($job){
 		if($this->clearQ){
 			return;
@@ -187,6 +237,7 @@ class StatusengineLegacyShell extends AppShell{
 					
 				}
 				$this->dumpObjects = true;
+				$this->fakeLastInsertId = 1;
 				$this->Logfile->log('Start dumping objects');
 				$this->disableAll();
 				//Legacy behavior :(
@@ -277,7 +328,7 @@ class StatusengineLegacyShell extends AppShell{
 					]
 				];
 				
-				$this->Command->rawInsert([$data]);
+				$this->Command->rawInsert([$data], false);
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->command_name);
 				
@@ -498,7 +549,7 @@ class StatusengineLegacyShell extends AppShell{
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $ContactName),
 						]
 					];
-					$this->Contactgroupmember->rawInsert([$data]);
+					$this->Contactgroupmember->rawInsert([$data], false);
 				}
 				
 				unset($result, $data);
@@ -618,7 +669,7 @@ class StatusengineLegacyShell extends AppShell{
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName)
 						]
 					];
-					$this->Hostcontact->rawInsert([$data]);
+					$this->Hostcontact->rawInsert([$data], false);
 				}
 				
 				foreach($payload->custom_variables as $varName => $varValue){
@@ -633,7 +684,7 @@ class StatusengineLegacyShell extends AppShell{
 							'varvalue' => $varValue
 						]
 					];
-					$this->Customvariable->rawInsert([$data]);
+					$this->Customvariable->save($data);
 				}
 
 				unset($data, $result);
@@ -679,7 +730,7 @@ class StatusengineLegacyShell extends AppShell{
 							'host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $hostName)
 						]
 					];
-					$this->Hostgroupmember->rawInsert([$data]);
+					$this->Hostgroupmember->rawInsert([$data], false);
 				}
 				
 				//Add the object to objectCache
@@ -692,9 +743,14 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->dumpObjects === false){
 					break;
 				}
-				$this->Service->create();
+				//$this->Service->create();
 				
 				$objectId = $this->objectIdFromCache($payload->object_type, $payload->host_name, $payload->description);
+				
+				/*
+				 * NOTICE
+				 * !!! THIS IS TESTING CODE AND WILL BE REMOVED SOON OR BE REPLEACED !!!
+				 */
 				/*if($objectId == null){
 					$result = $this->Objects->insertObjects([
 						'instance_id' => $this->instance_id,
@@ -715,20 +771,48 @@ class StatusengineLegacyShell extends AppShell{
 					]);
 				}*/
 
+				//CakePHP default
+				//$data = [
+				//	'Objects' => [
+				//		'objecttype_id' => $payload->object_type,
+				//		'name1' => $payload->host_name,
+				//		'name2' => $payload->description,
+				//		'is_active' => 1,
+				//		'object_id' => $objectId,
+				//		'instance_id' => $this->instance_id,
+				//	]
+				//];
+				//$result = $this->Objects->save($data);
 				
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => $payload->description,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $objectId,
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$result = $this->Objects->save($data);
-				$objectId = $result['Objects']['object_id'];
+				if($objectId === null){
+					$data = [
+						'Objects' => [
+							'objecttype_id' => $payload->object_type,
+							'name1' => $payload->host_name,
+							'name2' => $payload->description,
+							'is_active' => 1,
+							'instance_id' => $this->instance_id,
+						]
+					];
+					//Insert new record
+					$objectId = $this->Objects->rawInsert([$data], true);
+				}else{
+					$data = [
+						'Objects' => [
+							'objecttype_id' => $payload->object_type,
+							'name1' => $payload->host_name,
+							'name2' => $payload->description,
+							'is_active' => 1,
+							'object_id' => $objectId,
+							'instance_id' => $this->instance_id,
+						]
+					];
+					//Update + on duplicate key update
+					$this->Objects->rawSave([$data], false);
+				}
+				
+				
+				//$objectId = $result['Objects']['object_id'];
 				
 		
 				//Add the object to objectCache
@@ -741,6 +825,7 @@ class StatusengineLegacyShell extends AppShell{
 				
 				$data = [
 					'Service' => [
+						'service_id' => $this->fakeLastInsertId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $payload->host_name),
@@ -796,12 +881,16 @@ class StatusengineLegacyShell extends AppShell{
 					]
 				];
 				
-				$result = $this->Service->save($data);
+				$result = $this->Service->rawSave([$data], false);
 				$lastInsertId = null;
-				if($result['Service']['service_id']){
-					$lastInsertId = $result['Service']['service_id'];
-				}
+				//if(isset($result['Service']['service_id'])){
+				//	$lastInsertId = $result['Service']['service_id'];
+				//}
+				
+				$lastInsertId = $this->fakeLastInsertId;
+				
 				if($lastInsertId == null){
+					$this->fakeLastInsertId++;
 					continue;
 				}
 
@@ -838,7 +927,7 @@ class StatusengineLegacyShell extends AppShell{
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName)
 						]
 					];
-					$this->Servicecontact->rawInsert([$data]);
+					$this->Servicecontact->rawInsert([$data], false);
 				}
 				
 				foreach($payload->custom_variables as $varName => $varValue){
@@ -846,18 +935,18 @@ class StatusengineLegacyShell extends AppShell{
 					$data = [
 						'Customvariable' => [
 							'instance_id' => $this->instance_id,
-							'object_id' => $this->objectIdFromCache($payload->object_type, $payload->host_name, $payload->description),
+							'object_id' => $objectId,
 							'config_type' => $this->config_type,
 							'has_been_modified' => 0,
 							'varname' => $varName,
 							'varvalue' => $varValue
 						]
 					];
-					$this->Customvariable->rawInsert([$data]);
+					$this->Customvariable->save($data);
 				}
 				
-				unset($data, $result);
-					
+				unset($data, $result, $objectId);
+				$this->fakeLastInsertId++;
 				break;
 	
 			case OBJECT_SERVICEGROUP:
@@ -899,7 +988,7 @@ class StatusengineLegacyShell extends AppShell{
 							'service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $ServiceArray->host_name, $ServiceArray->service_description)
 						]
 					];
-					$this->Servicegroupmember->rawInsert([$data]);
+					$this->Servicegroupmember->rawInsert([$data], false);
 				}
 				
 				//Add the object to objectCache
@@ -1114,6 +1203,15 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
+	/**
+	 * This function handle every entry out of gearmans hoststatus Q
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param Gearmans $job object
+	 * @return void
+	 */
 	public function processHoststatus($job){
 		if($this->clearQ){
 			return;
@@ -1197,6 +1295,15 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
+	/**
+	 * This function handle every entry out of gearmans servicestatus Q
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param Gearmans $job object
+	 * @return void
+	 */
 	public function processServicestatus($job){
 		if($this->clearQ){
 			return;
@@ -1283,6 +1390,15 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
+	/**
+	 * This function handle every entry out of gearmans servicechecks Q
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param Gearmans $job object
+	 * @return void
+	 */
 	public function processServicechecks($job){
 		if($this->clearQ){
 			return;
@@ -1325,7 +1441,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
-		$this->Servicecheck->rawInsert([$data]);
+		$this->Servicecheck->rawInsert([$data], false);
 	}
 	
 	public function processHostchecks($job){
@@ -1376,7 +1492,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
-		$this->Hostcheck->rawInsert([$data]);
+		$this->Hostcheck->rawInsert([$data], false);
 	}
 	
 	public function processStatechanges($job){
@@ -1411,7 +1527,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
-		$this->Statehistory->rawInsert([$data]);
+		$this->Statehistory->rawInsert([$data], false);
 	}
 	
 	public function processLogentries($job){
@@ -1433,7 +1549,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
-		$this->Logentry->rawInsert([$data]);
+		$this->Logentry->rawInsert([$data], false);
 	}
 	
 	public function processSystemcommands($job){
@@ -1459,7 +1575,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
-		$this->Systemcommand->rawInsert([$data]);
+		$this->Systemcommand->rawInsert([$data], false);
 	}
 	
 	public function processComments($job){
@@ -1494,7 +1610,7 @@ class StatusengineLegacyShell extends AppShell{
 				'expiration_time' => $payload->comment->expire_time
 			]
 		];
-		$this->Comment->rawInsert([$data]);
+		$this->Comment->rawInsert([$data], false);
 	}
 	
 	public function processExternalcommands($job){
@@ -1512,7 +1628,7 @@ class StatusengineLegacyShell extends AppShell{
 				'command_args' => $payload->externalcommand->command_args
 			]
 		];
-		$this->Externalcommand->rawInsert([$data]);
+		$this->Externalcommand->rawInsert([$data], false);
 	}
 	
 	public function processAcknowledgements($job){
@@ -1544,7 +1660,7 @@ class StatusengineLegacyShell extends AppShell{
 				'notify_contacts' => $payload->acknowledgement->notify_contacts,
 			]
 		];
-		$this->Acknowledgement->rawInsert([$data]);
+		$this->Acknowledgement->rawInsert([$data], false);
 	}
 	
 	public function processFlappings($job){
@@ -1576,7 +1692,7 @@ class StatusengineLegacyShell extends AppShell{
 				'internal_comment_id' => $payload->flapping->comment_id
 			]
 		];
-		$this->Flapping->rawInsert([$data]);
+		$this->Flapping->rawInsert([$data], false);
 	}
 	
 	public function processDowntimes($job){
@@ -1798,7 +1914,7 @@ class StatusengineLegacyShell extends AppShell{
 				'program_date' => $payload->processdata->modification_data,
 			]
 		];
-		$this->Processdata->rawInsert([$data]);
+		$this->Processdata->rawInsert([$data], false);
 	}
 	
 	public function processNotifications($job){
@@ -1876,7 +1992,7 @@ class StatusengineLegacyShell extends AppShell{
 				'global_service_event_handler' =>$payload->programmstatus->global_service_event_handler,
 			]
 		];
-		$this->Programmstatus->rawSave([$data]);
+		$this->Programmstatus->rawSave([$data], false);
 	}
 	
 	public function processContactstatus($job){
@@ -1953,7 +2069,7 @@ class StatusengineLegacyShell extends AppShell{
 					'end_time_usec' => $payload->contactnotificationdata->end_time
 				]
 			];
-			$this->Contactnotification->rawInsert([$data]);
+			$this->Contactnotification->rawInsert([$data], false);
 		}
 	}
 	
@@ -2001,7 +2117,17 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
-	
+	/**
+	 * Parent process connect to the gearman servicer
+	 * If you start the programm this function get called from $this->forkWorker() OR $this->main(),
+	 * depends on if you start with -w or not
+	 * This function will bind the gearman Qs for the parent process
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function gearmanConnect(){
 		$this->worker= new GearmanWorker();
 		$this->worker->addServer();
@@ -2035,6 +2161,17 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
+	/**
+	 * Create the instance in instances table
+	 * Not sure if some one realy needs this, but most
+	 * software runs selects like "WHERE instance_id = 1"
+	 * or some like this
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function createInstance(){
 		$this->Instance->create();
 		$data = [
@@ -2047,6 +2184,16 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Instance->save($data);
 	}
 	
+	/**
+	 * Every time we recive an object we need the object_id to run CRUD (create, read, update, delete)
+	 * So we dont want to lookup the object id every time again, so we store them in an cache array
+	 * The sorting is done by the objecttype_id
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function clearObjectsCache(){
 		$this->objectCache = [
 			12 => [],
@@ -2063,6 +2210,14 @@ class StatusengineLegacyShell extends AppShell{
 		];
 	}
 	
+	/**
+	 * This function fills up the cache array with data out of the DB
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function buildObjectsCache(){
 		$objects = $this->Objects->find('all', [
 			'recursive' => -1 //drops associated data, so we dont get an memory limit error, while processing big data ;)
@@ -2076,6 +2231,20 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
+	/**
+	 * If an object is inside of the cache, we return the object_id
+	 * The object is sorted by the objecttype_id, i didn't check php's source code
+	 * but i guess a numeric array is the fastes way in php to acces an array
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param  int    objecttyoe_id The objecttype_id of the current object we want to lookup
+	 * @param  string name1 The first name of the object
+	 * @param  string name2 The second name of the object, or empty if the object has no name2 (default: null)
+	 * @param  mixed  default If we dont find an entry in our cache we retrun the default value (default: null)
+	 * @return int    object_id
+	 */
 	public function objectIdFromCache($objecttype_id, $name1, $name2 = null, $default = null){
 		if(isset($this->objectCache[$objecttype_id][$name1.$name2]['object_id'])){
 			return $this->objectCache[$objecttype_id][$name1.$name2]['object_id'];
@@ -2084,6 +2253,17 @@ class StatusengineLegacyShell extends AppShell{
 		return $default;
 	}
 	
+	/**
+	 * This function adds an new created object to the object cache, or replace it
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param  int    objecttype_id The objecttype_id of the object you want to add
+	 * @param  string name1 of the object
+	 * @param  string name2 of the object (default: null)
+	 * @return void
+	 */
 	public function addObjectToCache($objecttype_id, $id, $name1, $name2 = null){
 		if(!isset($this->objectCache[$objecttype_id][$name1.$name2])){
 			$this->objectCache[$objecttype_id][$name1.$name2] = [
@@ -2096,15 +2276,15 @@ class StatusengineLegacyShell extends AppShell{
 		return false;
 	}
 	
-	public function idByObjectIdFromDb($Model, $object_id){
-		$result = $this->{$Model}->findByObjectId($object_id);
-		if(isset($result[$Model]['id']) && $result[$Model]['id'] !== null){
-			return $result[$Model]['id'];
-		}
-		
-		return null;
-	}
-	
+	/**
+	 * Every time we recive an hoststatus we need to update the last record in DB
+	 * Cause of we don't want to lookup the id on every update again, we create us an cache of it
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function buildHoststatusCache(){
 		$this->hoststatusCache = [];
 		foreach($this->Hoststatus->find('all', ['fields' => ['hoststatus_id', 'host_object_id']]) as $hs){
@@ -2124,6 +2304,15 @@ class StatusengineLegacyShell extends AppShell{
 		return null;
 	}
 	
+	/**
+	 * Every time we recive an servucestatus we need to update the last record in DB
+	 * Cause of we don't want to lookup the id on every update again, we create us an cache of it
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function buildServicestatusCache(){
 		$this->servicestatusCache = [];
 		foreach($this->Servicestatus->find('all', ['fields' => ['servicestatus_id', 'service_object_id']]) as $ss){
@@ -2143,6 +2332,17 @@ class StatusengineLegacyShell extends AppShell{
 		return null;
 	}
 	
+	/**
+	 * For each CRUD operation we need the object_id
+	 * this function will return us the object id for the given $payload
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param  stdobject $payload (normaly from $job)
+	 * @param  string    the name of the current payload (For example 'statechange')
+	 * @return int       object_id
+	 */
 	public function getObjectIdForPayload($payload, $payloadName){
 		$object_id = null;
 		if($payload->{$payloadName}->service_description == null){
@@ -2183,6 +2383,14 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
+	/**
+	 * Define the constants for the objecttype_ids.
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	private function _constants(){
 		$constants = [
 			'OBJECT_COMMAND'           => 12,
@@ -2214,6 +2422,15 @@ class StatusengineLegacyShell extends AppShell{
 		return $field;
 	}
 	
+	/**
+	 * Parse the check_command string into command_name and command_arg
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param  string checkCommand from $payload
+	 * @return array  [0] => 'lan_ping', [1] => '!80!80'
+	 */
 	public function parseCheckCommand($checkCommand){
 		$cc = explode('!', $checkCommand, 2);
 		$return = [];
@@ -2226,6 +2443,14 @@ class StatusengineLegacyShell extends AppShell{
 		return $return;
 	}
 	
+	/**
+	 * This function will fork the child processes (worker) if you run with -w
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function forkWorker(){
 		$workers = [
 			/*[
@@ -2312,6 +2537,15 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
+	/**
+	 * This is the child process, and it waits for instuctions from the parent
+	 * The communication is done by unix signals
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function waitForInstructions(){
 		$this->Logfile->clog('Ok, i will wait for instructions');
 		if($this->bindQueues === true){
@@ -2380,6 +2614,14 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
+	/**
+	 * This is the parent signal handel, so that we can catch SIGTERM and SIGINT
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function signalHandler($signo){
 		switch($signo){
 			case SIGINT:
@@ -2393,6 +2635,14 @@ class StatusengineLegacyShell extends AppShell{
 		
 	}
 	
+	/**
+	 * This function sends a singal to every child process
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function sendSignal($signal){
 		foreach($this->childPids as $cpid){
 			$this->Logfile->log('Send signal to child pid: '.$cpid);
