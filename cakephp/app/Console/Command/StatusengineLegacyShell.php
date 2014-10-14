@@ -284,6 +284,8 @@ class StatusengineLegacyShell extends AppShell{
 		
 				$this->clearObjectsCache();
 				$this->buildObjectsCache();
+				$this->createParentHosts = [];
+				$this->createParentServices = [];
 				break;
 				
 			case FINISH_OBJECT_DUMP:
@@ -2391,8 +2393,7 @@ class StatusengineLegacyShell extends AppShell{
 						'parent_service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $serviceArray['host_name'], $serviceArray['description'])
 					]
 				];
-				//FIX ME Integrity constraint violation: 1062 Duplicate entry '5-40' for key 'instance_id'
-				//$this->Parentservice->save($data);
+				$this->Parentservice->save($data);
 			}
 		}
 	}
