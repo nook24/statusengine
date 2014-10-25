@@ -2130,33 +2130,33 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function gearmanConnect(){
 		$this->worker= new GearmanWorker();
-		$this->worker->addServer();
+		$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 		
 		if($this->workerMode === true){
-			$this->worker->addFunction('objects',        [$this, 'dumpObjects']);
-			$this->worker->addFunction('programmstatus', [$this, 'processProgrammstatus']);
-			$this->worker->addFunction('processdata',    [$this, 'processProcessdata']);
+			$this->worker->addFunction('statusngin_objects',        [$this, 'dumpObjects']);
+			$this->worker->addFunction('statusngin_programmstatus', [$this, 'processProgrammstatus']);
+			$this->worker->addFunction('statusngin_processdata',    [$this, 'processProcessdata']);
 		}else{
 			// These quese are (more or less) orderd by priority!
-			$this->worker->addFunction('objects',					[$this, 'dumpObjects']);
-			$this->worker->addFunction('servicestatus',				[$this, 'processServicestatus']);
-			$this->worker->addFunction('hoststatus',				[$this, 'processHoststatus']);
-			$this->worker->addFunction('servicechecks',				[$this, 'processServicechecks']);
-			$this->worker->addFunction('hostchecks',				[$this, 'processHostchecks']);
-			$this->worker->AddFunction('statechanges',				[$this, 'processStatechanges']);
-			$this->worker->addFunction('logentries',				[$this, 'processLogentries']);
-			$this->worker->addFunction('systemcommands',			[$this, 'processSystemcommands']);
-			$this->worker->addFunction('comments',					[$this, 'processComments']);
-			$this->worker->addFunction('externalcommands',			[$this, 'processExternalcommands']);
-			$this->worker->addFunction('acknowledgements',			[$this, 'processAcknowledgements']);
-			$this->worker->addFunction('flappings',					[$this, 'processFlappings']);
-			$this->worker->addFunction('downtimes',					[$this, 'processDowntimes']);
-			$this->worker->addFunction('processdata',				[$this, 'processProcessdata']);
-			$this->worker->addFunction('notifications',				[$this, 'processNotifications']);
-			$this->worker->addFunction('programmstatus',			[$this, 'processProgrammstatus']);
-			$this->worker->addFunction('contactstatus',				[$this, 'processContactstatus']);
-			$this->worker->addFunction('contactnotificationdata',	[$this, 'processContactnotificationdata']);
-			$this->worker->addFunction('contactnotificationmethod',	[$this, 'processContactnotificationmethod']);
+			$this->worker->addFunction('statusngin_objects',					[$this, 'dumpObjects']);
+			$this->worker->addFunction('statusngin_servicestatus',				[$this, 'processServicestatus']);
+			$this->worker->addFunction('statusngin_hoststatus',				[$this, 'processHoststatus']);
+			$this->worker->addFunction('statusngin_servicechecks',				[$this, 'processServicechecks']);
+			$this->worker->addFunction('statusngin_hostchecks',				[$this, 'processHostchecks']);
+			$this->worker->AddFunction('statusngin_statechanges',				[$this, 'processStatechanges']);
+			$this->worker->addFunction('statusngin_logentries',				[$this, 'processLogentries']);
+			$this->worker->addFunction('statusngin_systemcommands',			[$this, 'processSystemcommands']);
+			$this->worker->addFunction('statusngin_comments',					[$this, 'processComments']);
+			$this->worker->addFunction('statusngin_externalcommands',			[$this, 'processExternalcommands']);
+			$this->worker->addFunction('statusngin_acknowledgements',			[$this, 'processAcknowledgements']);
+			$this->worker->addFunction('statusngin_flappings',					[$this, 'processFlappings']);
+			$this->worker->addFunction('statusngin_downtimes',					[$this, 'processDowntimes']);
+			$this->worker->addFunction('statusngin_processdata',				[$this, 'processProcessdata']);
+			$this->worker->addFunction('statusngin_notifications',				[$this, 'processNotifications']);
+			$this->worker->addFunction('statusngin_programmstatus',			[$this, 'processProgrammstatus']);
+			$this->worker->addFunction('statusngin_contactstatus',				[$this, 'processContactstatus']);
+			$this->worker->addFunction('statusngin_contactnotificationdata',	[$this, 'processContactnotificationdata']);
+			$this->worker->addFunction('statusngin_contactnotificationmethod',	[$this, 'processContactnotificationmethod']);
 			while($this->worker->work());
 		}
 	}
@@ -2470,41 +2470,41 @@ class StatusengineLegacyShell extends AppShell{
 		$workers = [
 			/*[
 				'queues' => [
-					'objects' => 'dumpObjects',
-					'programmstatus' => 'processProgrammstatus',
-					'processdata' => 'processProcessdata'
+					'statusngin_objects' => 'dumpObjects',
+					'statusngin_programmstatus' => 'processProgrammstatus',
+					'statusngin_processdata' => 'processProcessdata'
 				]
 			],*/
 			[
-				'queues' => ['servicestatus' => 'processServicestatus']
+				'queues' => ['statusngin_servicestatus' => 'processServicestatus']
 			],
 			[
 				'queues' => [
-					'hoststatus' => 'processHoststatus',
-					'statechanges' => 'processStatechanges'
+					'statusngin_hoststatus' => 'processHoststatus',
+					'statusngin_statechanges' => 'processStatechanges'
 				]
 			],
 			[
-				'queues' => ['servicechecks' => 'processServicechecks']
+				'queues' => ['statusngin_servicechecks' => 'processServicechecks']
 			],
 			[
 				'queues' => [
-					'hostchecks' => 'processHostchecks',
-					'logentries' => 'processLogentries'
+					'statusngin_hostchecks' => 'processHostchecks',
+					'statusngin_logentries' => 'processLogentries'
 				]
 			],
 			[
 				'queues' => [
-					'notifications' => 'processNotifications',
-					'contactstatus' => 'processContactstatus',
-					'contactnotificationdata' => 'processContactnotificationdata',
-					'contactnotificationmethod' => 'processContactnotificationmethod',
-					'acknowledgements' => 'processAcknowledgements',
-					'comments' => 'processComments',
-					'flappings' => 'processFlappings',
-					'downtimes' => 'processDowntimes',
-					'externalcommands' => 'processExternalcommands',
-					'systemcommands' => 'processSystemcommands'
+					'statusngin_notifications' => 'processNotifications',
+					'statusngin_contactstatus' => 'processContactstatus',
+					'statusngin_contactnotificationdata' => 'processContactnotificationdata',
+					'statusngin_contactnotificationmethod' => 'processContactnotificationmethod',
+					'statusngin_acknowledgements' => 'processAcknowledgements',
+					'statusngin_comments' => 'processComments',
+					'statusngin_flappings' => 'processFlappings',
+					'statusngin_downtimes' => 'processDowntimes',
+					'statusngin_externalcommands' => 'processExternalcommands',
+					'statusngin_systemcommands' => 'processSystemcommands'
 				]
 			]
 		];
@@ -2565,7 +2565,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Logfile->clog('Ok, i will wait for instructions');
 		if($this->bindQueues === true){
 			$this->worker= new GearmanWorker();
-			$this->worker->addServer();
+			$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 			foreach($this->queues as $queueName => $functionName){
 				$this->Logfile->clog('Queue "'.$queueName.'" will be handled by function "'.$functionName.'"');
 				$this->worker->addFunction($queueName, [$this, $functionName]);

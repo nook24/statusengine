@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 #**********************************************************************************
 #
 #    #####
@@ -41,9 +41,9 @@ if grep -q DISTRIB_CODENAME=trusty /etc/lsb-release; then
 	cd ../../
 	cp -r cakephp /opt/statusengine/
 	chmod +x /opt/statusengine/cakephp/app/Console/cake
-	echo "Installation done..."
-	echo "Set broker_module=/opt/statusengine/statusengine.o in your config"
-	echo "Set the right MySQL username and passwort in cakephp/app/Config/database.php"
+	echo -e "\033[0;32mInstallation done...\033[0m"
+	echo -e "\033[0;34mSet broker_module=/opt/statusengine/statusengine.o in your config\033[0m"
+	echo -e "\033[0;34mSet the right MySQL username and passwort in cakephp/app/Config/database.php\033[0m"
 	cd /opt/statusengine
 else
 	echo "This installer only support Ubuntu 14.04 LTS (trusty)"

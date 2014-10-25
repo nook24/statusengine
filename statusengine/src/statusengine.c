@@ -105,7 +105,7 @@ extern char *global_service_event_handler;
 
 
 gearman_return_t ret; //remove me!!!
-gearman_client_st client;
+gearman_client_st gman_client;
 
 void *statusengine_module_handle = NULL;
 
@@ -157,13 +157,13 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	
 
 	//Create gearman client
-	if (gearman_client_create(&client) == NULL){
+	if (gearman_client_create(&gman_client) == NULL){
 		write_to_all_logs("[Statusengine] Memory allocation failure on client creation\n", NSLOG_INFO_MESSAGE);
 	}
 
-	ret= gearman_client_add_server(&client, "127.0.0.1", 4730);
+	ret= gearman_client_add_server(&gman_client, "127.0.0.1", 4730);
 	if (ret != GEARMAN_SUCCESS){
-		write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+		write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 	}
 
 	return 0;
@@ -197,7 +197,7 @@ int nebmodule_deinit(int flags, int reason){
 	write_to_all_logs("[Statusengine] Bye", NSLOG_INFO_MESSAGE);
 
 	//Delete gearman client
-	gearman_client_free(&client);
+	gearman_client_free(&gman_client);
 
 	return 0;
 }
@@ -302,9 +302,9 @@ int statusengine_handle_data(int event_type, void *data){
 		
 				json_object_object_add(my_object, "processdata", processdata_object);
 				const char* json_string = json_object_to_json_string(my_object);
-				ret= gearman_client_do_background(&client, "processdata", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+				ret= gearman_client_do_background(&gman_client, "statusngin_processdata", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 				if (ret != GEARMAN_SUCCESS)
-					write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+					write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 				json_object_put(my_object);
 			}
@@ -376,9 +376,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "hoststatus", host_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "hoststatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_hoststatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 
@@ -452,9 +452,9 @@ int statusengine_handle_data(int event_type, void *data){
 					json_object_object_add(my_object, "servicestatus", service_object);
 
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "servicestatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_servicestatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 				
 					json_object_put(my_object);
 
@@ -508,9 +508,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "servicecheck", servicecheck_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "servicechecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_servicechecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 					
 					json_object_put(my_object);
 
@@ -563,9 +563,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "hostcheck", hostcheck_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "hostchecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_hostchecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 				
@@ -621,9 +621,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "statechange", statechange_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "statechanges", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_statechanges", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 				}
@@ -648,9 +648,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "logentry", logentry_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "logentries", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_logentries", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 				}
@@ -684,9 +684,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "systemcommand", systemcommand_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "systemcommands", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_systemcommands", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 				}
@@ -721,9 +721,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "comment", comment_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "comments", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_comments", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 				}
@@ -748,9 +748,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "externalcommand", extcommand_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "externalcommands", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_externalcommands", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 			
 					json_object_put(my_object);
 				}
@@ -781,9 +781,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "acknowledgement", acknowledgement_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "acknowledgements", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_acknowledgements", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 				}
@@ -830,9 +830,9 @@ int statusengine_handle_data(int event_type, void *data){
 					json_object_object_add(my_object, "flapping", flapping_object);
 					const char* json_string = json_object_to_json_string(my_object);
 					//I'm not very happy with this queue name....
-					ret= gearman_client_do_background(&client, "flappings", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_flappings", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 				}
@@ -870,9 +870,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "downtime", downtime_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "downtimes", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_downtimes", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 				}
@@ -909,9 +909,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "notification_data", notification_data_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "notifications", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_notifications", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 
@@ -956,9 +956,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "programmstatus", programmstatus_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&client, "programmstatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_background(&gman_client, "statusngin_programmstatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+						write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 					json_object_put(my_object);
 				}
@@ -992,9 +992,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 						json_object_object_add(my_object, "contactstatus", contactstatus_object);
 						const char* json_string = json_object_to_json_string(my_object);
-						ret= gearman_client_do_background(&client, "contactstatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+						ret= gearman_client_do_background(&gman_client, "statusngin_contactstatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 						if (ret != GEARMAN_SUCCESS)
-							write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+							write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 						json_object_put(my_object);
 					}
@@ -1029,9 +1029,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 						json_object_object_add(my_object, "contactnotificationdata", cnd_object);
 						const char* json_string = json_object_to_json_string(my_object);
-						ret= gearman_client_do_background(&client, "contactnotificationdata", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+						ret= gearman_client_do_background(&gman_client, "statusngin_contactnotificationdata", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 						if (ret != GEARMAN_SUCCESS)
-							write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+							write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 						json_object_put(my_object);
 					}
@@ -1065,9 +1065,9 @@ int statusengine_handle_data(int event_type, void *data){
 
 						json_object_object_add(my_object, "contactnotificationmethod", cnm_object);
 						const char* json_string = json_object_to_json_string(my_object);
-						ret= gearman_client_do_background(&client, "contactnotificationmethod", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+						ret= gearman_client_do_background(&gman_client, "statusngin_contactnotificationmethod", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 						if (ret != GEARMAN_SUCCESS)
-							write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+							write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 						json_object_put(my_object);
 					}
@@ -1128,9 +1128,9 @@ void dump_object_data(){
 	my_object = json_object_new_object();
 	json_object_object_add(my_object, "object_type",       json_object_new_int(100));
 	const char* json_string_start = json_object_to_json_string(my_object);
-	ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string_start, (size_t)strlen(json_string_start), NULL);
+	ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string_start, (size_t)strlen(json_string_start), NULL);
 	if (ret != GEARMAN_SUCCESS)
-		write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+		write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 	json_object_put(my_object);
 	
@@ -1143,9 +1143,9 @@ void dump_object_data(){
 
 		const char* json_string = json_object_to_json_string(my_object);
 
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 
@@ -1180,9 +1180,9 @@ void dump_object_data(){
 		json_object_object_add(my_object, "timeranges", timeranges);
 		const char* json_string = json_object_to_json_string(my_object);
 
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 		
@@ -1260,9 +1260,9 @@ void dump_object_data(){
 
 		const char* json_string = json_object_to_json_string(my_object);
 
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 	}
@@ -1286,9 +1286,9 @@ void dump_object_data(){
 
 		const char* json_string = json_object_to_json_string(my_object);
 
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 	}
@@ -1391,9 +1391,9 @@ void dump_object_data(){
 
 		const char* json_string = json_object_to_json_string(my_object);
 
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 	}
@@ -1418,9 +1418,9 @@ void dump_object_data(){
 
 		const char* json_string = json_object_to_json_string(my_object);
 
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 	}
@@ -1520,9 +1520,9 @@ void dump_object_data(){
 
 		const char* json_string = json_object_to_json_string(my_object);
 
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 	}
@@ -1548,9 +1548,9 @@ void dump_object_data(){
 
 		const char* json_string = json_object_to_json_string(my_object);
 
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 		
@@ -1591,9 +1591,9 @@ void dump_object_data(){
 
 		const char* json_string = json_object_to_json_string(my_object);
 	
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 	}
@@ -1634,9 +1634,9 @@ void dump_object_data(){
 		json_object_object_add(my_object, "contacts", contacts_array);
 
 		const char* json_string = json_object_to_json_string(my_object);
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 	}
@@ -1658,9 +1658,9 @@ void dump_object_data(){
 		json_object_object_add(my_object, "fail_on_unreachable", json_object_new_int64(flag_isset(temp_hostdependency->failure_options, OPT_UNREACHABLE)));
 		
 		const char* json_string = json_object_to_json_string(my_object);
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 	}
@@ -1687,9 +1687,9 @@ void dump_object_data(){
 		json_object_object_add(my_object, "fail_on_critical", json_object_new_int64(flag_isset(temp_servicedependency->failure_options, OPT_CRITICAL)));
 
 		const char* json_string = json_object_to_json_string(my_object);
-		ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+			write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 
 		json_object_put(my_object);
 	}
@@ -1699,9 +1699,9 @@ void dump_object_data(){
 	my_object = json_object_new_object();
 	json_object_object_add(my_object, "object_type",       json_object_new_int(101));
 	const char* json_string = json_object_to_json_string(my_object);
-	ret= gearman_client_do_background(&client, "objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+	ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 	if (ret != GEARMAN_SUCCESS)
-		write_to_all_logs((char *)gearman_client_error(&client), NSLOG_INFO_MESSAGE);
+		write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 	json_object_put(my_object);
 	
 }
