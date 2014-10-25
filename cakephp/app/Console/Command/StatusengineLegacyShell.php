@@ -2619,15 +2619,14 @@ class StatusengineLegacyShell extends AppShell{
 			case SIGUSR1:
 				//Tell the worker to start its work
 				$this->work = true;
-				$this->bindChildSignalHandler();
 				break;
 				
 			case SIGUSR2:
 				//Tell the worker to stop its work
 				$this->work = false;
-				$this->bindChildSignalHandler();
 				break;
 		}
+		$this->bindChildSignalHandler();
 	}
 	
 	/**
@@ -2660,17 +2659,22 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function sendSignal($signal){
-		foreach($this->childPids as $cpid){
-			$this->Logfile->log('Send signal to child pid: '.$cpid);
-			posix_kill($cpid, $signal);
+		if($signal !== SIGTERM){
+			foreach($this->childPids as $cpid){
+				$this->Logfile->log('Send signal to child pid: '.$cpid);
+				posix_kill($cpid, $signal);
+			}
 		}
-		
+
 		if($signal == SIGTERM){
+			foreach($this->childPids as $cpid){
+				$this->Logfile->log('Will kill pid: '.$cpid);
+				posix_kill($cpid, SIGTERM);
+			}
 			foreach($this->childPids as $cpid){
 				pcntl_waitpid($cpid, $status);
 				$this->Logfile->log('Child ['.$cpid.'] killed successfully');
 			}
 		}
-
 	}
 }

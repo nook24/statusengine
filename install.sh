@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 #**********************************************************************************
 #
 #    #####
@@ -30,6 +29,7 @@ set -e
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 #**********************************************************************************
+set -e
 
 if grep -q DISTRIB_CODENAME=trusty /etc/lsb-release; then
 	apt-get update

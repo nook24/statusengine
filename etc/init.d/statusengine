@@ -1,0 +1,106 @@
+#!/bin/bash
+#**********************************************************************************
+#
+#    #####
+#   #     # #####   ##   ##### #    #  ####  ###### #    #  ####  # #    # ######
+#   #         #    #  #    #   #    # #      #      ##   # #    # # ##   # #
+#    #####    #   #    #   #   #    #  ####  #####  # #  # #      # # #  # #####
+#         #   #   ######   #   #    #      # #      #  # # #  ### # #  # # #
+#   #     #   #   #    #   #   #    # #    # #      #   ## #    # # #   ## #
+#    #####    #   #    #   #    ####   ####  ###### #    #  ####  # #    # ######
+#
+#                            the missing event broker
+#
+# --------------------------------------------------------------------------------
+#
+# Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation in version 2
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+#**********************************************************************************
+
+### BEGIN INIT INFO
+# Provides: statusengine2db
+# Required-Start: mysql
+# Required-Stop: mysql
+# Default-Start:  2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Statusengine database connector
+# Description: Starts the daemon that fetch data out of the gearman server and insert it into a mysql database
+### END INIT INFO
+
+
+set -e
+set -u
+i=0
+DAEMON="/opt/statusengine/cakephp/app/Console/cake statusengine_legacy"
+DAEMON_OPTS="-w"
+PIDFILE=/var/run/statusengine.pid
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+if [ $# -lt 1 ]
+then
+	echo "$0 <start|stop|restart|status>"
+	exit 1
+fi
+
+case $1 in
+	start)
+		echo "Starting Statusengine"
+		start-stop-daemon --start --pidfile $PIDFILE --make-pidfile --background --exec $DAEMON -- $DAEMON_OPTS
+	;;
+
+	stop)
+		echo "Stopping Statusengine"
+		while start-stop-daemon --pidfile=$PIDFILE --test --stop --exec $DAEMON -- $DAEMON_OPTS; do
+			sleep .1
+			if [ $i -ge 100 ]; then
+				echo "Statusengine stop failed"
+				exit 1
+			else
+				i=$(( i + 1 ))
+				echo -n "."
+			fi
+		done
+		#start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
+	;;
+	
+	restart|reload|force-reload)
+		echo "Restarting Statusengine"
+		$0 stop
+		$0 start
+	;;
+	
+	status)
+		if start-stop-daemon --pidfile=$PIDFILE --test --stop --exec $DAEMON -- $DAEMON_OPTS --quiet
+		then
+			PID=`cat $PIDFILE`
+			echo "Statusengine is running (pid $PID)."
+			exit 0
+		else
+			echo "Statusengine is not running"
+			exit 3
+		fi
+		;;
+	
+	probe)
+		echo restart
+		exit 0
+	;;
+	
+	*)
+		echo "Unknown command $1."
+		exit 1
+	;;
+esac
