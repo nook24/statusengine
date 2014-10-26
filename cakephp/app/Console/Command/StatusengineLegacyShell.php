@@ -2635,6 +2635,8 @@ class StatusengineLegacyShell extends AppShell{
 		switch($signo){
 			case SIGTERM:
 				$this->Logfile->clog('Will kill myself :-(');
+				$this->Logfile->clog('Unregister all my queues');
+				$this->worker->unregisterAll();
 				exit(0);
 				break;
 				
@@ -2665,10 +2667,12 @@ class StatusengineLegacyShell extends AppShell{
 			case SIGTERM:
 				$this->Logfile->log('Will kill my childs :-(');
 				$this->sendSignal(SIGTERM);
-				$this->Logfile->log('Cleanup my childs communicatiosn queues');
+				$this->Logfile->log('Cleanup my childs communication queues');
 				foreach($this->childPids as $cpid){
 					$this->worker->addFunction('statusngin_'.$cpid, [$this, 'devNull']);
 				}
+				$this->Logfile->log('Unregister all my queues');
+				$this->worker->unregisterAll();
 				$this->Logfile->log('Bye');
 				exit(0);
 				break;
