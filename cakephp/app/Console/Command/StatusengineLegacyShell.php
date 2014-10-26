@@ -2546,6 +2546,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->gearmanConnect();
 		$this->Logfile->log('Lets rock!');
 		$this->sendSignal(SIGUSR1);
+		$this->worker->setTimeout(500);
 		while(true){
 			pcntl_signal_dispatch();
 			$this->worker->work();
@@ -2570,6 +2571,7 @@ class StatusengineLegacyShell extends AppShell{
 				$this->Logfile->clog('Queue "'.$queueName.'" will be handled by function "'.$functionName.'"');
 				$this->worker->addFunction($queueName, [$this, $functionName]);
 			}
+			$this->worker->addFunction('statusngin_'.getmypid(), [$this, 'handleEvent']);
 			$this->bindQueues = false;
 		}
 		while(true){
@@ -2592,6 +2594,26 @@ class StatusengineLegacyShell extends AppShell{
 			}
 			pcntl_signal_dispatch();
 			usleep(250000);
+		}
+	}
+	
+	/**
+	 * If the child is stuck in $this->worker->work() it will not listen to the 
+	 * signal handler and not exit correctly. If ther is a better solution for this
+	 * please email me ASAP
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
+	public function handleEvent($job){
+		$this->Logfile->clog('Will handle an event i got from my parent');
+		$payload = json_decode($job->workload());
+		switch($payload->task){
+			case 'signal_dispatch':
+				pcntl_signal_dispatch();
+				break;
 		}
 	}
 	
@@ -2643,6 +2665,10 @@ class StatusengineLegacyShell extends AppShell{
 			case SIGTERM:
 				$this->Logfile->log('Will kill my childs :-(');
 				$this->sendSignal(SIGTERM);
+				$this->Logfile->log('Cleanup my childs communicatiosn queues');
+				foreach($this->childPids as $cpid){
+					$this->worker->addFunction('statusngin_'.$cpid, [$this, 'devNull']);
+				}
 				$this->Logfile->log('Bye');
 				exit(0);
 				break;
@@ -2659,8 +2685,12 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function sendSignal($signal){
+		$gmanClient = new GearmanClient();
+		$gmanClient->addServer(Configure::read('server'), Configure::read('port'));
 		if($signal !== SIGTERM){
 			foreach($this->childPids as $cpid){
+				//This will wakeup the child, if it stuck in worker->work()
+				$gmanClient->doBackground('statusngin_'.$cpid, json_encode(['task' => 'signal_dispatch']));
 				$this->Logfile->log('Send signal to child pid: '.$cpid);
 				posix_kill($cpid, $signal);
 			}
@@ -2669,12 +2699,28 @@ class StatusengineLegacyShell extends AppShell{
 		if($signal == SIGTERM){
 			foreach($this->childPids as $cpid){
 				$this->Logfile->log('Will kill pid: '.$cpid);
+				//This will wakeup the child, if it stuck in worker->work()
+				$gmanClient->doBackground('statusngin_'.$cpid, json_encode(['task' => 'signal_dispatch']));
 				posix_kill($cpid, SIGTERM);
 			}
 			foreach($this->childPids as $cpid){
+				$gmanClient->doBackground('statusngin_'.$cpid, json_encode(['task' => 'signal_dispatch']));
 				pcntl_waitpid($cpid, $status);
 				$this->Logfile->log('Child ['.$cpid.'] killed successfully');
 			}
 		}
+		unset($gmanClient);
+	}
+	
+	/**
+	 * Throw the given job away
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return true
+	 */
+	public function devNull($job){
+		return true;
 	}
 }
