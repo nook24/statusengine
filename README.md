@@ -84,7 +84,7 @@ chmod +x install.sh
 ```
 or InnoDB
 
-3. Create database InnoDB
+3. Upgrade database with CakePHP schema shell (InnoDB)
 ```bash
 /opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema_innodb.php --connection legacy
 ```
@@ -98,6 +98,15 @@ or InnoDB
 ```bash
 /opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w
 ```
+
+Tested with
+--------------
+* Naemon 0.8.0 - master
+* Nagios 4.0.8
+* mod_gearman
+* NagVis
+* MySQL
+* MariaDB
 
 Licence
 --------------
