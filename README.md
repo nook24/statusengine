@@ -13,11 +13,13 @@ Requirements
 
 Installation
 --------------
+
 1. Clone repository
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
+
 2. Set your username and password of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
 ```php
 	public $legacy = array(
@@ -31,28 +33,37 @@ chmod +x install.sh
 		//'encoding' => 'utf8',
 	);
 ```
+
 3. Create database (using CakePHP shell) MyISAM
 ```bash
 /opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema.php --connection legacy
 ```
 or:
+
 3. Create database InnoDB
 ```bash
 /opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema_innodb.php --connection legacy
 ```
 
-4. Start Statusengine in legacy mode:
+4. Change path to your nagios.cfg / naemon.cfg in /opt/statusengine/cakephp/app/Config/Statusengine.php if different on your system
+```php
+'coreconfig' => '/etc/naemon/naemon.cfg',
+```
+
+5. Start Statusengine in legacy mode:
 ```bash
 /opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w
 ```
 
 Migrate to Statusengine
 --------------
+
 1. Clone repository
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
+
 2. Set your username and password of MySQL server in /opt/statusengine/cakephp/app/Config/database.php
 ```php
 	public $legacy = array(
@@ -71,12 +82,19 @@ chmod +x install.sh
 ```bash
 /opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema.php --connection legacy
 ```
-or InnoDB:
+or InnoDB
+
 3. Create database InnoDB
 ```bash
 /opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema_innodb.php --connection legacy
 ```
-4. Start Statusengine in legacy mode:
+
+4. Change path to your nagios.cfg / naemon.cfg in /opt/statusengine/cakephp/app/Config/Statusengine.php if different on your system
+```php
+'coreconfig' => '/etc/naemon/naemon.cfg',
+```
+
+5. Start Statusengine in legacy mode:
 ```bash
 /opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w
 ```
