@@ -56,7 +56,6 @@
 * NEBCALLBACK_AGGREGATED_STATUS_DATA
 * NEBCALLBACK_RETENTION_DATA
 * NEBCALLBACK_TIMED_EVENT_DATA
-* NEBCALLBACK_EVENT_HANDLER_DATA
 * 
 *
 * Have fun :-)
@@ -155,6 +154,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	neb_register_callback(NEBCALLBACK_CONTACT_STATUS_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
 	neb_register_callback(NEBCALLBACK_CONTACT_NOTIFICATION_DATA,        statusengine_module_handle, 0, statusengine_handle_data);
 	neb_register_callback(NEBCALLBACK_CONTACT_NOTIFICATION_METHOD_DATA, statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_EVENT_HANDLER_DATA,               statusengine_module_handle, 0, statusengine_handle_data);
 	
 
 	//Create gearman client
@@ -193,6 +193,7 @@ int nebmodule_deinit(int flags, int reason){
 	neb_deregister_callback(NEBCALLBACK_CONTACT_STATUS_DATA,              statusengine_handle_data);
 	neb_deregister_callback(NEBCALLBACK_CONTACT_NOTIFICATION_DATA,        statusengine_handle_data);
 	neb_deregister_callback(NEBCALLBACK_CONTACT_NOTIFICATION_METHOD_DATA, statusengine_handle_data);
+	neb_deregister_callback(NEBCALLBACK_EVENT_HANDLER_DATA,               statusengine_handle_data);
 
 	write_to_all_logs("[Statusengine] We are done here", NSLOG_INFO_MESSAGE);
 	write_to_all_logs("[Statusengine] Bye", NSLOG_INFO_MESSAGE);
@@ -248,31 +249,32 @@ int nebmodule_deinit(int flags, int reason){
 
 //Handle callback data
 int statusengine_handle_data(int event_type, void *data){
-	nebstruct_host_status_data                 *hoststatusdata    = NULL;
-	nebstruct_service_status_data              *servicestatusdata = NULL;
-	nebstruct_process_data                     *programmdata      = NULL;
-	nebstruct_service_check_data               *servicecheck      = NULL;
-	char *raw_command                                             = NULL;
-	nebstruct_host_check_data                  *hostcheck         = NULL;
-	nebstruct_statechange_data                 *statechange       = NULL;
-	host                                       *tmp_host          = NULL;
-	service                                    *tmp_service       = NULL;
-	int                                        last_state         = -1;
-	int                                        last_hard_state    = -1;
-	nebstruct_log_data                         *logentry          = NULL;
-	nebstruct_system_command_data              *systemcommand     = NULL;
-	nebstruct_comment_data                     *_comment          = NULL;
-	nebstruct_external_command_data            *extcommand        = NULL;
-	nebstruct_acknowledgement_data             *acknowledgement   = NULL;
-	nebstruct_flapping_data                    *_flapping         = NULL;
-	comment                                    *tmp_comment       = NULL;
-	nebstruct_downtime_data                    *_downtime         = NULL;
-	nebstruct_notification_data                *notificationdata  = NULL;
-	nebstruct_program_status_data              *procstats         = NULL;
-	nebstruct_contact_status_data              *contactstatus     = NULL;
-	contact                                    *tmp_contact       = NULL;
-	nebstruct_contact_notification_data        *cnd               = NULL;
-	nebstruct_contact_notification_method_data *cnm        = NULL;
+	nebstruct_host_status_data                 *hoststatusdata     = NULL;
+	nebstruct_service_status_data              *servicestatusdata  = NULL;
+	nebstruct_process_data                     *programmdata       = NULL;
+	nebstruct_service_check_data               *servicecheck       = NULL;
+	char *raw_command                                              = NULL;
+	nebstruct_host_check_data                  *hostcheck          = NULL;
+	nebstruct_statechange_data                 *statechange        = NULL;
+	host                                       *tmp_host           = NULL;
+	service                                    *tmp_service        = NULL;
+	int                                        last_state          = -1;
+	int                                        last_hard_state     = -1;
+	nebstruct_log_data                         *logentry           = NULL;
+	nebstruct_system_command_data              *systemcommand      = NULL;
+	nebstruct_comment_data                     *_comment           = NULL;
+	nebstruct_external_command_data            *extcommand         = NULL;
+	nebstruct_acknowledgement_data             *acknowledgement    = NULL;
+	nebstruct_flapping_data                    *_flapping          = NULL;
+	comment                                    *tmp_comment        = NULL;
+	nebstruct_downtime_data                    *_downtime          = NULL;
+	nebstruct_notification_data                *notificationdata   = NULL;
+	nebstruct_program_status_data              *procstats          = NULL;
+	nebstruct_contact_status_data              *contactstatus      = NULL;
+	contact                                    *tmp_contact        = NULL;
+	nebstruct_contact_notification_data        *cnd                = NULL;
+	nebstruct_contact_notification_method_data *cnm                = NULL;
+	nebstruct_event_handler_data               *event_handler_data = NULL;
 	json_object *my_object;
 
 	switch(event_type){
@@ -1067,6 +1069,47 @@ int statusengine_handle_data(int event_type, void *data){
 						json_object_object_add(my_object, "contactnotificationmethod", cnm_object);
 						const char* json_string = json_object_to_json_string(my_object);
 						ret= gearman_client_do_background(&gman_client, "statusngin_contactnotificationmethod", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+						if (ret != GEARMAN_SUCCESS)
+							write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
+
+						json_object_put(my_object);
+					}
+					break;
+					
+				case NEBCALLBACK_EVENT_HANDLER_DATA:
+					if((event_handler_data = (nebstruct_event_handler_data *)data)){
+						if(event_handler_data == NULL){
+							return 0;
+						}
+						my_object = json_object_new_object();
+						json_object_object_add(my_object, "type",      json_object_new_int(event_handler_data->type));
+						json_object_object_add(my_object, "flags",     json_object_new_int(event_handler_data->flags));
+						json_object_object_add(my_object, "attr",      json_object_new_int(event_handler_data->attr));
+						json_object_object_add(my_object, "timestamp", json_object_new_int(event_handler_data->timestamp.tv_sec));
+
+						json_object *ehd_object = json_object_new_object();
+						json_object_object_add(ehd_object, "host_name",           (event_handler_data->host_name           != NULL ? json_object_new_string(event_handler_data->host_name) : NULL));
+						json_object_object_add(ehd_object, "service_description", (event_handler_data->service_description != NULL ? json_object_new_string(event_handler_data->service_description) : NULL));
+						json_object_object_add(ehd_object, "output",              (event_handler_data->output              != NULL ? json_object_new_string(event_handler_data->output) : NULL));
+						//ther is no longoutput at the moment!
+						json_object_object_add(ehd_object, "long_output",         (event_handler_data->output              != NULL ? json_object_new_string(event_handler_data->output) : NULL));
+						json_object_object_add(ehd_object, "command_name",        (event_handler_data->command_name        != NULL ? json_object_new_string(event_handler_data->command_name) : NULL));
+						json_object_object_add(ehd_object, "command_args",        (event_handler_data->command_args        != NULL ? json_object_new_string(event_handler_data->command_args) : NULL));
+						json_object_object_add(ehd_object, "command_line",        (event_handler_data->command_line        != NULL ? json_object_new_string(event_handler_data->command_line) : NULL));
+
+						json_object_object_add(ehd_object, "state_type",     json_object_new_int64(event_handler_data->state_type));
+						json_object_object_add(ehd_object, "state",          json_object_new_int64(event_handler_data->state));
+						json_object_object_add(ehd_object, "timeout",        json_object_new_int64(event_handler_data->timeout));
+						json_object_object_add(ehd_object, "early_timeout",  json_object_new_int64(event_handler_data->early_timeout));
+						json_object_object_add(ehd_object, "return_code",    json_object_new_int64(event_handler_data->return_code));
+						json_object_object_add(ehd_object, "execution_time", json_object_new_double(event_handler_data->execution_time));
+
+						json_object_object_add(ehd_object, "start_time",  json_object_new_int64(event_handler_data->start_time.tv_sec));
+						json_object_object_add(ehd_object, "end_time",    json_object_new_int64(event_handler_data->end_time.tv_sec));
+
+						json_object_object_add(my_object, "eventhandler", ehd_object);
+						const char* json_string = json_object_to_json_string(my_object);
+						ret= gearman_client_do_background(&gman_client, "statusngin_eventhandler", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 						if (ret != GEARMAN_SUCCESS)
 							write_to_all_logs((char *)gearman_client_error(&gman_client), NSLOG_INFO_MESSAGE);
 

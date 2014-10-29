@@ -97,12 +97,15 @@ class StatusengineLegacyShell extends AppShell{
 		'Legacy.Notification',
 		'Legacy.Contactnotification',
 		'Legacy.Contactnotificationmethod',
+		'Legacy.Eventhandler',
 		
 		//Other tables
 		'Legacy.Systemcommand',
 		'Legacy.Instance',
 		'Legacy.Processdata',
-		'Legacy.Dbversion'
+		'Legacy.Dbversion',
+		'Legacy.Configfile',
+		'Legacy.Configvariable'
 	];
 	
 	/**
@@ -277,6 +280,8 @@ class StatusengineLegacyShell extends AppShell{
 					
 					
 					'Systemcommand',
+					'Configfile',
+					'Configvariable'
 				];
 				foreach($truncate as $Model){
 					$this->{$Model}->deleteAll(true);
@@ -295,6 +300,11 @@ class StatusengineLegacyShell extends AppShell{
 				$this->saveParentHosts();
 				$this->saveParentServices();
 				//We are done with object dumping and can write parent hosts and services to DB
+				
+				$this->Logfile->log('Start dumping core config '.Configure::read('coreconfig').' to database');
+				$this->dumpCoreConfig();
+				$this->Logfile->log('Core config dump finished');
+				
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR1);
 				}
@@ -2122,6 +2132,49 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
+	//May be a little bit buggy?
+	public function processEventhandler($job){
+		if($this->clearQ){
+			return;
+		}
+		$payload = json_decode($job->workload());
+		
+		if($payload->eventhandler->service_description != NULL){
+			$object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->eventhandler->host_name, $payload->eventhandler->service_description);
+			$eventhanderType = 1;
+		}else{
+			$object_id = $this->objectIdFromCache(OBJECT_HOST, $payload->eventhandler->host_name);
+			$eventhanderType = 0;
+		}
+		
+		$this->Eventhandler->create();
+		
+		$data = [
+			'Eventhandler' => [
+				'instance_id' => $this->instance_id,
+				'eventhandler_type' => $eventhanderType,
+				'object_id' => $object_id,
+				'state' => $payload->eventhandler->state,
+				'state_type' => $payload->eventhandler->state_type,
+				'start_time' => date('Y-m-d H:i:s', $payload->eventhandler->start_time),
+				'start_time_usec' => $payload->eventhandler->start_time,
+				'end_time' => date('Y-m-d H:i:s', $payload->eventhandler->end_time),
+				'end_time_usec' => $payload->eventhandler->end_time,
+				'command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $payload->eventhandler->command_name),
+				'command_args' => $payload->eventhandler->command_args,
+				'command_line' => $payload->eventhandler->command_line,
+				'timeout' => $payload->eventhandler->timeout,
+				'early_timeout' => $payload->eventhandler->early_timeout,
+				'execution_time' => $payload->eventhandler->execution_time,
+				'return_code' => $payload->eventhandler->return_code,
+				'output' => $payload->eventhandler->output,
+				'long_output' => $payload->eventhandler->long_output
+			]
+		];
+		
+		$this->Eventhandler->save($data);
+	}
+	
 	/**
 	 * Parent process connect to the gearman servicer
 	 * If you start the programm this function get called from $this->forkWorker() OR $this->main(),
@@ -2162,6 +2215,8 @@ class StatusengineLegacyShell extends AppShell{
 			$this->worker->addFunction('statusngin_contactstatus',				[$this, 'processContactstatus']);
 			$this->worker->addFunction('statusngin_contactnotificationdata',	[$this, 'processContactnotificationdata']);
 			$this->worker->addFunction('statusngin_contactnotificationmethod',	[$this, 'processContactnotificationmethod']);
+			$this->worker->addFunction('statusngin_eventhandler',				[$this, 'processEventhandler']);
+			
 			while($this->worker->work());
 		}
 	}
@@ -2513,7 +2568,8 @@ class StatusengineLegacyShell extends AppShell{
 					'statusngin_flappings' => 'processFlappings',
 					'statusngin_downtimes' => 'processDowntimes',
 					'statusngin_externalcommands' => 'processExternalcommands',
-					'statusngin_systemcommands' => 'processSystemcommands'
+					'statusngin_systemcommands' => 'processSystemcommands',
+					'statusngin_eventhandler' => 'processEventhandler'
 				]
 			]
 		];
@@ -2728,5 +2784,48 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function devNull($job){
 		return true;
+	}
+	
+	public function dumpCoreConfig(){
+		$configFile = Configure::read('coreconfig');
+		
+		if(file_exists($configFile)){
+			$this->Configfile->create();
+			$data = [
+				'Configfile' => [
+					'instance_id' => $this->instance_id,
+					'configfile_type' => 0, // ???
+					'configfile_path' => Configure::read('coreconfig')
+				]
+			];
+		
+			$result = $this->Configfile->save($data);
+		
+		
+			$coreconfig = fopen($configFile, "r");
+		
+			while(!feof($coreconfig)){
+				$line = trim(fgets($coreconfig));
+				$strpos = strpos($line, '#');
+
+				if($line != '' && ($strpos === false || $strpos > 0)){
+					$parsed = explode('=', $line, 2);
+					if(isset($parsed[0]) && isset($parsed[1])){
+						$this->Configvariable->create();
+						$data = [
+							'Configvariable' => [
+								'instance_id' => $this->instance_id,
+								'configfile_id' => $result['Configfile']['configfile_id'],
+								'varname' => $parsed[0],
+								'varvalue' =>$parsed[1]
+							]
+						];
+						$this->Configvariable->save($data);
+					}
+				}
+			}
+		}else{
+			$this->Logfile->log('ERROR: Core config '.$configFile.' not found!!!');
+		}
 	}
 }
