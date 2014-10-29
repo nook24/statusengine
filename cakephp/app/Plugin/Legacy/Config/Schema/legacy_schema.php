@@ -1,6 +1,19 @@
 <?php 
 class LegacySchema extends CakeSchema {
 
+	/* Useful schema commands:
+	 *
+	 * Update to new schema:
+	 *  ../../cakephp/app/Console/cake schema update
+	 *
+	 * Update to snapshot:
+	 * /opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema.php --connection legacy -s X
+	 *
+	 * Generate new snapshot
+	 * 	/opt/statusengine/cakephp/app/Console/cake schema generate --plugin Legacy --file legacy_schema_X.php --connection legacy
+	 *
+	 */
+
 	public $connection = 'legacy';
 
 	public function before($event = array()) {
@@ -63,6 +76,31 @@ class LegacySchema extends CakeSchema {
 		'expiration_time' => array('type' => 'datetime', 'null' => false, 'default' => '0000-00-00 00:00:00'),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'comment_id', 'unique' => 1)
+		),
+		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
+	);
+
+	public $configfiles = array(
+		'configfile_id' => array('type' => 'integer', 'null' => false, 'default' => null, 'unsigned' => false, 'key' => 'primary'),
+		'instance_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false, 'key' => 'index'),
+		'configfile_type' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'configfile_path' => array('type' => 'string', 'null' => false, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'indexes' => array(
+			'PRIMARY' => array('column' => 'configfile_id', 'unique' => 1),
+			'instance_id' => array('column' => array('instance_id', 'configfile_type', 'configfile_path'), 'unique' => 1)
+		),
+		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
+	);
+
+	public $configfilevariables = array(
+		'configfilevariable_id' => array('type' => 'integer', 'null' => false, 'default' => null, 'unsigned' => false, 'key' => 'primary'),
+		'instance_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false, 'key' => 'index'),
+		'configfile_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
+		'varname' => array('type' => 'string', 'null' => false, 'length' => 64, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'varvalue' => array('type' => 'string', 'null' => false, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'indexes' => array(
+			'PRIMARY' => array('column' => 'configfilevariable_id', 'unique' => 1),
+			'instance_id' => array('column' => array('instance_id', 'configfile_id'), 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
 	);
@@ -222,7 +260,7 @@ class LegacySchema extends CakeSchema {
 	);
 
 	public $dbversion = array(
-		'name' => array('type' => 'string', 'null' => false, 'length' => 12, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8', 'key' => 'primary'),
+		'name' => array('type' => 'string', 'null' => false, 'default' => null, 'length' => 12, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8', 'key' => 'primary'),
 		'version' => array('type' => 'string', 'null' => false, 'length' => 10, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
 			
@@ -256,6 +294,32 @@ class LegacySchema extends CakeSchema {
 			'scheduled_start_time' => array('column' => 'scheduled_start_time', 'unique' => 0),
 			'scheduled_end_time' => array('column' => 'scheduled_end_time', 'unique' => 0),
 			'object_id' => array('column' => 'object_id', 'unique' => 0)
+		),
+		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
+	);
+
+	public $eventhandlers = array(
+		'eventhandler_id' => array('type' => 'integer', 'null' => false, 'default' => null, 'unsigned' => false, 'key' => 'primary'),
+		'instance_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'eventhandler_type' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
+		'state' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'state_type' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'start_time' => array('type' => 'datetime', 'null' => false, 'default' => '0000-00-00 00:00:00'),
+		'start_time_usec' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
+		'end_time' => array('type' => 'datetime', 'null' => false, 'default' => '0000-00-00 00:00:00'),
+		'end_time_usec' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
+		'command_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
+		'command_args' => array('type' => 'string', 'null' => false, 'length' => 1000, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'command_line' => array('type' => 'string', 'null' => false, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'timeout' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'early_timeout' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'execution_time' => array('type' => 'float', 'null' => false, 'default' => '0', 'unsigned' => false),
+		'return_code' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'output' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'long_output' => array('type' => 'text', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'indexes' => array(
+			'PRIMARY' => array('column' => 'eventhandler_id', 'unique' => 1)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
 	);
@@ -347,16 +411,16 @@ class LegacySchema extends CakeSchema {
 		'end_time' => array('type' => 'datetime', 'null' => false, 'default' => '0000-00-00 00:00:00'),
 		'end_time_usec' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'command_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
-		'command_args' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
-		'command_line' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'command_args' => array('type' => 'string', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'command_line' => array('type' => 'string', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'timeout' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'early_timeout' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'execution_time' => array('type' => 'float', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'latency' => array('type' => 'float', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'return_code' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
-		'output' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'output' => array('type' => 'string', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'long_output' => array('type' => 'text', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
-		'perfdata' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'perfdata' => array('type' => 'string', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'hostcheck_id', 'unique' => 1),
 			'start_time' => array('column' => 'start_time', 'unique' => 0)
@@ -788,8 +852,8 @@ class LegacySchema extends CakeSchema {
 		'end_time' => array('type' => 'datetime', 'null' => false, 'default' => '0000-00-00 00:00:00'),
 		'end_time_usec' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'command_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
-		'command_args' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
-		'command_line' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'command_args' => array('type' => 'string', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'command_line' => array('type' => 'string', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'timeout' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'early_timeout' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'execution_time' => array('type' => 'float', 'null' => false, 'default' => '0', 'unsigned' => false),
@@ -801,9 +865,9 @@ class LegacySchema extends CakeSchema {
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'servicecheck_id', 'unique' => 1),
 			'start_time' => array('column' => 'start_time', 'unique' => 0),
-			'instance_id' => array('column' => 'instance_id', 'unique' => 0),
 			'service_object_id' => array('column' => 'service_object_id', 'unique' => 0),
-			'start_time_2' => array('column' => 'start_time', 'unique' => 0)
+			'start_time_2' => array('column' => 'start_time', 'unique' => 0),
+			'instance_id' => array('column' => 'instance_id', 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
 	);
