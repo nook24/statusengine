@@ -31,9 +31,14 @@ chmod +x install.sh
 		//'encoding' => 'utf8',
 	);
 ```
-3. Create database (using CakePHP shell)
+3. Create database (using CakePHP shell) MyISAM
 ```bash
 /opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema.php --connection legacy
+```
+or:
+3. Create database InnoDB
+```bash
+/opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema_innodb.php --connection legacy
 ```
 
 4. Start Statusengine in legacy mode:
@@ -62,9 +67,14 @@ chmod +x install.sh
 	);
 ```
 
-3. Upgrade database with CakePHP schema shell:
+3. Upgrade database with CakePHP schema shell (MyISAM):
 ```bash
 /opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema.php --connection legacy
+```
+or InnoDB:
+3. Create database InnoDB
+```bash
+/opt/statusengine/cakephp/app/Console/cake schema update --plugin Legacy --file legacy_schema_innodb.php --connection legacy
 ```
 4. Start Statusengine in legacy mode:
 ```bash
