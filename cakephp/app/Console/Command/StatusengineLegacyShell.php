@@ -580,6 +580,7 @@ class StatusengineLegacyShell extends AppShell{
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->name);
 
 				$checkCommand = $this->parseCheckCommand($payload->check_command);
+				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
 
 				$data = [
 					'Host' => [
@@ -591,8 +592,8 @@ class StatusengineLegacyShell extends AppShell{
 						'address' => $payload->address,
 						'check_command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $checkCommand[0]),
 						'check_command_args' => $checkCommand[1],
-						'eventhandler_command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $payload->event_handler, null, 0),
-						'eventhandler_command_args' => '',
+						'eventhandler_command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $eventHandlerCommand[0], null, 0),
+						'eventhandler_command_args' => $eventHandlerCommand[1],
 						'notification_timeperiod_object_id' => $this->objectIdFromCache(OBJECT_TIMEPERIOD, $payload->notification_period),
 						'check_timeperiod_object_id' => $this->objectIdFromCache(OBJECT_TIMEPERIOD, $payload->check_period),
 						'failure_prediction_options' => 0,
@@ -823,6 +824,9 @@ class StatusengineLegacyShell extends AppShell{
 					debug($checkCommand);
 				}
 				
+				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
+				
+				
 				$data = [
 					'Service' => [
 						'service_id' => $this->fakeLastInsertId,
@@ -833,8 +837,8 @@ class StatusengineLegacyShell extends AppShell{
 						'display_name' => $payload->display_name,
 						'check_command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $checkCommand[0]),
 						'check_command_args' => $checkCommand[1],
-						'eventhandler_command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $payload->event_handler, null, 0),
-						'eventhandler_command_args' => '',
+						'eventhandler_command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $eventHandlerCommand[0], null, 0),
+						'eventhandler_command_args' => $eventHandlerCommand[1],
 						'notification_timeperiod_object_id' => $this->objectIdFromCache(OBJECT_TIMEPERIOD, $payload->notification_period),
 						'check_timeperiod_object_id' => $this->objectIdFromCache(OBJECT_TIMEPERIOD, $payload->check_period),
 						'failure_prediction_options' => 0,
@@ -843,8 +847,8 @@ class StatusengineLegacyShell extends AppShell{
 						'max_check_attempts' => $payload->max_attempts,
 						'first_notification_delay' => $payload->first_notification_delay,
 						'notification_interval' => $payload->notification_interval,
-						'notify_on_unknown' => $payload->notify_on_unknown,
 						'notify_on_warning' => $payload->notify_on_warning,
+						'notify_on_unknown' => $payload->notify_on_unknown,
 						'notify_on_critical' => $payload->notify_on_critical,
 						'notify_on_recovery' => $payload->notify_on_recovery,
 						'notify_on_flapping' => $payload->notify_on_flapping,
@@ -853,6 +857,7 @@ class StatusengineLegacyShell extends AppShell{
 						'stalk_on_warning' => $payload->stalk_on_warning,
 						'stalk_on_unknown' => $payload->stalk_on_unknown,
 						'stalk_on_critical' => $payload->stalk_on_critical,
+						'is_volatile' => $payload->is_volatile,
 						'flap_detection_enabled' => $payload->flap_detection_enabled,
 						'flap_detection_on_ok' => $payload->flap_detection_on_ok,
 						'flap_detection_on_warning' => $payload->flap_detection_on_warning,
@@ -860,7 +865,6 @@ class StatusengineLegacyShell extends AppShell{
 						'flap_detection_on_critical' => $payload->flap_detection_on_critical,
 						'low_flap_threshold' => $payload->low_flap_threshold,
 						'high_flap_threshold' => $payload->high_flap_threshold,
-						'is_volatile' => 0,
 						'process_performance_data' => $payload->process_performance_data,
 						'freshness_checks_enabled' => $payload->check_freshness,
 						'freshness_threshold' => $payload->freshness_threshold,
@@ -880,7 +884,6 @@ class StatusengineLegacyShell extends AppShell{
 						'importance' => $payload->hourly_value
 					]
 				];
-				
 				$result = $this->Service->rawSave([$data], false);
 				$lastInsertId = null;
 				//if(isset($result['Service']['service_id'])){
@@ -895,6 +898,8 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				//$lastInsertId = $this->Service->rawInsert([$data]);
+				unset($data);
+				
 				//Must run if all services are in the database, or we get in trouble!
 				foreach($payload->parent_services as $parentService){
 					$this->createParentServices[$lastInsertId][] = [
@@ -2449,7 +2454,11 @@ class StatusengineLegacyShell extends AppShell{
 	public function parseCheckCommand($checkCommand){
 		$cc = explode('!', $checkCommand, 2);
 		$return = [];
-		$return[0] = $cc[0];
+		if(isset($cc[0])){
+			$return[0] = $cc[0];
+		}else{
+			$return[0] = '';
+		}
 		if(isset($cc[1])){
 			$return[1] = $cc[1];
 		}else{

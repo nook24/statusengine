@@ -1464,6 +1464,7 @@ void dump_object_data(){
 		SERVICEOBJECT_INT(high_flap_threshold);
 		SERVICEOBJECT_INT(low_flap_threshold);
 		SERVICEOBJECT_INT(flap_detection_enabled);
+		SERVICEOBJECT_INT(is_volatile);
 
 		json_object_object_add(my_object, "flap_detection_on_ok",          json_object_new_int(flag_isset(temp_service->flap_detection_options, OPT_OK)));
 		json_object_object_add(my_object, "flap_detection_on_warning",     json_object_new_int(flag_isset(temp_service->flap_detection_options, OPT_WARNING)));

@@ -47,18 +47,19 @@ class LegacyAppModel extends AppModel{
 		
 		$data = Set::extract('{n}.' . $this->alias, $data);
 		$duplicate_data = [];
+		
 		$schema = $this->schema();
 		unset($schema['id']);
 		$keyData = '`' . implode('`, `', array_keys($schema)) . '`';
 
 		$db = $this->getDataSource();
+		
 		foreach($data as $k => $row) {
 			foreach ($row as $field => $value) {
 				$row[$field] = $db->value($value, $field);
 			}
 			
 			//Insert on duplicate key update syntax
-			
 			foreach($row as $column => $_value){
 				if($column != $this->primaryKey){
 					$duplicate_data[] = $column.'='.$_value;
