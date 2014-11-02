@@ -44,7 +44,7 @@
 set -e
 set -u
 i=0
-DAEMON="/usr/bin/php"
+DAEMON="/usr/bin/php5"
 DAEMON_OPTS="-q /opt/statusengine/cakephp/app/Console/cake.php -working /opt/statusengine/cakephp/app statusengine_legacy -w"
 PIDFILE=/var/run/statusengine.pid
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
