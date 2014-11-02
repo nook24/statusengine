@@ -29,24 +29,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 #**********************************************************************************
-set -e
 
-if grep -q DISTRIB_CODENAME=trusty /etc/lsb-release; then
-	apt-get update
-	apt-get install gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5 php5-cli php5-dev libjson-c-dev manpages-dev build-essential
-	cd statusengine/src
-	LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
-	mkdir -p /opt/statusengine
-	cp statusengine.o /opt/statusengine/
-	cd ../../
-	cp -r cakephp /opt/statusengine/
-	cp etc/init.d/statusengine /etc/init.d/statusengine
-	chmod +x /etc/init.d/statusengine
-	chmod +x /opt/statusengine/cakephp/app/Console/cake
-	echo -e "\033[0;32mInstallation done...\033[0m"
-	echo -e "\033[0;34mSet broker_module=/opt/statusengine/statusengine.o in your config\033[0m"
-	echo -e "\033[0;34mSet the right MySQL username and passwort in cakephp/app/Config/database.php\033[0m"
-	cd /opt/statusengine
-else
-	echo "This installer only support Ubuntu 14.04 LTS (trusty)"
-fi
+
+apt-get remove gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5 php5-cli php5-dev libjson-c-dev manpages-dev build-essential
+
+rm -r /opt/statusengine
+rm /etc/init.d/statusengine
+
+echo -e "\033[0;34mRemove broker_module=/opt/statusengine/statusengine.o in your config\033[0m"
+
+
