@@ -105,25 +105,4 @@ class LegacyAppModel extends AppModel{
 		return true;
 	}
 	
-	
-	/*
-	 * NOTICE
-	 * !!! THIS IS TESTING CODE AND WILL BE REMOVED SOON OR BE REPLEACED !!!
-	 */
-	public function insertObjects($data){
-		$db = $this->getDataSource();
-		$query = 'INSERT HIGH_PRIORITY INTO nagios_objects (`instance_id`, `objecttype_id`, `name1`, `name2`, `is_active`) VALUES ("'.$data['instance_id'].'","'.$data['objecttype_id'].'","'.$data['name1'].'","'.$data['name2'].'","'.$data['is_active'].'")';
-		$this->query($query);
-		return $db->lastInsertId();
-	}
-	
-	/*
-	 * NOTICE
-	 * !!! THIS IS TESTING CODE AND WILL BE REMOVED SOON OR BE REPLEACED !!!
-	 */
-	public function updateObjects(){
-		$db = $this->getDataSource();
-		$query = 'UPDATE HIGH_PRIORITY nagios_objects SET `instance_id` = "'.$data['instance_id'].'", `objecttype_id` = "'.$data['objecttype_id'].'", `name1` = "'.$data['name1'].'", `name2` = "'.$data['name2'].'", `is_active` = "'.$data['is_active'].'" WHERE `object_id` = '.$data['object_id'];
-		$this->query($query);
-	}
 }
