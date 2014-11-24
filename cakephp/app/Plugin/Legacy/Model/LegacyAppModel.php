@@ -1,21 +1,32 @@
 <?php
-/**
+/**********************************************************************************
 *
-* Licensed under The MIT License
-* Redistributions of files must retain the above copyright notice.
+*    #####
+*   #     # #####   ##   ##### #    #  ####  ###### #    #  ####  # #    # ######
+*   #         #    #  #    #   #    # #      #      ##   # #    # # ##   # #
+*    #####    #   #    #   #   #    #  ####  #####  # #  # #      # # #  # #####
+*         #   #   ######   #   #    #      # #      #  # # #  ### # #  # # #
+*   #     #   #   #    #   #   #    # #    # #      #   ## #    # # #   ## #
+*    #####    #   #    #   #    ####   ####  ###### #    #  ####  # #    # ######
 *
-* @copyright 2014 - present Marc Ypes, The Netherlands
-* @author Ceeram
-* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
+*                            the missing event broker
 */
-
 
 App::uses('AppModel', 'Model');
 
 class LegacyAppModel extends AppModel{
 
-	// Many thanks to Ceeram from #cakephp :-)
-
+	/**
+	*
+	* rawSave
+	*
+	* Licensed under The MIT License
+	* Redistributions of files must retain the above copyright notice.
+	*
+	* @copyright 2014 - present Marc Ypes, The Netherlands
+	* @author Ceeram
+	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
+	*/
 	public function rawSave($data, $returnLastInserId = true){
 		$this->saveTemplate = 'INSERT INTO `%s` (%s) VALUES %s ON DUPLICATE KEY UPDATE %s;';
 		if(empty($data)) {
@@ -54,6 +65,17 @@ class LegacyAppModel extends AppModel{
 		return true;
 	}
 	
+	/**
+	*
+	* rawInsert
+	*
+	* Licensed under The MIT License
+	* Redistributions of files must retain the above copyright notice.
+	*
+	* @copyright 2014 - present Marc Ypes, The Netherlands
+	* @author Ceeram
+	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
+	*/
 	public function rawInsert($data, $returnLastInserId = true){
 		$this->saveTemplate = 'INSERT INTO `%s` (%s) VALUES %s ;';
 		if(empty($data)) {
