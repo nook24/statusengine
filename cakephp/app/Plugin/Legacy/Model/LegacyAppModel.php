@@ -1,43 +1,20 @@
 <?php
-/**********************************************************************************
+/**
 *
-*    #####
-*   #     # #####   ##   ##### #    #  ####  ###### #    #  ####  # #    # ######
-*   #         #    #  #    #   #    # #      #      ##   # #    # # ##   # #
-*    #####    #   #    #   #   #    #  ####  #####  # #  # #      # # #  # #####
-*         #   #   ######   #   #    #      # #      #  # # #  ### # #  # # #
-*   #     #   #   #    #   #   #    # #    # #      #   ## #    # # #   ## #
-*    #####    #   #    #   #    ####   ####  ###### #    #  ####  # #    # ######
+* Licensed under The MIT License
+* Redistributions of files must retain the above copyright notice.
 *
-*                            the missing event broker
-*
-* --------------------------------------------------------------------------------
-*
-* Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>
-*
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License
-* as published by the Free Software Foundation in version 2
-* 
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-* 
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*
-* --------------------------------------------------------------------------------
+* @copyright 2014 - present Marc Ypes, The Netherlands
+* @author Ceeram
+* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
 */
+
 
 App::uses('AppModel', 'Model');
 
 class LegacyAppModel extends AppModel{
 
 	// Many thanks to Ceeram from #cakephp :-)
-	public $saveTemplate = 'INSERT INTO `%s` (%s) VALUES %s ON DUPLICATE KEY UPDATE %s;';
-
 
 	public function rawSave($data, $returnLastInserId = true){
 		$this->saveTemplate = 'INSERT INTO `%s` (%s) VALUES %s ON DUPLICATE KEY UPDATE %s;';
