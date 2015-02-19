@@ -168,7 +168,7 @@ class LegacySchema extends CakeSchema {
 		'command_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'command_args' => array('type' => 'string', 'null' => true, 'length' => 1000, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
-			'PRIMARY' => array('column' => 'contactnotificationmethod_id', 'unique' => 1),
+			'PRIMARY' => array('column' => array('contactnotificationmethod_id', 'start_time'), 'unique' => 1),
 			'instance_id' => array('column' => array('instance_id', 'contactnotification_id', 'start_time', 'start_time_usec'), 'unique' => 1),
 			'start_time' => array('column' => 'start_time', 'unique' => 0)
 		),
@@ -185,7 +185,7 @@ class LegacySchema extends CakeSchema {
 		'end_time' => array('type' => 'datetime', 'null' => false, 'default' => '0000-00-00 00:00:00'),
 		'end_time_usec' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'indexes' => array(
-			'PRIMARY' => array('column' => 'contactnotification_id', 'unique' => 1),
+			'PRIMARY' => array('column' => array('contactnotification_id', 'start_time'), 'unique' => 1),
 			'start_time' => array('column' => 'start_time', 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
@@ -422,7 +422,7 @@ class LegacySchema extends CakeSchema {
 		'long_output' => array('type' => 'text', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'perfdata' => array('type' => 'string', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
-			'PRIMARY' => array('column' => 'hostcheck_id', 'unique' => 1),
+			'PRIMARY' => array('column' => array('hostcheck_id', 'start_time'), 'unique' => 1),
 			'start_time' => array('column' => 'start_time', 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
@@ -678,7 +678,7 @@ class LegacySchema extends CakeSchema {
 		'realtime_data' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'inferred_data_extracted' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'indexes' => array(
-			'PRIMARY' => array('column' => 'logentry_id', 'unique' => 1),
+			'PRIMARY' => array('column' => array('logentry_id', 'entry_time'), 'unique' => 1),
 			'logentry_time' => array('column' => 'logentry_time', 'unique' => 0),
 			'legentry_time' => array('column' => 'logentry_time', 'unique' => 0),
 			'entry_time' => array('column' => 'entry_time', 'unique' => 0),
@@ -703,7 +703,7 @@ class LegacySchema extends CakeSchema {
 		'escalated' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'contacts_notified' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'indexes' => array(
-			'PRIMARY' => array('column' => 'notification_id', 'unique' => 1),
+			'PRIMARY' => array('column' => array('notification_id', 'start_time'), 'unique' => 1),
 			'top10' => array('column' => array('object_id', 'start_time', 'contacts_notified'), 'unique' => 0),
 			'start_time' => array('column' => 'start_time', 'unique' => 0)
 		),
@@ -863,7 +863,7 @@ class LegacySchema extends CakeSchema {
 		'long_output' => array('type' => 'text', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'perfdata' => array('type' => 'string', 'null' => true, 'default' => null, 'length' => 1000, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
-			'PRIMARY' => array('column' => 'servicecheck_id', 'unique' => 1),
+			'PRIMARY' => array('column' => array('servicecheck_id', 'start_time'), 'unique' => 1),
 			'start_time' => array('column' => 'start_time', 'unique' => 0),
 			'service_object_id' => array('column' => 'service_object_id', 'unique' => 0),
 			'start_time_2' => array('column' => 'start_time', 'unique' => 0),
@@ -1113,7 +1113,7 @@ class LegacySchema extends CakeSchema {
 		'output' => array('type' => 'string', 'null' => false, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'long_output' => array('type' => 'text', 'null' => false, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
-			'PRIMARY' => array('column' => 'statehistory_id', 'unique' => 1),
+			'PRIMARY' => array('column' => array('statehistory_id', 'state_time'), 'unique' => 1),
 			'state_time' => array('column' => array('state_time', 'state_time_usec'), 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
