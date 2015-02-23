@@ -633,26 +633,7 @@ class LegacySchema extends CakeSchema {
 		'check_timeperiod_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'hoststatus_id', 'unique' => 1),
-			'object_id' => array('column' => 'host_object_id', 'unique' => 1),
-			'instance_id' => array('column' => 'instance_id', 'unique' => 0),
-			'status_update_time' => array('column' => 'status_update_time', 'unique' => 0),
-			'current_state' => array('column' => 'current_state', 'unique' => 0),
-			'check_type' => array('column' => 'check_type', 'unique' => 0),
-			'state_type' => array('column' => 'state_type', 'unique' => 0),
-			'last_state_change' => array('column' => 'last_state_change', 'unique' => 0),
-			'notifications_enabled' => array('column' => 'notifications_enabled', 'unique' => 0),
-			'problem_has_been_acknowledged' => array('column' => 'problem_has_been_acknowledged', 'unique' => 0),
-			'active_checks_enabled' => array('column' => 'active_checks_enabled', 'unique' => 0),
-			'passive_checks_enabled' => array('column' => 'passive_checks_enabled', 'unique' => 0),
-			'event_handler_enabled' => array('column' => 'event_handler_enabled', 'unique' => 0),
-			'flap_detection_enabled' => array('column' => 'flap_detection_enabled', 'unique' => 0),
-			'is_flapping' => array('column' => 'is_flapping', 'unique' => 0),
-			'percent_state_change' => array('column' => 'percent_state_change', 'unique' => 0),
-			'latency' => array('column' => 'latency', 'unique' => 0),
-			'execution_time' => array('column' => 'execution_time', 'unique' => 0),
-			'scheduled_downtime_depth' => array('column' => 'scheduled_downtime_depth', 'unique' => 0),
-			'last_check' => array('column' => 'last_check', 'unique' => 0),
-			'passiv_checks_enabled' => array('column' => 'passive_checks_enabled', 'unique' => 0)
+			'hoststatus' => array('column' => array('host_object_id', 'current_state'), 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
 	);
@@ -719,11 +700,8 @@ class LegacySchema extends CakeSchema {
 		'is_active' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'object_id', 'unique' => 1),
-			'objecttype_id' => array('column' => array('objecttype_id', 'name1', 'name2'), 'unique' => 0),
-			'achmet' => array('column' => array('name1', 'name2'), 'unique' => 0),
-			'nag_name1' => array('column' => 'name1', 'unique' => 0),
-			'nag_name1_and_name2' => array('column' => array('name1', 'name2'), 'unique' => 0),
-			'check_object' => array('column' => array('objecttype_id', 'name1', 'name2', 'instance_id', 'is_active', 'object_id'), 'unique' => 0)
+			'hostobject' => array('column' => array('name1', 'name2', 'objecttype_id'), 'unique' => 0),
+			'serviceobject' => array('column' => array('name2', 'objecttype_id'), 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
 	);
@@ -867,7 +845,6 @@ class LegacySchema extends CakeSchema {
 			'start_time' => array('column' => 'start_time', 'unique' => 0),
 			'service_object_id' => array('column' => 'service_object_id', 'unique' => 0),
 			'start_time_2' => array('column' => 'start_time', 'unique' => 0),
-			'instance_id' => array('column' => 'instance_id', 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
 	);
@@ -1073,26 +1050,7 @@ class LegacySchema extends CakeSchema {
 		'check_timeperiod_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'servicestatus_id', 'unique' => 1),
-			'object_id' => array('column' => 'service_object_id', 'unique' => 1),
-			'instance_id' => array('column' => 'instance_id', 'unique' => 0),
-			'status_update_time' => array('column' => 'status_update_time', 'unique' => 0),
-			'current_state' => array('column' => 'current_state', 'unique' => 0),
-			'check_type' => array('column' => 'check_type', 'unique' => 0),
-			'state_type' => array('column' => 'state_type', 'unique' => 0),
-			'last_state_change' => array('column' => 'last_state_change', 'unique' => 0),
-			'notifications_enabled' => array('column' => 'notifications_enabled', 'unique' => 0),
-			'problem_has_been_acknowledged' => array('column' => 'problem_has_been_acknowledged', 'unique' => 0),
-			'active_checks_enabled' => array('column' => 'active_checks_enabled', 'unique' => 0),
-			'passive_checks_enabled' => array('column' => 'passive_checks_enabled', 'unique' => 0),
-			'event_handler_enabled' => array('column' => 'event_handler_enabled', 'unique' => 0),
-			'flap_detection_enabled' => array('column' => 'flap_detection_enabled', 'unique' => 0),
-			'is_flapping' => array('column' => 'is_flapping', 'unique' => 0),
-			'percent_state_change' => array('column' => 'percent_state_change', 'unique' => 0),
-			'latency' => array('column' => 'latency', 'unique' => 0),
-			'execution_time' => array('column' => 'execution_time', 'unique' => 0),
-			'scheduled_downtime_depth' => array('column' => 'scheduled_downtime_depth', 'unique' => 0),
-			'last_check' => array('column' => 'last_check', 'unique' => 0),
-			'passiv_checks_enabled' => array('column' => 'passive_checks_enabled', 'unique' => 0)
+			'servicestatus' => array('column' => array('service_object_id', 'current_state', 'last_check', 'next_check', 'last_hard_state_change', 'output', 'scheduled_downtime_depth', 'active_checks_enabled', 'state_type', 'problem_has_been_acknowledged', 'is_flapping'), 'unique' => 0, 'length' => array('output' => '255'))
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
 	);
