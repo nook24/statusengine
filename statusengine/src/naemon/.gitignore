@@ -1,0 +1,9 @@
+*.o
+naemon
+naemonstats
+shadownaemon
+oconfsplit
+naemon.8
+naemonstats.8
+oconfsplit.8
+shadownaemon.8
