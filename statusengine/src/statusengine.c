@@ -42,8 +42,12 @@
 * Getting started on Ubuntu 14.04 LTS:
 * apt-get install gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5 php5-cli php5-dev libjson-c-dev manpages-dev build-essential
 *
-* Compile with the following command:
-* LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
+* Compile with the following command for Naemon
+* LANG=C gcc -shared -DNAEMON -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
+*
+* Compile with the following command for Nagios 4
+* LANG=C gcc -shared -DNAGIOS -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
+* 
 *
 * Load the broker in your nagios.cfg
 * broker_module=/opt/statusengine/bin/statusengine.o
@@ -62,6 +66,11 @@
 *
 **********************************************************************************/
 
+#if !defined NAEMON && !defined NAGIOS
+#error Please define either NAEMON or NAGIOS using -DNAEMON or -DNAGIOS command line options.
+#endif
+
+#ifdef NAEMON
 //Load default event broker stuff
 #include "naemon/naemon.h"
 #include "naemon/nebmodules.h"
@@ -70,17 +79,32 @@
 #include "naemon/broker.h"
 
 #include "naemon/configuration.h"
-/*#include "naemon/config.h" */
 #include "naemon/common.h"
 #include "naemon/downtime.h"
 #include "naemon/comments.h"
 #include "naemon/macros.h"
+#endif
+
+#ifdef NAGIOS
+#include "../include/nebmodules.h"
+#include "../include/nebcallbacks.h"
+#include "../include/nebstructs.h"
+#include "../include/broker.h"
+#include "../include/config.h"
+#include "../include/common.h"
+#include "../include/nagios.h"
+#include "../include/downtime.h"
+#include "../include/comments.h"
+#include "../include/macros.h"
+#endif
 
 //Load external libs
 #include <libgearman/gearman.h>
 #include <json-c/json.h>
 
+#ifdef NAEMON
 #include <string.h>
+#endif
 
 // specify event broker API version (required)
 NEB_API_VERSION(CURRENT_NEB_API_VERSION);
@@ -117,6 +141,15 @@ int statusengine_handle_data(int, void *);
 void dump_object_data();
 
 
+void logswitch(int level, char *message){
+#ifdef NAGIOS
+	write_to_all_logs(message, level);
+#endif
+#ifdef NAEMON
+	nm_log(level, "%s", message);
+#endif
+}
+
 //Broker initialize function
 int nebmodule_init(int flags, char *args, nebmodule *handle){
 
@@ -132,15 +165,15 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_DESC,    "A powerful and flexible event broker");
 
 	//Welcome messages
-	nm_log(NSLOG_INFO_MESSAGE, "Statusengine - the missing event broker");
-	nm_log(NSLOG_INFO_MESSAGE, "Statusengine - the missing event broker");
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>");
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Please visit http://www.statusengine.org for more information");
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Contribute to Statusenigne at: https://github.com/nook24/statusengine");
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Thanks for using Statusengine :-)");
+	logswitch(NSLOG_INFO_MESSAGE, "Statusengine - the missing event broker");
+	logswitch(NSLOG_INFO_MESSAGE, "Statusengine - the missing event broker");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Please visit http://www.statusengine.org for more information");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Contribute to Statusenigne at: https://github.com/nook24/statusengine");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Thanks for using Statusengine :-)");
 
 	//Register callbacks
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Register callbacks");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Register callbacks");
 	neb_register_callback(NEBCALLBACK_HOST_STATUS_DATA,                 statusengine_module_handle, 0, statusengine_handle_data);
 	neb_register_callback(NEBCALLBACK_SERVICE_STATUS_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
 	neb_register_callback(NEBCALLBACK_PROCESS_DATA,                     statusengine_module_handle, 0, statusengine_handle_data);
@@ -164,12 +197,12 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 
 	//Create gearman client
 	if (gearman_client_create(&gman_client) == NULL){
-		nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Memory allocation failure on client creation\n");
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Memory allocation failure on client creation\n");
 	}
 
 	ret= gearman_client_add_server(&gman_client, "127.0.0.1", 4730);
 	if (ret != GEARMAN_SUCCESS){
-		//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+		logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 	}
 
 	return 0;
@@ -179,7 +212,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 int nebmodule_deinit(int flags, int reason){
 
 	// Deregister all callbacks
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Deregister callbacks");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Deregister callbacks");
 	neb_deregister_callback(NEBCALLBACK_HOST_STATUS_DATA,                 statusengine_handle_data);
 	neb_deregister_callback(NEBCALLBACK_SERVICE_STATUS_DATA,              statusengine_handle_data);
 	neb_deregister_callback(NEBCALLBACK_PROCESS_DATA,                     statusengine_handle_data);
@@ -200,8 +233,8 @@ int nebmodule_deinit(int flags, int reason){
 	neb_deregister_callback(NEBCALLBACK_CONTACT_NOTIFICATION_METHOD_DATA, statusengine_handle_data);
 	neb_deregister_callback(NEBCALLBACK_EVENT_HANDLER_DATA,               statusengine_handle_data);
 
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] We are done here");
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Bye");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] We are done here");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Bye");
 
 	//Delete gearman client
 	gearman_client_free(&gman_client);
@@ -312,7 +345,7 @@ int statusengine_handle_data(int event_type, void *data){
 				const char* json_string = json_object_to_json_string(my_object);
 				ret= gearman_client_do_background(&gman_client, "statusngin_processdata", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 				if (ret != GEARMAN_SUCCESS)
-					//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+					logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 				json_object_put(my_object);
 			}
@@ -386,7 +419,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_hoststatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 
@@ -462,7 +495,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_servicestatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 				
 					json_object_put(my_object);
 
@@ -518,7 +551,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_servicechecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 					
 					json_object_put(my_object);
 
@@ -573,7 +606,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_hostchecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 				
@@ -631,7 +664,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_statechanges", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 				}
@@ -658,7 +691,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_logentries", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 				}
@@ -694,7 +727,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_systemcommands", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 				}
@@ -731,7 +764,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_comments", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 				}
@@ -758,7 +791,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_externalcommands", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 			
 					json_object_put(my_object);
 				}
@@ -791,7 +824,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_acknowledgements", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 				}
@@ -840,7 +873,7 @@ int statusengine_handle_data(int event_type, void *data){
 					//I'm not very happy with this queue name....
 					ret= gearman_client_do_background(&gman_client, "statusngin_flappings", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 				}
@@ -880,7 +913,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_downtimes", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 				}
@@ -919,7 +952,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_notifications", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 
@@ -966,7 +999,7 @@ int statusengine_handle_data(int event_type, void *data){
 					const char* json_string = json_object_to_json_string(my_object);
 					ret= gearman_client_do_background(&gman_client, "statusngin_programmstatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
-						//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 					json_object_put(my_object);
 				}
@@ -1002,7 +1035,7 @@ int statusengine_handle_data(int event_type, void *data){
 						const char* json_string = json_object_to_json_string(my_object);
 						ret= gearman_client_do_background(&gman_client, "statusngin_contactstatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 						if (ret != GEARMAN_SUCCESS)
-							//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 						json_object_put(my_object);
 					}
@@ -1039,7 +1072,7 @@ int statusengine_handle_data(int event_type, void *data){
 						const char* json_string = json_object_to_json_string(my_object);
 						ret= gearman_client_do_background(&gman_client, "statusngin_contactnotificationdata", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 						if (ret != GEARMAN_SUCCESS)
-							//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 						json_object_put(my_object);
 					}
@@ -1075,7 +1108,7 @@ int statusengine_handle_data(int event_type, void *data){
 						const char* json_string = json_object_to_json_string(my_object);
 						ret= gearman_client_do_background(&gman_client, "statusngin_contactnotificationmethod", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 						if (ret != GEARMAN_SUCCESS)
-							//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 						json_object_put(my_object);
 					}
@@ -1116,7 +1149,7 @@ int statusengine_handle_data(int event_type, void *data){
 						const char* json_string = json_object_to_json_string(my_object);
 						ret= gearman_client_do_background(&gman_client, "statusngin_eventhandler", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 						if (ret != GEARMAN_SUCCESS)
-							//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 						json_object_put(my_object);
 					}
@@ -1179,11 +1212,11 @@ void dump_object_data(){
 	const char* json_string_start = json_object_to_json_string(my_object);
 	ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string_start, (size_t)strlen(json_string_start), NULL);
 	if (ret != GEARMAN_SUCCESS)
-		//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+		logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 	json_object_put(my_object);
 	
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping command configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping command configuration");
 	for(temp_command = command_list; temp_command != NULL; temp_command = temp_command->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type", json_object_new_int(12));
@@ -1194,7 +1227,7 @@ void dump_object_data(){
 
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 
@@ -1202,7 +1235,7 @@ void dump_object_data(){
 	
 	//Fetch timeperiods
 	//Logging that we dump commands right now
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping timeperiod configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping timeperiod configuration");
 	for(temp_timeperiod = timeperiod_list; temp_timeperiod != NULL; temp_timeperiod = temp_timeperiod->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type", json_object_new_int(9));
@@ -1231,14 +1264,14 @@ void dump_object_data(){
 
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 		
 	}
 	
 	//Fetch contact configuration
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping contact configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping contact configuration");
 	for(temp_contact = contact_list; temp_contact != NULL; temp_contact = temp_contact->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",                    json_object_new_int(10));
@@ -1311,13 +1344,13 @@ void dump_object_data(){
 
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
 
 	//Fetch contact group configuration
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping contact group configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping contact group configuration");
 	for(temp_contactgroup = contactgroup_list; temp_contactgroup != NULL; temp_contactgroup = temp_contactgroup->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(11));
@@ -1337,13 +1370,13 @@ void dump_object_data(){
 
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
 	
 	//Fetch host configuration
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host configuration");
 	for(temp_host = host_list; temp_host != NULL; temp_host = temp_host->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(1));
@@ -1442,13 +1475,13 @@ void dump_object_data(){
 
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
 	
 	//Fetch hostgroup configuration
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host group configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host group configuration");
 	for(temp_hostgroup = hostgroup_list; temp_hostgroup != NULL; temp_hostgroup=temp_hostgroup->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(3));
@@ -1469,14 +1502,14 @@ void dump_object_data(){
 
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
 
 
 	//Fetch service configuration
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service configuration");
 	for(temp_service = service_list; temp_service != NULL; temp_service = temp_service->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(2));
@@ -1572,13 +1605,13 @@ void dump_object_data(){
 
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
 	
 	//Fetch service groups
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service group configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service group configuration");
 	for(temp_servicegroup = servicegroup_list; temp_servicegroup != NULL; temp_servicegroup = temp_servicegroup->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(4));
@@ -1600,14 +1633,14 @@ void dump_object_data(){
 
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 		
 	}
 	
 	//Fetch host escalations
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host escalation configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host escalation configuration");
 	for(x = 0; x < num_objects.hostescalations; x++){
 		temp_hostescalation = hostescalation_ary[x];
 		my_object = json_object_new_object();
@@ -1643,13 +1676,13 @@ void dump_object_data(){
 	
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
 	
 	//Fetch service escalations
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping servcie escalation configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping servcie escalation configuration");
 	for(x = 0; x < num_objects.serviceescalations; x++) {
 		temp_serviceescalation = serviceescalation_ary[x];
 		my_object = json_object_new_object();
@@ -1686,12 +1719,12 @@ void dump_object_data(){
 		const char* json_string = json_object_to_json_string(my_object);
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
 	
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host dependency configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host dependency configuration");
 	for(x = 0; x < num_objects.hostdependencies; x++){
 		temp_hostdependency = hostdependency_ary[x];
 		my_object = json_object_new_object();
@@ -1710,12 +1743,12 @@ void dump_object_data(){
 		const char* json_string = json_object_to_json_string(my_object);
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
 
-	nm_log(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service dependency configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service dependency configuration");
 	for(x = 0; x < num_objects.servicedependencies; x++){
 		temp_servicedependency = servicedependency_ary[x];
 		my_object = json_object_new_object();
@@ -1739,7 +1772,7 @@ void dump_object_data(){
 		const char* json_string = json_object_to_json_string(my_object);
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
-			//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
@@ -1751,7 +1784,7 @@ void dump_object_data(){
 	const char* json_string = json_object_to_json_string(my_object);
 	ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 	if (ret != GEARMAN_SUCCESS)
-		//nm_log(NSLOG_INFO_MESSAGE, gearman_client_error(&gman_client));
+		logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 	json_object_put(my_object);
 	
 }
