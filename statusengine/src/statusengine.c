@@ -557,7 +557,8 @@ int statusengine_handle_data(int event_type, void *data){
 					ret= gearman_client_do_background(&gman_client, "statusngin_servicechecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
-					
+				
+					json_object_put(servicecheck_object);	
 					json_object_put(my_object);
 
 				}
@@ -613,6 +614,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(hostcheck_object);
 					json_object_put(my_object);
 				
 				}
@@ -671,6 +673,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(statechange_object);
 					json_object_put(my_object);
 				}
 				break;
@@ -698,6 +701,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(logentry_object);
 					json_object_put(my_object);
 				}
 				break;
@@ -734,6 +738,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(systemcommand_object);
 					json_object_put(my_object);
 				}
 				break;
@@ -771,6 +776,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(comment_object);
 					json_object_put(my_object);
 				}
 				break;
@@ -797,7 +803,8 @@ int statusengine_handle_data(int event_type, void *data){
 					ret= gearman_client_do_background(&gman_client, "statusngin_externalcommands", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
-			
+		
+					json_object_put(extcommand_object);	
 					json_object_put(my_object);
 				}
 				break;
@@ -831,6 +838,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(acknowledgement_object);
 					json_object_put(my_object);
 				}
 				break;
@@ -880,6 +888,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(flapping_object);
 					json_object_put(my_object);
 				}
 				break;
@@ -920,6 +929,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(downtime_object);
 					json_object_put(my_object);
 				}
 				break;
@@ -959,6 +969,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(notification_data_object);
 					json_object_put(my_object);
 
 				}
@@ -1006,6 +1017,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(programmstatus_object);
 					json_object_put(my_object);
 				}
 				break;
@@ -1042,6 +1054,7 @@ int statusengine_handle_data(int event_type, void *data){
 						if (ret != GEARMAN_SUCCESS)
 							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+						json_object_put(contactstatus_object);
 						json_object_put(my_object);
 					}
 					break;
@@ -1079,6 +1092,7 @@ int statusengine_handle_data(int event_type, void *data){
 						if (ret != GEARMAN_SUCCESS)
 							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+						json_object_put(cnd_object);
 						json_object_put(my_object);
 					}
 					break;
@@ -1115,6 +1129,7 @@ int statusengine_handle_data(int event_type, void *data){
 						if (ret != GEARMAN_SUCCESS)
 							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+						json_object_put(cnm_object);
 						json_object_put(my_object);
 					}
 					break;
@@ -1156,6 +1171,7 @@ int statusengine_handle_data(int event_type, void *data){
 						if (ret != GEARMAN_SUCCESS)
 							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+						json_object_put(ehd_object);
 						json_object_put(my_object);
 					}
 					break;
