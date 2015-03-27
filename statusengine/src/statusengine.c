@@ -70,6 +70,7 @@
 #error Please define either NAEMON or NAGIOS using -DNAEMON or -DNAGIOS command line options.
 #endif
 
+
 #ifdef NAEMON
 //Load default event broker stuff
 #include "naemon/naemon.h"
@@ -149,6 +150,7 @@ void logswitch(int level, char *message){
 	nm_log(level, "%s", message);
 #endif
 }
+
 
 //Broker initialize function
 int nebmodule_init(int flags, char *args, nebmodule *handle){
@@ -347,6 +349,7 @@ int statusengine_handle_data(int event_type, void *data){
 				if (ret != GEARMAN_SUCCESS)
 					logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+				json_object_put(processdata_object);
 				json_object_put(my_object);
 			}
 			
@@ -421,6 +424,7 @@ int statusengine_handle_data(int event_type, void *data){
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
+					json_object_put(host_object);
 					json_object_put(my_object);
 
 				}
@@ -491,12 +495,13 @@ int statusengine_handle_data(int event_type, void *data){
 					SERVICEFIELD_DOUBLE(retry_interval);
 
 					json_object_object_add(my_object, "servicestatus", service_object);
-
 					const char* json_string = json_object_to_json_string(my_object);
+
 					ret= gearman_client_do_background(&gman_client, "statusngin_servicestatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
-				
+					
+					json_object_put(service_object);
 					json_object_put(my_object);
 
 				}
