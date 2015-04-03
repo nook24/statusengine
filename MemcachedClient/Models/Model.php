@@ -47,7 +47,8 @@ class Model{
 		$matchConditions = true;
 		if(isset($options['conditions'])){
 			foreach($options['conditions'] as $fieldName => $value){
-				if(!isset($result[$fieldName]) || $result[$fieldName] != $value){
+				$fieldAndModel = $this->_SplitModelAndField($fieldName);
+				if(!isset($result[$fieldAndModel['fieldName']]) || $result[$fieldAndModel['fieldName']] != $value){
 					$matchConditions = false;
 					//Conditions dont match, break out of foreach to save time and go on
 					break;
@@ -68,6 +69,7 @@ class Model{
 					if(isset($result[$this->ModelName]['problem_has_been_acknowledged']) && $result[$this->ModelName]['problem_has_been_acknowledged'] > 0){
 						$Acknowledgement = new Acknowledgement($this->Memcached);
 						$_result = $Acknowledgement->find($objectName);
+						unset($Acknowledgement);
 					}
 				}
 				
@@ -75,6 +77,7 @@ class Model{
 					if(isset($result[$this->ModelName]['scheduled_downtime_depth']) && $result[$this->ModelName]['scheduled_downtime_depth'] > 0){
 						$Downtime = new Downtime($this->Memcached);
 						$_result = $Downtime->find($objectName);
+						unset($Downtime);
 					}
 				}
 				
@@ -96,6 +99,57 @@ class Model{
 				$return[] = $result;
 			}
 		}
+		
+		if(isset($options['order'])){
+			foreach($options['order'] as $fieldName => $direction){
+				$direction = strtolower($direction);
+				if(in_array($direction, ['asc', 'desc'])){
+					//Split Model And field (Model.field)
+					$fieldAndModel = $this->_SplitModelAndField($fieldName);
+					$_fieldsToOrder = [];
+					//$key is the array index 0,1,2,n $record is an aray ['Servicestatus'] => $data
+					foreach($return as $key => $record){
+						foreach($record as $_ModelName => $data){
+							//Is this the model we want to sort, and does the field exists?
+							if($_ModelName == $fieldAndModel['modelName'] && isset($data[$fieldAndModel['fieldName']])){
+								$_fieldsToOrder[$key] = $data[$fieldAndModel['fieldName']];
+							}
+						}
+					}
+					if($direction == 'asc'){
+						asort($_fieldsToOrder);
+					}
+					
+					if($direction == 'desc'){
+						arsort($_fieldsToOrder);
+					}
+					
+					//push the new order to return array
+					$_return = [];
+					foreach($_fieldsToOrder as $key => $value){
+						$_return[] = $return[$key];
+					}
+					
+					$return = $_return;
+					unset($_return);
+				}
+			}
+		}
 		return $return;
+	}
+	
+	private function _SplitModelAndField($value = ''){
+		$split = explode('.', $value, 2);
+		if(sizeof($split) == 2){
+			return [
+				'fieldName' => $split[1],
+				'modelName' => $split[0]
+			];
+		}
+		
+		return [
+			'fieldName' => $split[0],
+			'modelName' => $this->ModelName
+		];
 	}
 }
