@@ -36,7 +36,7 @@ class Model{
 	
 	public function find($objectName, $options = []){
 		if(is_array($objectName)){
-			return $this->findAll();
+			return $this->findAll($objectName);
 		}
 		
 		$result = $this->Memcached->get($this->keyPrefix.$objectName);
