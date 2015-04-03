@@ -107,12 +107,19 @@ class Model{
 					//Split Model And field (Model.field)
 					$fieldAndModel = $this->_SplitModelAndField($fieldName);
 					$_fieldsToOrder = [];
+					$unsortedKeys = [];
 					//$key is the array index 0,1,2,n $record is an aray ['Servicestatus'] => $data
 					foreach($return as $key => $record){
 						foreach($record as $_ModelName => $data){
 							//Is this the model we want to sort, and does the field exists?
-							if($_ModelName == $fieldAndModel['modelName'] && isset($data[$fieldAndModel['fieldName']])){
-								$_fieldsToOrder[$key] = $data[$fieldAndModel['fieldName']];
+							if($_ModelName == $fieldAndModel['modelName']){
+								if(isset($data[$fieldAndModel['fieldName']])){
+									$_fieldsToOrder[$key] = $data[$fieldAndModel['fieldName']];
+									
+								}else{
+									$unsortedKeys[] = $key;
+									
+								}
 							}
 						}
 					}
@@ -127,6 +134,11 @@ class Model{
 					//push the new order to return array
 					$_return = [];
 					foreach($_fieldsToOrder as $key => $value){
+						$_return[] = $return[$key];
+					}
+					
+					//add missing keys to result
+					foreach($unsortedKeys as $key){
 						$_return[] = $return[$key];
 					}
 					
