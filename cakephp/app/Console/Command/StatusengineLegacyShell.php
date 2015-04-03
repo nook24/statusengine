@@ -40,7 +40,7 @@
 **********************************************************************************/
 
 class StatusengineLegacyShell extends AppShell{
-	public $tasks = ['Logfile'];
+	public $tasks = ['Logfile', 'Memcached'];
 	
 	//Load models out of Plugin/Legacy/Model
 	public $uses = [
@@ -176,6 +176,17 @@ class StatusengineLegacyShell extends AppShell{
 		$this->out('THIS IS LEGACY MODE!');
 		$this->Logfile->log('THIS IS LEGACY MODE!');
 		$this->servicestatus_freshness = Configure::read('servicestatus_freshness');
+		
+		$this->useMemcached = false;
+		if(Configure::read('memcached.use_memcached') === true){
+			if($this->Memcached->init()){
+				$this->useMemcached = true;
+				if(Configure::read('memcached.drop_in_start') === true){
+					$this->Memcached->deleteAll();
+				}
+			}
+			
+		}
 		
 		if(array_key_exists('worker', $this->params)){
 			
@@ -1233,6 +1244,11 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		$payload = json_decode($job->workload());
 		
+		if($this->useMemcached === true){
+			$this->Memcached->setHoststatus($payload);
+			return;
+		}
+		
 		//$this->Hoststatus->create();
 		
 		if($this->objectIdFromCache(OBJECT_HOST, $payload->hoststatus->name) === null){
@@ -1329,6 +1345,11 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 		//$this->Servicestatus->create();
+		
+		if($this->useMemcached === true){
+			$this->Memcached->setServicestatus($payload);
+			return;
+		}
 		
 		$service_object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->servicestatus->host_name, $payload->servicestatus->description);
 		
@@ -1657,6 +1678,11 @@ class StatusengineLegacyShell extends AppShell{
 		if($object_id === null){
 			//Object has gone
 			return;
+		}
+		
+		if($this->useMemcached=== true){
+			//Add a record in memcached
+			$this->Memcached->setAcknowledgement($payload);
 		}
 		
 		//$this->Acknowledgement->create();
