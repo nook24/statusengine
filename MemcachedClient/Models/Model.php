@@ -91,7 +91,7 @@ class Model{
 		return $result;
 	}
 	
-	public function findAll($objectNamesAsArray, $options = []){
+	public function findAll($objectNamesAsArray, $options = [], $addMissingOrderResults = true){
 		$return = [];
 		foreach($objectNamesAsArray as $objectName){
 			$result = $this->find($objectName, $options);
@@ -115,10 +115,10 @@ class Model{
 							if($_ModelName == $fieldAndModel['modelName']){
 								if(isset($data[$fieldAndModel['fieldName']])){
 									$_fieldsToOrder[$key] = $data[$fieldAndModel['fieldName']];
-									
 								}else{
+									//The feild is missing in result but we want to add this record
+									// to our return result later, so we need the key
 									$unsortedKeys[] = $key;
-									
 								}
 							}
 						}
@@ -137,9 +137,11 @@ class Model{
 						$_return[] = $return[$key];
 					}
 					
-					//add missing keys to result
-					foreach($unsortedKeys as $key){
-						$_return[] = $return[$key];
+					if($addMissingOrderResults === true){
+						//add missing keys to result
+						foreach($unsortedKeys as $key){
+							$_return[] = $return[$key];
+						}
 					}
 					
 					$return = $_return;
