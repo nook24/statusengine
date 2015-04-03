@@ -194,4 +194,66 @@ class MemcachedTask extends AppShell{
 		return $this->Memcached->set($key, $data);
 	}
 	
+	public function deleteAcknowledgementIfExists($payload){
+		$key = 'ack_'.md5($payload->statechange->host_name.$payload->statechange->service_description);
+		$this->Memcached->delete($key);
+	}
+	
+	public function setDowntime($payload){
+		$key = 'downtime_'.md5($payload->downtime->host_name.$payload->downtime->service_description);
+		
+		if($payload->type == 1100 || $payload->type == 1102){
+			//Add a new downtime
+			$data = [
+				'host_name' => $payload->downtime->host_name,
+				'service_description' => $payload->downtime->service_description,
+				'author_name' => $payload->downtime->author_name,
+				'comment_data' => $payload->downtime->comment_data,
+				'downtime_type' => $payload->downtime->downtime_type,
+				'entry_time' => date('Y-m-d H:i:s', $payload->downtime->entry_time),
+				'start_time' => date('Y-m-d H:i:s', $payload->downtime->start_time),
+				'end_time' => date('Y-m-d H:i:s', $payload->downtime->end_time),
+				'triggered_by' => $payload->downtime->triggered_by,
+				'downtime_id' => $payload->downtime->downtime_id,
+				'fixed' => $payload->downtime->fixed,
+				'duration' => $payload->downtime->duration,
+				'was_started' => 0,
+				'actual_start_time' => date('Y-m-d H:i:s', 0),
+				'actual_start_time_usec' => 0,
+				'actual_end_time' => date('Y-m-d H:i:s', 0),
+				'actual_end_time_usec' => 0,
+			];
+			return $this->Memcached->set($key, $data);
+		}
+		
+		if($payload->type == 1103){
+			//The downtime exists, and was started now
+			$data = [
+				'host_name' => $payload->downtime->host_name,
+				'service_description' => $payload->downtime->service_description,
+				'author_name' => $payload->downtime->author_name,
+				'comment_data' => $payload->downtime->comment_data,
+				'downtime_type' => $payload->downtime->downtime_type,
+				'entry_time' => date('Y-m-d H:i:s', $payload->downtime->entry_time),
+				'start_time' => date('Y-m-d H:i:s', $payload->downtime->start_time),
+				'end_time' => date('Y-m-d H:i:s', $payload->downtime->end_time),
+				'triggered_by' => $payload->downtime->triggered_by,
+				'downtime_id' => $payload->downtime->downtime_id,
+				'fixed' => $payload->downtime->fixed,
+				'duration' => $payload->downtime->duration,
+				'was_started' => 1,
+				'actual_start_time' => date('Y-m-d H:i:s', 0),
+				'actual_start_time_usec' => 0,
+				'actual_end_time' => date('Y-m-d H:i:s', $payload->timestamp),
+				'actual_end_time_usec' => $payload->timestamp,
+			];
+			return $this->Memcached->set($key, $data);
+		}
+		
+		if($payload->type == 1104){
+			//The downtime exists, but ends now - so we delete it out of memcached
+			$this->Memcached->delete($key);
+		}
+	}
+	
 }

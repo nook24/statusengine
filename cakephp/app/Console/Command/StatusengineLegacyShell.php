@@ -1539,6 +1539,11 @@ class StatusengineLegacyShell extends AppShell{
 
 		$object_id = $this->getObjectIdForPayload($payload, 'statechange');
 
+		if($this->useMemcached=== true && $payload->statechange->state == 0){
+			//Delete ack from memcached if record exists
+			$this->Memcached->deleteAcknowledgementIfExists($payload);
+		}
+
 		if($object_id === null){
 			//Object has gone
 			return;
@@ -1742,6 +1747,10 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		$payload = json_decode($job->workload());
 		$object_id = $this->getObjectIdForPayload($payload, 'downtime');
+		
+		if($this->useMemcached === true){
+			$this->Memcached->setDowntime($payload);
+		}
 		
 		if($object_id === null){
 			//Object has gone

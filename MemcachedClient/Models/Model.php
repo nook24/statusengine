@@ -75,7 +75,33 @@ class Model{
 			}
 		}
 		
-		return [$this->ModelName => $result];
+		//build up cakephp's default array structure
+		$result = [$this->ModelName => $result];
+		
+		if(isset($options['join'])){
+			foreach($options['join'] as $ModelName){
+				if($ModelName == 'Acknowledgement'){
+					if(isset($result[$this->ModelName]['problem_has_been_acknowledged']) && $result[$this->ModelName]['problem_has_been_acknowledged'] > 0){
+						$Acknowledgement = new Acknowledgement($this->Memcached);
+						$_result = $Acknowledgement->find($objectName);
+					}
+				}
+				
+				if($ModelName == 'Downtime'){
+					if(isset($result[$this->ModelName]['scheduled_downtime_depth']) && $result[$this->ModelName]['scheduled_downtime_depth'] > 0){
+						$Downtime = new Downtime($this->Memcached);
+						$_result = $Downtime->find($objectName);
+					}
+				}
+				
+				$result[$ModelName] = [];
+				if(isset($_result[$ModelName])){
+					$result[$ModelName] = $_result[$ModelName];
+				}
+			}
+		}
+		
+		return $result;
 	}
 	
 	public function findAll($objectNamesAsArray, $options = []){
