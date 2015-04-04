@@ -54,4 +54,12 @@ class StatusengineMemoryClient{
 		return $this->Memcached->addServer($server, $port);
 	}
 	
+	public function getStats(){
+		return $this->Memcached->getStats();
+	}
+	
+	public function getAllKeys(){
+		return $this->Memcached->getAllKeys();
+	}
+	
 }

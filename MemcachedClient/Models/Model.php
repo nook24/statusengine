@@ -122,6 +122,16 @@ class Model{
 		$return = [];
 		$offset = 0;
 		$i = 1;
+
+		
+		/*$allResults = $this->Memcached->getMulti($this->_prefix($objectNamesAsArray));
+		foreach($allResults as $_result){
+			$result = $this->find('', $options, $_result);
+			if(!empty($result)){
+				$return[] = $result;
+			}
+		}*/
+
 		foreach($objectNamesAsArray as $objectName){
 			if(isset($options['limit'][0])){
 				if(is_array($options['limit'][0])){
