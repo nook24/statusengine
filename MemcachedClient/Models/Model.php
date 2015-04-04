@@ -36,7 +36,7 @@ class Model{
 	
 	public function find($objectName, $options = []){
 		if(is_array($objectName)){
-			return $this->findAll($objectName);
+			return $this->findAll($objectName, $options);
 		}
 		
 		$result = $this->Memcached->get($this->keyPrefix.$objectName);
@@ -88,15 +88,61 @@ class Model{
 			}
 		}
 		
+		if(isset($options['fields'])){
+			$fields = [];
+			foreach($options['fields'] as $fieldName){
+				$fieldAndModel = $this->_SplitModelAndField($fieldName);
+				$fields[$fieldAndModel['modelName']][] = $fieldAndModel['fieldName'];
+			}
+			//print_r($fields);
+			foreach($result as $ModelName => $data){
+				//Only continue, if Model is in result
+				if(isset($fields[$ModelName])){
+					foreach($data as $fieldName => $value){
+						if(!in_array($fieldName, $fields[$ModelName])){
+							unset($result[$ModelName][$fieldName]);
+						}
+					}
+				}else{
+					unset($result[$ModelName]);
+				}
+			}
+		}
 		return $result;
 	}
 	
 	public function findAll($objectNamesAsArray, $options = [], $addMissingOrderResults = true){
 		$return = [];
+		$offset = 0;
+		$i = 1;
 		foreach($objectNamesAsArray as $objectName){
-			$result = $this->find($objectName, $options);
-			if(!empty($result)){
-				$return[] = $result;
+			if(isset($options['limit'][0])){
+				if(is_array($options['limit'][0])){
+					$offset = $options['limit'][0][0]; //Start
+					$count = $options['limit'][0][1];
+				}else{
+					$count = $options['limit'][0];
+				}
+				if($offset == 0 && $i < $count){
+					$result = $this->find($objectName, $options);
+					if(!empty($result)){
+						$return[] = $result;
+					}
+				}
+
+				if($i > $offset && $offset > 0 && sizeof($return) < $count){
+					$result = $this->find($objectName, $options);
+					if(!empty($result)){
+						$return[] = $result;
+					}
+				}
+				
+				$i++;
+			}else{
+				$result = $this->find($objectName, $options);
+				if(!empty($result)){
+					$return[] = $result;
+				}
 			}
 		}
 		
