@@ -48,10 +48,17 @@ class Model{
 		if(isset($options['conditions'])){
 			foreach($options['conditions'] as $fieldName => $value){
 				$fieldAndModel = $this->_SplitModelAndField($fieldName);
-				if(!isset($result[$fieldAndModel['fieldName']]) || $result[$fieldAndModel['fieldName']] != $value){
+				if(is_array($value)){
 					$matchConditions = false;
-					//Conditions dont match, break out of foreach to save time and go on
-					break;
+					if(isset($result[$fieldAndModel['fieldName']]) && in_array($result[$fieldAndModel['fieldName']], $value)){
+						$matchConditions = true;
+					}
+				}else{
+					if(!isset($result[$fieldAndModel['fieldName']]) || $result[$fieldAndModel['fieldName']] != $value){
+						$matchConditions = false;
+						//Conditions dont match, break out of foreach to save time and go on
+						break;
+					}
 				}
 			}
 			
