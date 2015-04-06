@@ -56,7 +56,9 @@ class Servicestatus extends Model{
 		if(!empty($HostAndServiceDescription)){
 			$_HostAndServiceDescription = [];
 			foreach($HostAndServiceDescription as $hostName => $servicesAsArray){
-				$_HostAndServiceDescription[] = $this->serialize($hostName, $servicesAsArray);
+				foreach($servicesAsArray as $service){
+					$_HostAndServiceDescription[] = $this->serialize($hostName, $service);
+				}
 			}
 			return parent::_findAll($_HostAndServiceDescription, $options);
 		}else{
@@ -64,11 +66,7 @@ class Servicestatus extends Model{
 		}
 	}
 	
-	public function serialize($hostName, $servicesAsArray){
-		$return = [];
-		foreach($servicesAsArray as $serviceName){
-			$return[] = md5($hostName.$serviceName);
-		}
-		return $return;
+	public function serialize($hostName, $serviceName){
+		return md5($hostName.$serviceName);
 	}
 }
