@@ -178,10 +178,12 @@ class StatusengineLegacyShell extends AppShell{
 		$this->servicestatus_freshness = Configure::read('servicestatus_freshness');
 		
 		$this->useMemcached = false;
+		$this->MemcachedProcessingType = 0;
 		if(Configure::read('memcached.use_memcached') === true){
 			if($this->Memcached->init()){
 				$this->useMemcached = true;
-				if(Configure::read('memcached.drop_in_start') === true){
+				$this->MemcachedProcessingType = (int)Configure::read('memcached.processing_type');
+				if(Configure::read('memcached.drop_on_start') === true){
 					$this->Memcached->deleteAll();
 				}
 			}
@@ -1246,7 +1248,9 @@ class StatusengineLegacyShell extends AppShell{
 		
 		if($this->useMemcached === true){
 			$this->Memcached->setHoststatus($payload);
-			return;
+			if($this->MemcachedProcessingType === 1){
+				return;
+			}
 		}
 		
 		//$this->Hoststatus->create();
@@ -1348,7 +1352,9 @@ class StatusengineLegacyShell extends AppShell{
 		
 		if($this->useMemcached === true){
 			$this->Memcached->setServicestatus($payload);
-			return;
+			if($this->MemcachedProcessingType === 1){
+				return;
+			}
 		}
 		
 		$service_object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->servicestatus->host_name, $payload->servicestatus->description);

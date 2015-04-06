@@ -32,4 +32,35 @@ class Hoststatus extends Model{
 	public function __construct($Memcached){
 		$this->Memcached = $Memcached;
 	}
+	
+	public function find($hostName = '', $options = []){
+		return parent::_find($this->serialize($hostName), $options);
+	}
+	
+	/*
+	findAll() usage:
+	$hostNames = [
+		'localhost',
+		'router'
+	]
+	*/
+	public function findAll($hostNames = [], $options = []){
+		if(!empty($hostNames)){
+			return parent::_findAll($this->serialize($hostNames), $options);
+		}else{
+			return parent::_findAll($this->getAllKeys(), $options);
+		}
+	}
+	
+	public function serialize($hostNames){
+		if(is_array($hostNames)){
+			$return = [];
+			foreach($hostNames as $hostName){
+				$return[] = md5($hostName);
+			}
+			return $return;
+		}
+		
+		return md5($hostNames);
+	}
 }

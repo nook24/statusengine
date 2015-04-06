@@ -34,9 +34,9 @@ class Model{
 	public $Memcached = null;
 	public $ModelName = '';
 	
-	public function find($objectName, $options = []){
+	public function _find($objectName, $options = []){
 		if(is_array($objectName)){
-			return $this->findAll($objectName, $options);
+			return $this->_findAll($objectName, $options);
 		}
 		
 		$result = $this->Memcached->get($this->keyPrefix.$objectName);
@@ -75,7 +75,7 @@ class Model{
 				if($ModelName == 'Acknowledgement'){
 					if(isset($result[$this->ModelName]['problem_has_been_acknowledged']) && $result[$this->ModelName]['problem_has_been_acknowledged'] > 0){
 						$Acknowledgement = new Acknowledgement($this->Memcached);
-						$_result = $Acknowledgement->find($objectName);
+						$_result = $Acknowledgement->_find($objectName);
 						unset($Acknowledgement);
 					}
 				}
@@ -83,7 +83,8 @@ class Model{
 				if($ModelName == 'Downtime'){
 					if(isset($result[$this->ModelName]['scheduled_downtime_depth']) && $result[$this->ModelName]['scheduled_downtime_depth'] > 0){
 						$Downtime = new Downtime($this->Memcached);
-						$_result = $Downtime->find($objectName);
+						print_r($objectName);
+						$_result = $Downtime->_find($objectName);
 						unset($Downtime);
 					}
 				}
@@ -118,7 +119,7 @@ class Model{
 		return $result;
 	}
 	
-	public function findAll($objectNamesAsArray, $options = [], $addMissingOrderResults = true){
+	public function _findAll($objectNamesAsArray, $options = [], $addMissingOrderResults = true){
 		$return = [];
 		$offset = 0;
 		$i = 1;
@@ -141,14 +142,14 @@ class Model{
 					$count = $options['limit'][0];
 				}
 				if($offset == 0 && $i < $count){
-					$result = $this->find($objectName, $options);
+					$result = $this->_find($objectName, $options);
 					if(!empty($result)){
 						$return[] = $result;
 					}
 				}
 
 				if($i > $offset && $offset > 0 && sizeof($return) < $count){
-					$result = $this->find($objectName, $options);
+					$result = $this->_find($objectName, $options);
 					if(!empty($result)){
 						$return[] = $result;
 					}
@@ -156,7 +157,7 @@ class Model{
 				
 				$i++;
 			}else{
-				$result = $this->find($objectName, $options);
+				$result = $this->_find($objectName, $options);
 				if(!empty($result)){
 					$return[] = $result;
 				}
@@ -228,5 +229,18 @@ class Model{
 			'fieldName' => $split[0],
 			'modelName' => $this->ModelName
 		];
+	}
+	
+	public function getAllKeys(){
+		$keys = $this->Memcached->getAllKeys();
+		$return = [];
+		$len = strlen($this->keyPrefix);
+		foreach($keys as $key){
+			$substr = substr($key, 0, $len);
+			if($substr == $this->keyPrefix){
+				$return[] = substr($key, $len);
+			}
+		}
+		return $return;
 	}
 }
