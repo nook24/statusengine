@@ -54,10 +54,11 @@ class Servicestatus extends Model{
 	*/
 	public function findAll($HostAndServiceDescription = [], $options = []){
 		if(!empty($HostAndServiceDescription)){
+			$_HostAndServiceDescription = [];
 			foreach($HostAndServiceDescription as $hostName => $servicesAsArray){
-				$HostAndServiceDescription = $this->serialize($hostName, $servicesAsArray);
+				$_HostAndServiceDescription[] = $this->serialize($hostName, $servicesAsArray);
 			}
-			return parent::_findAll($HostAndServiceDescription, $options);
+			return parent::_findAll($_HostAndServiceDescription, $options);
 		}else{
 			return parent::_findAll($this->getAllKeys(), $options);
 		}
