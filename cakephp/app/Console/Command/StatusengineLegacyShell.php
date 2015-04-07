@@ -2469,16 +2469,18 @@ class StatusengineLegacyShell extends AppShell{
 	}
 	
 	public function saveParentHosts(){
-		foreach($this->createParentHosts as $host_id => $hostName){
-			$this->Parenthost->create();
-			$data = [
-				'Parenthost' => [
-					'instance_id' => $this->instance_id,
-					'host_id' => $host_id,
-					'parent_host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $hostName)
-				]
-			];
-			$this->Parenthost->save($data);
+		foreach($this->createParentHosts as $host_id => $hostNamesAsArray){
+			foreach($hostNamesAsArray as $hostName){
+				$this->Parenthost->create();
+				$data = [
+					'Parenthost' => [
+						'instance_id' => $this->instance_id,
+						'host_id' => $host_id,
+						'parent_host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $hostName)
+					]
+				];
+				$this->Parenthost->save($data);
+			}
 		}
 	}
 	
