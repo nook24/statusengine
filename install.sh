@@ -35,7 +35,26 @@ if grep -q DISTRIB_CODENAME=trusty /etc/lsb-release; then
 	apt-get update
 	apt-get install gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5 php5-cli php5-dev libjson-c-dev manpages-dev build-essential
 	cd statusengine/src
-	LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
+
+	echo -e "\nPlease define either NAEMON or NAGIOS."
+	read monengine
+	case "$monengine" in 
+		
+		NAEMON)
+		LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c -DNAEMON;
+		;;
+	
+		NAGIOS)
+                LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c -DNAGIOS;
+                ;;
+
+		*)
+	        echo "ERR: Please define either 'NAEMON' or 'NAGIOS'. Script aborted.";
+	        exit 2;
+		;;
+	
+	esac
+
 	mkdir -p /opt/statusengine
 	cp statusengine.o /opt/statusengine/
 	cd ../../
