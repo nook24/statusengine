@@ -131,6 +131,8 @@ class StatusengineLegacyShell extends AppShell{
 		$this->createParentHosts = [];
 		$this->createParentServices = [];
 		
+		$this->maxJobIdelCounter = 500;
+		
 		//We only start dumping objects to the db if this is true.
 		//If you kill the script while it dumps data, you may be have problems on restart statusengine.
 		//If you killed it on dump, restart statusengine and restart nagios
@@ -2667,13 +2669,13 @@ class StatusengineLegacyShell extends AppShell{
 			pcntl_signal_dispatch();
 			if($this->worker->work() === false){
 				//Worker returend false, looks like the queue is empty
-				if($jobIdelCounter < 5){
+				if($jobIdelCounter < $this->maxJobIdelCounter){
 					$jobIdelCounter++;
 				}
 			}else{
 				$jobIdelCounter = 0;
 			}
-			if($jobIdelCounter === 5){
+			if($jobIdelCounter === $this->maxJobIdelCounter){
 				//The worker will sleep because therer are no jobs to do
 				//This will save CPU time!
 				usleep(250000);
@@ -2742,13 +2744,13 @@ class StatusengineLegacyShell extends AppShell{
 			pcntl_signal_dispatch();
 			if($this->worker->work() === false){
 				//Worker returend false, looks like the queue is empty
-				if($jobIdelCounter < 5){
+				if($jobIdelCounter < $this->maxJobIdelCounter){
 					$jobIdelCounter++;
 				}
 			}else{
 				$jobIdelCounter = 0;
 			}
-			if($jobIdelCounter === 5){
+			if($jobIdelCounter === $this->maxJobIdelCounter){
 				//The worker will sleep because therer are no jobs to do
 				//This will save CPU time!
 				usleep(250000);
