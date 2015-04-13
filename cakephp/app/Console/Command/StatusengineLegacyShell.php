@@ -174,7 +174,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->parser = $this->getOptionParser();
 		$this->out('Starting Statusengine version: '.Configure::read('version').'...');
 		$this->out('THIS IS LEGACY MODE!');
-		$this->Logfile->log('THIS IS LEGACY MODE!');
+		$this->Logfile->stlog('THIS IS LEGACY MODE!');
 		$this->servicestatus_freshness = Configure::read('servicestatus_freshness');
 		
 		$this->useMemcached = false;
@@ -210,7 +210,7 @@ class StatusengineLegacyShell extends AppShell{
 			]);
 		
 			$this->gearmanConnect();
-			$this->Logfile->log('Lets rock!');
+			$this->Logfile->stlog('Lets rock!');
 		}
 		
 	}
@@ -254,7 +254,7 @@ class StatusengineLegacyShell extends AppShell{
 				}
 				$this->dumpObjects = true;
 				$this->fakeLastInsertId = 1;
-				$this->Logfile->log('Start dumping objects');
+				$this->Logfile->stlog('Start dumping objects');
 				$this->disableAll();
 				//Legacy behavior :(
 				$truncate = [
@@ -307,16 +307,16 @@ class StatusengineLegacyShell extends AppShell{
 				break;
 				
 			case FINISH_OBJECT_DUMP:
-				$this->Logfile->log('Finished dumping objects');
+				$this->Logfile->stlog('Finished dumping objects');
 				$this->buildHoststatusCache();
 				$this->buildServicestatusCache();
 				$this->saveParentHosts();
 				$this->saveParentServices();
 				//We are done with object dumping and can write parent hosts and services to DB
 				
-				$this->Logfile->log('Start dumping core config '.Configure::read('coreconfig').' to database');
+				$this->Logfile->stlog('Start dumping core config '.Configure::read('coreconfig').' to database');
 				$this->dumpCoreConfig();
-				$this->Logfile->log('Core config dump finished');
+				$this->Logfile->stlog('Core config dump finished');
 				
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR1);
@@ -2229,6 +2229,12 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function gearmanConnect(){
 		$this->worker= new GearmanWorker();
+		
+		/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
+		 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
+		 */
+		$this->worker->addOptions (GEARMAN_WORKER_NON_BLOCKING);
+		
 		$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 		
 		if($this->workerMode === true){
@@ -2618,7 +2624,7 @@ class StatusengineLegacyShell extends AppShell{
 		];
 		foreach($workers as $worker){
 			declare(ticks = 1);
-			$this->Logfile->log('Forking a new worker child');
+			$this->Logfile->stlog('Forking a new worker child');
 			$pid = pcntl_fork();
 			if(!$pid){
 				//We are the child
@@ -2635,6 +2641,7 @@ class StatusengineLegacyShell extends AppShell{
 			}
 		}
 		pcntl_signal(SIGTERM, [$this, 'signalHandler']);
+		pcntl_signal(SIGINT,  [$this, 'signalHandler']);
 		
 		//Every worker is created now, so lets rock!
 		
@@ -2652,12 +2659,24 @@ class StatusengineLegacyShell extends AppShell{
 		]);
 		
 		$this->gearmanConnect();
-		$this->Logfile->log('Lets rock!');
+		$this->Logfile->stlog('Lets rock!');
 		$this->sendSignal(SIGUSR1);
 		$this->worker->setTimeout(500);
 		while(true){
 			pcntl_signal_dispatch();
-			$this->worker->work();
+			if($this->worker->work() === false){
+				//Worker returend false, looks like the queue is empty
+				if($jobIdelCounter < 5){
+					$jobIdelCounter++;
+				}
+			}else{
+				$jobIdelCounter = 0;
+			}
+			if($jobIdelCounter === 5){
+				//The worker will sleep because therer are no jobs to do
+				//This will save CPU time!
+				usleep(250000);
+			}
 		}
 	}
 	
@@ -2674,12 +2693,17 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Logfile->clog('Ok, i will wait for instructions');
 		if($this->bindQueues === true){
 			$this->worker= new GearmanWorker();
+			
+			/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
+			 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
+			 */
+			$this->worker->addOptions (GEARMAN_WORKER_NON_BLOCKING);
+			
 			$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 			foreach($this->queues as $queueName => $functionName){
 				$this->Logfile->clog('Queue "'.$queueName.'" will be handled by function "'.$functionName.'"');
 				$this->worker->addFunction($queueName, [$this, $functionName]);
 			}
-			$this->worker->addFunction('statusngin_'.getmypid(), [$this, 'handleEvent']);
 			$this->bindQueues = false;
 		}
 		while(true){
@@ -2705,26 +2729,6 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 	
-	/**
-	 * If the child is stuck in $this->worker->work() it will not listen to the 
-	 * signal handler and not exit correctly. If ther is a better solution for this
-	 * please email me ASAP
-	 *
-	 * @since 1.0.0
-	 * @author Daniel Ziegler <daniel@statusengine.org>
-	 *
-	 * @return void
-	 */
-	public function handleEvent($job){
-		$this->Logfile->clog('Will handle an event i got from my parent');
-		$payload = json_decode($job->workload());
-		switch($payload->task){
-			case 'signal_dispatch':
-				pcntl_signal_dispatch();
-				break;
-		}
-	}
-	
 	public function bindChildSignalHandler(){
 		pcntl_signal(SIGTERM, [$this, 'childSignalHandler']);
 		pcntl_signal(SIGUSR1, [$this, 'childSignalHandler']);
@@ -2732,9 +2736,22 @@ class StatusengineLegacyShell extends AppShell{
 	}
 	
 	public function childWork(){
+		$jobIdelCounter = 0;
 		while($this->work === true){
 			pcntl_signal_dispatch();
-			$this->worker->work();
+			if($this->worker->work() === false){
+				//Worker returend false, looks like the queue is empty
+				if($jobIdelCounter < 5){
+					$jobIdelCounter++;
+				}
+			}else{
+				$jobIdelCounter = 0;
+			}
+			if($jobIdelCounter === 5){
+				//The worker will sleep because therer are no jobs to do
+				//This will save CPU time!
+				usleep(250000);
+			}
 		}
 	}
 	
@@ -2772,9 +2789,9 @@ class StatusengineLegacyShell extends AppShell{
 		switch($signo){
 			case SIGINT:
 			case SIGTERM:
-				$this->Logfile->log('Will kill my childs :-(');
+				$this->Logfile->stlog('Will kill my childs :-(');
 				$this->sendSignal(SIGTERM);
-				$this->Logfile->log('Bye');
+				$this->Logfile->stlog('Bye');
 				exit(0);
 				break;
 		}
@@ -2794,27 +2811,21 @@ class StatusengineLegacyShell extends AppShell{
 		$gmanClient->addServer(Configure::read('server'), Configure::read('port'));
 		if($signal !== SIGTERM){
 			foreach($this->childPids as $cpid){
-				//This will wakeup the child, if it stuck in worker->work()
-				$gmanClient->doBackground('statusngin_'.$cpid, json_encode(['task' => 'signal_dispatch']));
-				$this->Logfile->log('Send signal to child pid: '.$cpid);
+				$this->Logfile->stlog('Send signal to child pid: '.$cpid);
 				posix_kill($cpid, $signal);
 			}
 		}
 
 		if($signal == SIGTERM){
 			foreach($this->childPids as $cpid){
-				$this->Logfile->log('Will kill pid: '.$cpid);
-				//This will wakeup the child, if it stuck in worker->work()
-				$gmanClient->doBackground('statusngin_'.$cpid, json_encode(['task' => 'signal_dispatch']));
+				$this->Logfile->stlog('Will kill pid: '.$cpid);
 				posix_kill($cpid, SIGTERM);
 			}
 			foreach($this->childPids as $cpid){
-				$gmanClient->doBackground('statusngin_'.$cpid, json_encode(['task' => 'signal_dispatch']));
 				pcntl_waitpid($cpid, $status);
-				$this->Logfile->log('Child ['.$cpid.'] killed successfully');
+				$this->Logfile->stlog('Child ['.$cpid.'] killed successfully');
 			}
 		}
-		unset($gmanClient);
 	}
 	
 	/**
@@ -2868,7 +2879,7 @@ class StatusengineLegacyShell extends AppShell{
 				}
 			}
 		}else{
-			$this->Logfile->log('ERROR: Core config '.$configFile.' not found!!!');
+			$this->Logfile->stlog('ERROR: Core config '.$configFile.' not found!!!');
 		}
 	}
 }
