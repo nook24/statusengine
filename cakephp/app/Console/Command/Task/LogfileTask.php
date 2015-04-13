@@ -8,7 +8,7 @@ class LogfileTask extends AppShell{
 		$this->open();
 	}
 	
-	public function log($str = ''){
+	public function stlog($str = ''){
 		if(!is_resource($this->log)){
 			$this->open();
 		}
@@ -16,7 +16,7 @@ class LogfileTask extends AppShell{
 	}
 	
 	public function clog($str = ''){
-		$this->log('['.getmypid().'] '.$str);
+		$this->stlog('['.getmypid().'] '.$str);
 	}
 	
 	public function open(){
@@ -24,22 +24,22 @@ class LogfileTask extends AppShell{
 	}
 	
 	public function welcome(){
-		$this->log('');
-		$this->log('    #####');
-		$this->log('   #     # #####   ##   ##### #    #  ####  ###### #    #  ####  # #    # ######');
-		$this->log('   #         #    #  #    #   #    # #      #      ##   # #    # # ##   # #');
-		$this->log('    #####    #   #    #   #   #    #  ####  #####  # #  # #      # # #  # #####');
-		$this->log('         #   #   ######   #   #    #      # #      #  # # #  ### # #  # # #');
-		$this->log('   #     #   #   #    #   #   #    # #    # #      #   ## #    # # #   ## #');
-		$this->log('    #####    #   #    #   #    ####   ####  ###### #    #  ####  # #    # ######');
-		$this->log('');
-		$this->log('                            the missing event broker');
-		$this->log('');
-		$this->log('Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>');
-		$this->log('Please visit http://www.statusengine.org for more information');
-		$this->log('Contribute to Statusenigne at: https://github.com/nook24/statusengine');
-		$this->log('');
-		$this->log('');
-		$this->log('');
+		$this->stlog('');
+		$this->stlog('    #####');
+		$this->stlog('   #     # #####   ##   ##### #    #  ####  ###### #    #  ####  # #    # ######');
+		$this->stlog('   #         #    #  #    #   #    # #      #      ##   # #    # # ##   # #');
+		$this->stlog('    #####    #   #    #   #   #    #  ####  #####  # #  # #      # # #  # #####');
+		$this->stlog('         #   #   ######   #   #    #      # #      #  # # #  ### # #  # # #');
+		$this->stlog('   #     #   #   #    #   #   #    # #    # #      #   ## #    # # #   ## #');
+		$this->stlog('    #####    #   #    #   #    ####   ####  ###### #    #  ####  # #    # ######');
+		$this->stlog('');
+		$this->stlog('                            the missing event broker');
+		$this->stlog('');
+		$this->stlog('Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>');
+		$this->stlog('Please visit http://www.statusengine.org for more information');
+		$this->stlog('Contribute to Statusenigne at: https://github.com/nook24/statusengine');
+		$this->stlog('');
+		$this->stlog('');
+		$this->stlog('');
 	}
 }
