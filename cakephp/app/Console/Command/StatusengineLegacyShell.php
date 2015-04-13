@@ -2662,6 +2662,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Logfile->stlog('Lets rock!');
 		$this->sendSignal(SIGUSR1);
 		$this->worker->setTimeout(500);
+		$jobIdelCounter = 0;
 		while(true){
 			pcntl_signal_dispatch();
 			if($this->worker->work() === false){
