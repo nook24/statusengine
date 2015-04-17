@@ -1,8 +1,7 @@
 Statusengine  - the missing event broker
 ============
 
-Statusengine
-
+You can also vist the project page of [Statusengine](http://www.statusengine.org)
 
 Requirements
 --------------
