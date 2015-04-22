@@ -330,7 +330,7 @@ class LegacySchema extends CakeSchema {
 		'entry_time' => array('type' => 'datetime', 'null' => false, 'default' => '0000-00-00 00:00:00', 'key' => 'index'),
 		'command_type' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'command_name' => array('type' => 'string', 'null' => false, 'length' => 128, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
-		'command_args' => array('type' => 'string', 'null' => false, 'length' => 1000, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'command_args' => array('type' => 'string', 'null' => true, 'length' => 1000, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'externalcommand_id', 'unique' => 1),
 			'instance_id' => array('column' => 'instance_id', 'unique' => 0),
