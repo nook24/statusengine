@@ -131,8 +131,6 @@ class StatusengineLegacyShell extends AppShell{
 		$this->createParentHosts = [];
 		$this->createParentServices = [];
 		
-		$this->maxJobIdelCounter = 500;
-		
 		//We only start dumping objects to the db if this is true.
 		//If you kill the script while it dumps data, you may be have problems on restart statusengine.
 		//If you killed it on dump, restart statusengine and restart nagios
@@ -1366,13 +1364,13 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 		
-		$servicestatus_id = $this->servicestatusIdFromCache($service_object_id);
+		//$servicestatus_id = $this->servicestatusIdFromCache($service_object_id);
 		
 		//debug('Servicestatus Id: '.$servicestatus_id);
 		//debug($payload);
 		$data = [
 			'Servicestatus' => [
-				'servicestatus_id' => $servicestatus_id,
+				//'servicestatus_id' => $servicestatus_id,
 				'instance_id' => $this->instance_id,
 				'service_object_id' => $service_object_id,
 				'status_update_time' => date('Y-m-d H:i:s', $payload->timestamp),
@@ -1423,7 +1421,9 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
-		if($servicestatus_id == null){
+		$result = $this->Servicestatus->rawSaveServicestatus([$data]);
+		
+		/*if($servicestatus_id == null){
 			$result = $this->Servicestatus->save($data);
 		}else{
 			$result = $this->Servicestatus->rawSave([$data]);
@@ -1431,7 +1431,7 @@ class StatusengineLegacyShell extends AppShell{
 		
 		if($servicestatus_id == null){
 			$this->addToServicestatusCache($service_object_id, $result['Servicestatus']['servicestatus_id']);
-		}
+		}*/
 	}
 	
 	/**
@@ -2230,12 +2230,12 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function gearmanConnect(){
-		$this->worker= new GearmanWorker();
+		$this->worker = new GearmanWorker();
 		
 		/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
 		 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 		 */
-		$this->worker->addOptions (GEARMAN_WORKER_NON_BLOCKING);
+		$this->worker->addOptions(GEARMAN_WORKER_NON_BLOCKING);
 		
 		$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 		
@@ -2582,48 +2582,7 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function forkWorker(){
-		$workers = [
-			/*[
-				'queues' => [
-					'statusngin_objects' => 'dumpObjects',
-					'statusngin_programmstatus' => 'processProgrammstatus',
-					'statusngin_processdata' => 'processProcessdata'
-				]
-			],*/
-			[
-				'queues' => ['statusngin_servicestatus' => 'processServicestatus']
-			],
-			[
-				'queues' => [
-					'statusngin_hoststatus' => 'processHoststatus',
-					'statusngin_statechanges' => 'processStatechanges'
-				]
-			],
-			[
-				'queues' => ['statusngin_servicechecks' => 'processServicechecks']
-			],
-			[
-				'queues' => [
-					'statusngin_hostchecks' => 'processHostchecks',
-					'statusngin_logentries' => 'processLogentries'
-				]
-			],
-			[
-				'queues' => [
-					'statusngin_notifications' => 'processNotifications',
-					'statusngin_contactstatus' => 'processContactstatus',
-					'statusngin_contactnotificationdata' => 'processContactnotificationdata',
-					'statusngin_contactnotificationmethod' => 'processContactnotificationmethod',
-					'statusngin_acknowledgements' => 'processAcknowledgements',
-					'statusngin_comments' => 'processComments',
-					'statusngin_flappings' => 'processFlappings',
-					'statusngin_downtimes' => 'processDowntimes',
-					'statusngin_externalcommands' => 'processExternalcommands',
-					'statusngin_systemcommands' => 'processSystemcommands',
-					'statusngin_eventhandler' => 'processEventhandler'
-				]
-			]
-		];
+		$workers = Configure::read('workers');
 		foreach($workers as $worker){
 			declare(ticks = 1);
 			$this->Logfile->stlog('Forking a new worker child');
@@ -2664,18 +2623,10 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Logfile->stlog('Lets rock!');
 		$this->sendSignal(SIGUSR1);
 		$this->worker->setTimeout(500);
-		$jobIdelCounter = 0;
 		while(true){
 			pcntl_signal_dispatch();
-			if($this->worker->work() === false){
-				//Worker returend false, looks like the queue is empty
-				if($jobIdelCounter < $this->maxJobIdelCounter){
-					$jobIdelCounter++;
-				}
-			}else{
-				$jobIdelCounter = 0;
-			}
-			if($jobIdelCounter === $this->maxJobIdelCounter){
+			$this->worker->work();
+			if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
 				//The worker will sleep because therer are no jobs to do
 				//This will save CPU time!
 				usleep(250000);
@@ -2695,12 +2646,12 @@ class StatusengineLegacyShell extends AppShell{
 	public function waitForInstructions(){
 		$this->Logfile->clog('Ok, i will wait for instructions');
 		if($this->bindQueues === true){
-			$this->worker= new GearmanWorker();
+			$this->worker = new GearmanWorker();
 			
 			/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
 			 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 			 */
-			$this->worker->addOptions (GEARMAN_WORKER_NON_BLOCKING);
+			$this->worker->addOptions(GEARMAN_WORKER_NON_BLOCKING);
 			
 			$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 			foreach($this->queues as $queueName => $functionName){
@@ -2739,18 +2690,11 @@ class StatusengineLegacyShell extends AppShell{
 	}
 	
 	public function childWork(){
-		$jobIdelCounter = 0;
 		while($this->work === true){
 			pcntl_signal_dispatch();
-			if($this->worker->work() === false){
-				//Worker returend false, looks like the queue is empty
-				if($jobIdelCounter < $this->maxJobIdelCounter){
-					$jobIdelCounter++;
-				}
-			}else{
-				$jobIdelCounter = 0;
-			}
-			if($jobIdelCounter === $this->maxJobIdelCounter){
+			$this->worker->work();
+
+			if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
 				//The worker will sleep because therer are no jobs to do
 				//This will save CPU time!
 				usleep(250000);

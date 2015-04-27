@@ -1050,6 +1050,7 @@ class LegacySchema extends CakeSchema {
 		'check_timeperiod_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'servicestatus_id', 'unique' => 1),
+			'object_id_instance_id' => array('column' => array('service_object_id', 'instance_id'), 'unique' => 1),
 			'servicestatus' => array('column' => array('service_object_id', 'current_state', 'last_check', 'next_check', 'last_hard_state_change', 'output', 'scheduled_downtime_depth', 'active_checks_enabled', 'state_type', 'problem_has_been_acknowledged', 'is_flapping'), 'unique' => 0, 'length' => array('output' => '255'))
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')

@@ -1073,6 +1073,7 @@ class LegacySchema extends CakeSchema {
 		'check_timeperiod_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'servicestatus_id', 'unique' => 1),
+			'object_id_instance_id' => array('column' => array('service_object_id', 'instance_id'), 'unique' => 1),
 			'object_id' => array('column' => 'service_object_id', 'unique' => 1),
 			'instance_id' => array('column' => 'instance_id', 'unique' => 0),
 			'status_update_time' => array('column' => 'status_update_time', 'unique' => 0),
