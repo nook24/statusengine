@@ -13,7 +13,7 @@ $config = [
 	'logfile' => '/var/log/statusengine.log',
 	
 	//max age of service status records in gearman queue
-	'servicestatus_freshness' => 30,
+	'servicestatus_freshness' => 300,
 	
 	//address of gearman-job-server
 	'server' => '127.0.0.1',

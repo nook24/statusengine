@@ -120,8 +120,6 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function __construct(){
 		parent::__construct();
-		$this->instance_id = 1;
-		$this->config_type = 1;
 		$this->childPids = [];
 		$this->_constants();
 		$this->clearQ = false;
@@ -169,6 +167,10 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function main(){
 		Configure::load('Statusengine');
+		
+		$this->instance_id = Configure::read('instance_id');
+		$this->config_type = Configure::read('config_type');
+		
 		$this->Logfile->init();
 		$this->Logfile->welcome();
 		$this->parser = $this->getOptionParser();
@@ -178,6 +180,9 @@ class StatusengineLegacyShell extends AppShell{
 		$this->servicestatus_freshness = Configure::read('servicestatus_freshness');
 		
 		$this->useMemcached = false;
+		
+		$this->maxJobIdleCounter = 500;
+		
 		$this->MemcachedProcessingType = 0;
 		if(Configure::read('memcached.use_memcached') === true){
 			if($this->Memcached->init()){
@@ -2623,10 +2628,23 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Logfile->stlog('Lets rock!');
 		$this->sendSignal(SIGUSR1);
 		$this->worker->setTimeout(500);
+		
+		$jobIdleCounter = 0;
+		
 		while(true){
 			pcntl_signal_dispatch();
-			$this->worker->work();
-			if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
+			//$this->worker->work();
+			
+			if($this->worker->work() === false){
+				if($jobIdleCounter < $this->maxJobIdleCounter){
+					$jobIdleCounter++;
+				}
+			}else{
+				$jobIdleCounter = 0;
+			}
+			
+			//if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
+			if($jobIdleCounter === $this->maxJobIdleCounter){
 				//The worker will sleep because therer are no jobs to do
 				//This will save CPU time!
 				usleep(250000);
@@ -2690,11 +2708,19 @@ class StatusengineLegacyShell extends AppShell{
 	}
 	
 	public function childWork(){
+		$jobIdleCounter = 0;
 		while($this->work === true){
 			pcntl_signal_dispatch();
-			$this->worker->work();
-
-			if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
+			if($this->worker->work() === false){
+				if($jobIdleCounter < $this->maxJobIdleCounter){
+					$jobIdleCounter++;
+				}
+			}else{
+				$jobIdleCounter = 0;
+			}
+			
+			//if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
+			if($jobIdleCounter === $this->maxJobIdleCounter){
 				//The worker will sleep because therer are no jobs to do
 				//This will save CPU time!
 				usleep(250000);
