@@ -33,7 +33,7 @@
 *
 * This little extension allows you, to store performance data out of Mod_Gearmans perfdata Q
 * I know process_perfdata.pl can do this job as well, but on my test systems with 50k and 220k
-* or service checks i recived mollions of GEARMAN_UNEXPECTED_PACKET errors and my Gearman Job Server
+* service checks i received millions of GEARMAN_UNEXPECTED_PACKET errors and my Gearman Job Server
 * crashed.
 *
 * This is why i started coding this php script, to get the job done :)
@@ -95,6 +95,14 @@ class ModPerfdataShell extends AppShell{
 		$this->work();
 	}
 	
+	/**
+	 * Create the GearmanWorker that is responsible for the perfdata Q
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function createWorker(){
 		$this->worker = new GearmanWorker();
 		$this->worker->addOptions(GEARMAN_WORKER_NON_BLOCKING);
@@ -102,6 +110,15 @@ class ModPerfdataShell extends AppShell{
 		$this->worker->addFunction('perfdata', [$this, 'processPerfdata']);
 	}
 	
+	/**
+	 * Will fill up a key < 32 bit with zero, that we are able to uncrypt the
+	 * data stored in gearman job server (provided by mod_gearman)
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function fillKeyWithZero(){
 		$key = $this->Config['MOD_GEARMAN']['key'];
 		while(strlen($key) < 32){
@@ -110,10 +127,26 @@ class ModPerfdataShell extends AppShell{
 		$this->Config['MOD_GEARMAN']['key'] = $key;
 	}
 	
+	/**
+	 * Uncrypt the data recived form gearman
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function decrypt($stringFormModGearman){
 		return mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $this->Config['MOD_GEARMAN']['key'], base64_decode($stringFormModGearman), MCRYPT_MODE_ECB);
 	}
 	
+	/**
+	 * Run GearmanWoker::work()
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function work(){
 		while(true){
 			$this->worker->work();
@@ -121,6 +154,15 @@ class ModPerfdataShell extends AppShell{
 		}
 	}
 	
+	/**
+	 * Is the callback function, called by GearmanWorker::work()
+	 * Will parse and process performance data
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function processPerfdata($job){
 		$stringFormModGearman = $job->workload();
 		
@@ -236,6 +278,14 @@ class ModPerfdataShell extends AppShell{
 		
 	}
 	
+	/**
+	 * Parse perfdata out of service_perfdata_file_template defined in naemon.cfg to an array
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	public function parsePerfdataFileTemplate($perfdataFileTemplateString){
 		/* $perfdataFileTemplateString should looks like this
 		 * DATATYPE::SERVICEPERFDATA	TIMET::1431363160	HOSTNAME::localhost	SERVICEDESC::ping	SERVICEPERFDATA::rta=0.069000ms;100.000000;500.000000;0.000000 pl=0%;20;60;0	SERVICECHECKCOMMAND::check_ping!100.0,20%!500.0,60%	SERVICESTATE::0	SERVICESTATETYPE::1
@@ -250,6 +300,14 @@ class ModPerfdataShell extends AppShell{
 		return $parsedData;
 	}
 	
+	/**
+	 * Parse perfdata of the naemon plugin output to an array
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
 	function parsePerfdataString($perfdataString){
 		/* $perfdataString should looks like this
 		rta=0.069000ms;100.000000;500.000000;0.000000 pl=0%;20;60;0
