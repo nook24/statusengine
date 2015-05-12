@@ -76,8 +76,8 @@ class ModPerfdataShell extends AppShell{
 		Configure::load('Perfdata');
 		$this->Config = Configure::read('perfdata');
 		
-		//Load CakePHP's XML class
-		App::uses('Xml', 'Utility');
+		//Load CakePHP's File class
+		App::uses('File', 'Utility');
 		
 		$this->out('Starting Statusengine ModPerfdata extension -  version: '.$this->Config['version'].'...');
 		if($this->Config['MOD_GEARMAN']['encryption'] === true){
@@ -175,107 +175,133 @@ class ModPerfdataShell extends AppShell{
 		$parsedPerfdataString = $this->parsePerfdataFileTemplate($stringFormModGearman);
 		if(isset($parsedPerfdataString['SERVICEPERFDATA'])){
 			$parsedPerfdata = $this->parsePerfdataString($parsedPerfdataString['SERVICEPERFDATA']);
-			
-			$xmlAsArray = [
-				'NAGIOS' => [
-					'RRD' => [],
-					'XML' => [
-						'VERSION' => 4
-					],
-					'NAGIOS_DATATYPE' => $parsedPerfdataString['DATATYPE'],
-					'NAGIOS_TIMET' => $parsedPerfdataString['TIMET'],
-					'NAGIOS_HOSTNAME' => $parsedPerfdataString['HOSTNAME'],
-					'NAGIOS_SERVICEDESC' => $parsedPerfdataString['SERVICEDESC'],
-					'NAGIOS_SERVICEPERFDATA' => $parsedPerfdataString['SERVICEPERFDATA'],
-					'NAGIOS_SERVICECHECKCOMMAND' => $parsedPerfdataString['SERVICECHECKCOMMAND'],
-					'NAGIOS_SERVICESTATE' => $this->servicestate[$this->$parsedPerfdataString['SERVICESTATE']],
-					'NAGIOS_SERVICESTATETYPE' => ($parsedPerfdataString['SERVICESTATETYPE'] == 1 ? 'HARD' : 'SOFT'),
-					'NAGIOS_XMLFILE' => $this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].'.xml'
-				]
-			];
-			
-			$dataSourceCounter = 1;
-			foreach($parsedPerfdata as $ds => $data){
-				if(is_numeric($data['current'])){
-					$appendXml = [
-						'DATASOURCE' => [
-							'TEMPLATE' => $this->parseCheckCommand($parsedPerfdataString['SERVICECHECKCOMMAND'])[0],
-							'RRDFILE' => $this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].'.rrd',
-							'RRD_STORAGE_TYPE' => 'SINGLE',
-							'RRD_HEARTBEAT' => $this->Config['RRD']['heartbeat'],
-							'IS_MULTI' => 0,
-							'DS' => $dataSourceCounter,
-							'NAME' => $ds,
-							'LABEL' => $ds,
-							'UNIT' => $data['unit'],
-							'ACT' => $data['current'],
-							'WARN' => $data['warning'],
-							'WARN_MIN' => null,
-							'WARN_MAX' => null,
-							'WARN_RANGE_TYPE' => null,
-							'CRIT' => $data['critical'],
-							'CRIT_MIN' => null,
-							'CRIT_MAX' => null,
-							'CRIT_RANGE_TYPE' => null,
-							'MIN' => $data['min'],
-							'MAX' => $data['max']
-						]
-					];
-					$xmlAsArray['NAGIOS']['DATASOURCES'][] = $appendXml;
-					unset($appendXml);
-				}
-				$dataSourceCounter++;
-			}
-			//debug($xmlAsArray);
-			
-			$this->writeToRrd($xmlAsArray);
-			
+			$rrdReturn = $this->writeToRrd($parsedPerfdataString, $parsedPerfdata);
+			$this->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
 		}
 	}
 	
-	public function writeToRrd($xmlAsArray){
-		$this->checkAndCreateXML($xmlAsArray);
+	public function writeToRrd($parsedPerfdataString, $parsedPerfdata){
+		$perfdataFile = $this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].'.rrd';
+		$error = '';
+		$return = true;
 		
-		$rrdOptions = [
-			$xmlAsArray['NAGIOS']['NAGIOS_TIMET']
-		];
-		$dataSourceCounter = 1;
-		foreach($xmlAsArray['NAGIOS']['DATASOURCES'] as $dataSource){
-			if(file_exists($dataSoruce['DATASOURCE']['RRDFILE'])){
-				//RRD File exists, we can simple fire up rrd_update
-				$rrdOptions[] = $dataSoruce['DATASOURCE']['ACT'];
-				$updateRrd = true;
-			}else{
-				//We need to create the RRD file first
-				$updateRrd = false;
+		if(file_exists($perfdataFile)){
+			$options = [];
+			$options[] = $parsedPerfdataString['TIMET'];
+			
+			foreach($parsedPerfdata as $ds => $data){
+				$options[] = $data['current'];
 			}
-		}
-		
-		if($updateRrd{
-			if(!rrd_update($dataSoruce['DATASOURCE']['RRDFILE'], [implode(':', $rrdOptions)])){
+
+			if(!rrd_update($perfdataFile, [implode(':', $options)])){
 				$this->out('Error on updating RRD');
-				//1431375341:2182
-				//1431375345:0.042000:0
-				debug(rrd_error());
-			};
+				$return = false;
+				$error = rrd_error();
+			}
 		}else{
 			//RRA:AVERAGE:0.5:1:576000 RRA:MAX:0.5:1:576000 RRA:MIN:0.5:1:576000 DS:1:GAUGE:8460:U:U --start=1431375240 --step=60
 			//RRA:AVERAGE:0.5:1:576000 RRA:MAX:0.5:1:576000 RRA:MIN:0.5:1:576000 DS:1:GAUGE:8460:U:U DS:2:GAUGE:8460:U:U --start=1431375345 --step=60
-			if(!rrd_create($dataSoruce['DATASOURCE']['RRDFILE'], [])){
+			$options = [];
+			$options[] = 'RRA:AVERAGE:'.$this->Config['RRA']['average'];
+			$options[] = 'RRA:MAX:'.$this->Config['RRA']['max'];
+			$options[] = 'RRA:MIN:'.$this->Config['RRA']['min'];
+			
+			$dataSourceCount = 1;
+			foreach($parsedPerfdata as $ds => $data){
+				if(isset($this->Config['RRD']['DATATYPE'][$data['unit']])){
+					$options[] = 'DS:'.$dataSourceCount.':'.$this->Config['RRD']['DATATYPE'][$data['unit']].':8460:U:U';
+				}else{
+					$options[] = 'DS:'.$dataSourceCount.':'.$this->Config['RRD']['DATATYPE']['default'].':8460:U:U';
+				}
+				$dataSourceCount++;
+			}
+			
+			$options[] = '--start='.$parsedPerfdataString['TIMET'];
+			$options[] = '--step='.$this->Config['RRA']['step'];
+			
+			if(!rrd_create($perfdataFile, $options)){
 				$this->out('Error on updating RRD');
-				debug(rrd_error());
+				$return = false;
+				$error = rrd_error();
+				debug($error);
 			}
 		}
 		
+		return [
+			'return' => $return,
+			'error' => $error
+		];
+		
 	}
 	
-	public function checkAndCreateXML($xmlAsArray){
-		return;
-		$xmlFile = new File($xmlAsArray['NAGIOS']['NAGIOS_XMLFILE']);
+	public function updateXML($parsedPerfdataString, $parsedPerfdata, $rrdReturn){
+		$xmlFile = new File($this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].'.xml');
 		if(!$xmlFile->exists()){
 			$xmlFile->create();
 		}
 		
+		$xml = "";
+
+$xml .= "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+<NAGIOS>";
+$dataSourceCounter = 1;
+foreach($parsedPerfdata as $ds => $data){
+$xml.="  <DATASOURCE>
+    <TEMPLATE></TEMPLATE>
+    <RRDFILE>".$this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].".rrd</RRDFILE>
+    <RRD_STORAGE_TYPE>SINGLE</RRD_STORAGE_TYPE>
+    <RRD_HEARTBEAT>".$this->Config['RRD']['heartbeat']."</RRD_HEARTBEAT>
+    <IS_MULTI>0</IS_MULTI>
+    <DS>".$dataSourceCounter."</DS>
+    <NAME>".$ds."</NAME>
+    <LABEL>".$ds."</LABEL>
+    <UNIT>".$data['unit']."</UNIT>
+    <ACT>".$data['current']."</ACT>
+    <WARN>".$data['warning']."</WARN>
+    <WARN_MIN></WARN_MIN>
+    <WARN_MAX></WARN_MAX>
+    <WARN_RANGE_TYPE></WARN_RANGE_TYPE>
+    <CRIT>".$data['critical']."</CRIT>
+    <CRIT_MIN></CRIT_MIN>
+    <CRIT_MAX></CRIT_MAX>
+    <CRIT_RANGE_TYPE></CRIT_RANGE_TYPE>
+    <MIN>".$data['min']."</MIN>
+    <MAX>".$data['max']."</MAX>
+  </DATASOURCE>";
+  $dataSourceCounter++;
+}
+
+$xml.="  <RRD>
+    <RC>".(int)$rrdReturn['return']."</RC>
+    <TXT>".($rrdReturn['return']?'successful updated':$rrdReturn['error'])."</TXT>
+  </RRD>
+  <NAGIOS_AUTH_HOSTNAME></NAGIOS_AUTH_HOSTNAME>
+  <NAGIOS_AUTH_SERVICEDESC></NAGIOS_AUTH_SERVICEDESC>
+  <NAGIOS_CHECK_COMMAND>cdd9ba25-a4d8-4261-a551-32164d4dde14!100.0,20%!500.0,60%</NAGIOS_CHECK_COMMAND>
+  <NAGIOS_DATATYPE>".$parsedPerfdataString['DATATYPE']."</NAGIOS_DATATYPE>
+  <NAGIOS_DISP_HOSTNAME>".$parsedPerfdataString['HOSTNAME']."</NAGIOS_DISP_HOSTNAME>
+  <NAGIOS_DISP_SERVICEDESC>".$parsedPerfdataString['SERVICEDESC']."</NAGIOS_DISP_SERVICEDESC>
+  <NAGIOS_HOSTNAME>".$parsedPerfdataString['HOSTNAME']."</NAGIOS_HOSTNAME>
+  <NAGIOS_HOSTSTATE></NAGIOS_HOSTSTATE>
+  <NAGIOS_HOSTSTATETYPE></NAGIOS_HOSTSTATETYPE>
+  <NAGIOS_MULTI_PARENT></NAGIOS_MULTI_PARENT>
+  <NAGIOS_PERFDATA>".$parsedPerfdataString['SERVICEPERFDATA']."</NAGIOS_PERFDATA>
+  <NAGIOS_RRDFILE>".$this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].".rrd</NAGIOS_RRDFILE>
+  <NAGIOS_SERVICECHECKCOMMAND>".$parsedPerfdataString['SERVICECHECKCOMMAND']."</NAGIOS_SERVICECHECKCOMMAND>
+  <NAGIOS_SERVICEDESC>".$parsedPerfdataString['SERVICEDESC']."</NAGIOS_SERVICEDESC>
+  <NAGIOS_SERVICEPERFDATA>".$parsedPerfdataString['SERVICEPERFDATA']."</NAGIOS_SERVICEPERFDATA>
+  <NAGIOS_SERVICESTATE>OK</NAGIOS_SERVICESTATE>
+  <NAGIOS_SERVICESTATETYPE>".($parsedPerfdataString['SERVICESTATETYPE'] == 1 ? 'HARD' : 'SOFT')."</NAGIOS_SERVICESTATETYPE>
+  <NAGIOS_TIMET>".$parsedPerfdataString['TIMET']."</NAGIOS_TIMET>
+  <NAGIOS_XMLFILE>".$this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].".xml</NAGIOS_XMLFILE>
+  <XML>
+   <VERSION>4</VERSION>
+  </XML>
+</NAGIOS>";
+
+	$xmlFile->write($xml);
+	$xmlFile->close();
+
 	}
 	
 	/**

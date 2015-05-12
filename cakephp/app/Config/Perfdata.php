@@ -12,7 +12,21 @@ $config = [
 		],
 		
 		'RRD' => [
-			'heartbeat' => 8460
+			'heartbeat' => 8460,
+			
+			'DATATYPE' => [
+				//rrdtool support different datatypes for each datasoruce
+				//http://oss.oetiker.ch/rrdtool/doc/rrdcreate.en.html
+				//You can now set a datatype for each unit.
+				// value=500c  -> c is the unit
+				// value=250ms -> ms is the unit
+					
+				//'c' => 'COUNTER',
+				'd' => 'DERIVE',
+				
+				
+				'default' => 'GAUGE'
+			]
 		],
 	
 		'RRDCACHED' => [
