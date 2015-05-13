@@ -52,8 +52,12 @@
 
 class ModPerfdataShell extends AppShell{
 	
+	public $tasks = ['Logfile'];
+	
 	//Some class variables
 	protected $worker = null;
+	private $maxJobIdleCounter = 250;
+	
 	public $Config = [];
 	
 	public $servicestate = [
@@ -75,6 +79,9 @@ class ModPerfdataShell extends AppShell{
 	public function main(){
 		Configure::load('Perfdata');
 		$this->Config = Configure::read('perfdata');
+		
+		$this->Logfile->init($this->Config['logfile']);
+		$this->Logfile->welcome();
 		
 		//Load CakePHP's File class
 		App::uses('File', 'Utility');
@@ -133,7 +140,7 @@ class ModPerfdataShell extends AppShell{
 	 * @since 1.0.0
 	 * @author Daniel Ziegler <daniel@statusengine.org>
 	 *
-	 * @return void
+	 * @return string
 	 */
 	public function decrypt($stringFormModGearman){
 		return mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $this->Config['MOD_GEARMAN']['key'], base64_decode($stringFormModGearman), MCRYPT_MODE_ECB);
@@ -148,9 +155,21 @@ class ModPerfdataShell extends AppShell{
 	 * @return void
 	 */
 	public function work(){
+		$jobIdleCounter = 0;
 		while(true){
 			$this->worker->work();
-			sleep(5);
+			if($this->worker->returnCode() == GEARMAN_NO_JOBS || $this->worker->returnCode() == GEARMAN_IO_WAIT){
+				if($jobIdleCounter < $this->maxJobIdleCounter){
+					$jobIdleCounter++;
+				}
+			}else{
+				$jobIdleCounter = 0;
+			}
+			
+			if($jobIdleCounter === $this->maxJobIdleCounter){
+				//Save some CPU time
+				sleep(1);
+			}
 		}
 	}
 	
@@ -176,11 +195,17 @@ class ModPerfdataShell extends AppShell{
 		if(isset($parsedPerfdataString['SERVICEPERFDATA'])){
 			$parsedPerfdata = $this->parsePerfdataString($parsedPerfdataString['SERVICEPERFDATA']);
 			$rrdReturn = $this->writeToRrd($parsedPerfdataString, $parsedPerfdata);
-			$this->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
+			if($this->Config['XML']['write_xml_files'] === true){
+				$this->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
+			}
 		}
 	}
 	
 	public function writeToRrd($parsedPerfdataString, $parsedPerfdata){
+		if(!is_dir($this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'])){
+			mkdir($this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME']);
+		}
+		
 		$perfdataFile = $this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].'.rrd';
 		$error = '';
 		$return = true;
@@ -197,6 +222,8 @@ class ModPerfdataShell extends AppShell{
 				$this->out('Error on updating RRD');
 				$return = false;
 				$error = rrd_error();
+				$this->Logfile->stlog($error);
+				//debug($error);
 			}
 		}else{
 			//RRA:AVERAGE:0.5:1:576000 RRA:MAX:0.5:1:576000 RRA:MIN:0.5:1:576000 DS:1:GAUGE:8460:U:U --start=1431375240 --step=60
@@ -220,10 +247,11 @@ class ModPerfdataShell extends AppShell{
 			$options[] = '--step='.$this->Config['RRA']['step'];
 			
 			if(!rrd_create($perfdataFile, $options)){
-				$this->out('Error on updating RRD');
+				$this->out('Error on createing RRD');
 				$return = false;
 				$error = rrd_error();
-				debug($error);
+				$this->Logfile->stlog($error);
+				//debug($error);
 			}
 		}
 		
@@ -240,14 +268,21 @@ class ModPerfdataShell extends AppShell{
 			$xmlFile->create();
 		}
 		
+		if($this->Config['XML']['delay'] > 0){
+			if((time() - $xmlFile->lastChange()) < $this->Config['XML']['delay']){
+				return false;
+			}
+		}
+		
 		$xml = "";
 
 $xml .= "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <NAGIOS>";
 $dataSourceCounter = 1;
+$template = $this->parseCheckCommand($parsedPerfdataString['SERVICECHECKCOMMAND'])[0];
 foreach($parsedPerfdata as $ds => $data){
 $xml.="  <DATASOURCE>
-    <TEMPLATE></TEMPLATE>
+    <TEMPLATE>".$template."</TEMPLATE>
     <RRDFILE>".$this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].".rrd</RRDFILE>
     <RRD_STORAGE_TYPE>SINGLE</RRD_STORAGE_TYPE>
     <RRD_HEARTBEAT>".$this->Config['RRD']['heartbeat']."</RRD_HEARTBEAT>
@@ -277,7 +312,7 @@ $xml.="  <RRD>
   </RRD>
   <NAGIOS_AUTH_HOSTNAME></NAGIOS_AUTH_HOSTNAME>
   <NAGIOS_AUTH_SERVICEDESC></NAGIOS_AUTH_SERVICEDESC>
-  <NAGIOS_CHECK_COMMAND>cdd9ba25-a4d8-4261-a551-32164d4dde14!100.0,20%!500.0,60%</NAGIOS_CHECK_COMMAND>
+  <NAGIOS_CHECK_COMMAND>".$parsedPerfdataString['SERVICECHECKCOMMAND']."</NAGIOS_CHECK_COMMAND>
   <NAGIOS_DATATYPE>".$parsedPerfdataString['DATATYPE']."</NAGIOS_DATATYPE>
   <NAGIOS_DISP_HOSTNAME>".$parsedPerfdataString['HOSTNAME']."</NAGIOS_DISP_HOSTNAME>
   <NAGIOS_DISP_SERVICEDESC>".$parsedPerfdataString['SERVICEDESC']."</NAGIOS_DISP_SERVICEDESC>
@@ -366,6 +401,10 @@ $xml.="  <RRD>
 						}else{
 							$unit .= $char;
 						}
+					}
+					
+					if($unit == '%'){
+						$unit = '%%';
 					}
 					
 					$perfdata[$s[0]][$arrayKeys[0]] = str_replace(',', '.', $current);

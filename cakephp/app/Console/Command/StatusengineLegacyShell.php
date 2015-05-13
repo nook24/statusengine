@@ -171,7 +171,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->instance_id = Configure::read('instance_id');
 		$this->config_type = Configure::read('config_type');
 		
-		$this->Logfile->init();
+		$this->Logfile->init(Configure::read('logfile'));
 		$this->Logfile->welcome();
 		$this->parser = $this->getOptionParser();
 		$this->out('Starting Statusengine version: '.Configure::read('version').'...');

@@ -1,9 +1,8 @@
 <?php
 class LogfileTask extends AppShell{
 	
-	public function init(){
-		Configure::load('Statusengine');
-		$this->logfile = Configure::read('logfile');
+	public function init($logfile){
+		$this->logfile = $logfile;
 		$this->log = null;
 		$this->open();
 	}
