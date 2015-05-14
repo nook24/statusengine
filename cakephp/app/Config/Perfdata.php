@@ -61,9 +61,11 @@ $config = [
 	
 		'RRDCACHED' => [
 			
+			// apt-get install rrdcached
+			
 			/* If ModPerfdata will use rrdcached or not
 			 * Type: Boolean
-			 * Default: true
+			 * Default: false
 			 */
 			'use' => false,
 			

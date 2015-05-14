@@ -295,18 +295,30 @@ class ModPerfdataShell extends AppShell{
 		
 		if(file_exists($perfdataFile)){
 			$options = [];
+			
 			$options[] = $parsedPerfdataString['TIMET'];
 			
 			foreach($parsedPerfdata as $ds => $data){
 				$options[] = $data['current'];
 			}
 
-			if(!rrd_update($perfdataFile, [implode(':', $options)])){
-				$this->out('Error on updating RRD');
-				$return = false;
-				$error = rrd_error();
-				$this->Logfile->stlog($error);
-				//debug($error);
+			
+			if($this->Config['RRDCACHED']['use'] === true){
+				if(!rrd_update($perfdataFile, [implode(':', $options)])){
+					$this->out('Error on updating RRD');
+					$return = false;
+					$error = rrd_error();
+					$this->Logfile->stlog($error);
+					//debug($error);
+				}
+			}else{
+				if(!rrd_update($perfdataFile, [implode(':', $options), '--daemon='.$this->Config['RRDCACHED']['sock']])){
+					$this->out('Error on updating RRD');
+					$return = false;
+					$error = rrd_error();
+					$this->Logfile->stlog($error);
+					//debug($error);
+				}
 			}
 		}else{
 			//RRA:AVERAGE:0.5:1:576000 RRA:MAX:0.5:1:576000 RRA:MIN:0.5:1:576000 DS:1:GAUGE:8460:U:U --start=1431375240 --step=60
