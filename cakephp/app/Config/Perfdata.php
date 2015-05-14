@@ -4,7 +4,17 @@ $config = [
 		//Version of Statusengine's Perfdata extension
 		'version' => '1.0.0',
 		
+		/* Logfile of Statusengin's ModPerfdata
+		 * Type: String
+		 * Default: /var/log/mod_perfdata.log
+		 */
 		'logfile' => '/var/log/mod_perfdata.log',
+	
+		/* Number of worker processes, ModPerfdata will create
+		 * Type: Integer
+		 * Default: 2
+		 */
+		'worker' => 2,
 	
 		'RRA' => [
 			'step' => 60,

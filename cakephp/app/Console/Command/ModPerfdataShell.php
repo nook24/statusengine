@@ -57,6 +57,7 @@ class ModPerfdataShell extends AppShell{
 	//Some class variables
 	protected $worker = null;
 	private $maxJobIdleCounter = 250;
+	private $childPids = [];
 	
 	public $Config = [];
 	
@@ -98,8 +99,89 @@ class ModPerfdataShell extends AppShell{
 		//debug($this->parsePerfdataString('active=650;jobs=650;worker=3436;queues=29'));die();
 		//debug($this->parseCheckCommand('84084403-5c21-4273-835b-d8ac770b4a9f!7.0,6.0,5.0!10.0,7.0,6.0'));die();
 		
+		$this->forkWorkers();
+		
 		$this->createWorker();
 		$this->work();
+	}
+	
+	public function forkWorkers(){
+		declare(ticks = 1);
+		if($this->Config['worker'] > 1){
+			for($i = 1; $i < $this->Config['worker']; $i++){
+				$this->Logfile->stlog('Forking a new worker child');
+				$pid = pcntl_fork();
+				if(!$pid){
+					$this->Logfile->clog('Hey, I\'m a new child');
+					pcntl_signal(SIGTERM, [$this, 'childSignalHandler']);
+				}else{
+					//we are the parrent
+					$this->childPids[] = $pid;
+				}
+			}
+		}
+		
+		pcntl_signal(SIGTERM, [$this, 'signalHandler']);
+		pcntl_signal(SIGINT,  [$this, 'signalHandler']);
+	}
+	
+	/**
+	 * This is the parent signal handel, so that we can catch SIGTERM and SIGINT
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
+	public function signalHandler($signo){
+		switch($signo){
+			case SIGINT:
+			case SIGTERM:
+				$this->Logfile->stlog('Will kill my childs :-(');
+				$this->sendSignal(SIGTERM);
+				$this->Logfile->stlog('Bye');
+				exit(0);
+				break;
+		}
+	}
+	
+	/**
+	 * This function sends a singal to every child process
+	 *
+	 * @since 1.0.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @return void
+	 */
+	public function sendSignal($signal){
+		if($signal !== SIGTERM){
+			foreach($this->childPids as $cpid){
+				$this->Logfile->stlog('Send signal to child pid: '.$cpid);
+				posix_kill($cpid, $signal);
+			}
+		}
+
+		if($signal == SIGTERM){
+			foreach($this->childPids as $cpid){
+				$this->Logfile->stlog('Will kill pid: '.$cpid);
+				posix_kill($cpid, SIGTERM);
+			}
+			foreach($this->childPids as $cpid){
+				pcntl_waitpid($cpid, $status);
+				$this->Logfile->stlog('Child ['.$cpid.'] killed successfully');
+			}
+		}
+	}
+	
+	public function childSignalHandler($signo){
+		$this->Logfile->clog('Recived signal: '.$signo);
+		switch($signo){
+			case SIGTERM:
+				$this->Logfile->clog('Will kill myself :-(');
+				$this->Logfile->clog('Unregister all my queues');
+				exit(0);
+				break;
+		}
 	}
 	
 	/**
@@ -157,6 +239,7 @@ class ModPerfdataShell extends AppShell{
 	public function work(){
 		$jobIdleCounter = 0;
 		while(true){
+			pcntl_signal_dispatch();
 			$this->worker->work();
 			if($this->worker->returnCode() == GEARMAN_NO_JOBS || $this->worker->returnCode() == GEARMAN_IO_WAIT){
 				if($jobIdleCounter < $this->maxJobIdleCounter){
