@@ -7,7 +7,7 @@
 
 $config = [
 	//Version of Statusengine
-	'version' => '1.3.0',
+	'version' => '1.4.0',
 	
 	//Logfile, where statusengine will log some information
 	'logfile' => '/var/log/statusengine.log',
@@ -29,6 +29,12 @@ $config = [
 	
 	//The number of the config type you would to dump to the database (just an integer value)
 	'config_type' => 1,
+	
+	//If you want, Statusengine's servicestatus workers are able to
+	//process performacne data for you and save them to RRD files
+	//so you don't need to install any additional software to
+	//get the job done.
+	'process_perfdata' => false,
 	
 	//Workers Statusengine will fork in worker mode
 	'workers' => [

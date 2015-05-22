@@ -35,6 +35,7 @@ apt-get remove gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gea
 
 rm -r /opt/statusengine
 rm /etc/init.d/statusengine
+rm /etc/init.d/mod_perfdata
 
 echo -e "\033[0;34mRemove broker_module=/opt/statusengine/statusengine.o in your config\033[0m"
 

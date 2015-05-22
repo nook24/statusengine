@@ -28,7 +28,7 @@ class LegacyAppModel extends AppModel{
 	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
 	*/
 	public function rawSave($data, $returnLastInserId = true){
-		$this->saveTemplate = 'INSERT INTO `%s` (%s) VALUES %s ON DUPLICATE KEY UPDATE %s;';
+		$this->saveTemplate = 'SET NAMES utf8; INSERT INTO `%s` (%s) VALUES %s ON DUPLICATE KEY UPDATE %s;';
 		if(empty($data)) {
 			return true;
 		}
@@ -77,7 +77,7 @@ class LegacyAppModel extends AppModel{
 	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
 	*/
 	public function rawSaveServicestatus($data, $returnLastInserId = true){
-		$this->saveTemplate = 'INSERT INTO `%s` (%s) VALUES %s ON DUPLICATE KEY UPDATE %s;';
+		$this->saveTemplate = 'SET NAMES utf8; INSERT INTO `%s` (%s) VALUES %s ON DUPLICATE KEY UPDATE %s;';
 		if(empty($data)) {
 			return true;
 		}
@@ -127,7 +127,7 @@ class LegacyAppModel extends AppModel{
 	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
 	*/
 	public function rawInsert($data, $returnLastInserId = true){
-		$this->saveTemplate = 'INSERT INTO `%s` (%s) VALUES %s ;';
+		$this->saveTemplate = 'SET NAMES utf8; INSERT INTO `%s` (%s) VALUES %s ;';
 		if(empty($data)) {
 			return true;
 		}

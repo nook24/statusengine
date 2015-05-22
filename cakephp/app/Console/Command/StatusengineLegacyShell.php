@@ -40,7 +40,7 @@
 **********************************************************************************/
 
 class StatusengineLegacyShell extends AppShell{
-	public $tasks = ['Logfile', 'Memcached'];
+	public $tasks = ['Logfile', 'Memcached', 'Perfdata'];
 	
 	//Load models out of Plugin/Legacy/Model
 	public $uses = [
@@ -171,13 +171,22 @@ class StatusengineLegacyShell extends AppShell{
 		$this->instance_id = Configure::read('instance_id');
 		$this->config_type = Configure::read('config_type');
 		
-		$this->Logfile->init();
+		$this->Logfile->init(Configure::read('logfile'));
 		$this->Logfile->welcome();
 		$this->parser = $this->getOptionParser();
 		$this->out('Starting Statusengine version: '.Configure::read('version').'...');
 		$this->out('THIS IS LEGACY MODE!');
 		$this->Logfile->stlog('THIS IS LEGACY MODE!');
 		$this->servicestatus_freshness = Configure::read('servicestatus_freshness');
+		
+		$this->processPerfdata = Configure::read('process_perfdata');
+		
+		if($this->processPerfdata === true){
+			Configure::load('Perfdata');
+			$this->PerfdataConfig = Configure::read('perfdata');
+			$this->Perfdata->init($this->PerfdataConfig, $this->Logfile);
+		}
+		
 		
 		$this->useMemcached = false;
 		
@@ -1491,6 +1500,25 @@ class StatusengineLegacyShell extends AppShell{
 		];
 		
 		$this->Servicecheck->rawInsert([$data], false);
+		
+		if($this->processPerfdata === true && $payload->servicecheck->perf_data !== null){
+			$parsedPerfdataString = [
+				'DATATYPE' => 'SERVICEPERFDATA',
+				'TIMET' => $payload->servicecheck->start_time,
+				'HOSTNAME' => $payload->servicecheck->host_name,
+				'SERVICEDESC' => $payload->servicecheck->service_description,
+				'SERVICEPERFDATA' => $payload->servicecheck->perf_data,
+				'SERVICECHECKCOMMAND' => $payload->servicecheck->command_name,
+				'SERVICESTATE' => $payload->servicecheck->state,
+				'SERVICESTATETYPE' => $payload->servicecheck->state_type 
+			];
+			
+			$parsedPerfdata = $this->Perfdata->parsePerfdataString($payload->servicecheck->perf_data);
+			$rrdReturn = $this->Perfdata->writeToRrd($parsedPerfdataString, $parsedPerfdata);
+			if($this->PerfdataConfig['XML']['write_xml_files'] === true){
+				$this->Perfdata->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
+			}
+		}
 	}
 	
 	public function processHostchecks($job){
