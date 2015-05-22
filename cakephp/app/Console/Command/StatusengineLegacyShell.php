@@ -181,6 +181,7 @@ class StatusengineLegacyShell extends AppShell{
 		
 		$this->processPerfdata = Configure::read('process_perfdata');
 		
+		$this->processPerfdataCache = [];
 		if($this->processPerfdata === true){
 			Configure::load('Perfdata');
 			$this->PerfdataConfig = Configure::read('perfdata');
@@ -264,8 +265,8 @@ class StatusengineLegacyShell extends AppShell{
 			case START_OBJECT_DUMP:
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR2);
-					
 				}
+				
 				$this->dumpObjects = true;
 				$this->fakeLastInsertId = 1;
 				$this->Logfile->stlog('Start dumping objects');
@@ -335,6 +336,11 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR1);
 				}
+				
+				if($this->workerMode === false && $this->processPerfdata === true){
+					$this->buildProcessPerfdataCache();
+				}
+				
 				$this->dumpObjects = false;
 				break;
 			
@@ -1502,21 +1508,24 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Servicecheck->rawInsert([$data], false);
 		
 		if($this->processPerfdata === true && $payload->servicecheck->perf_data !== null){
-			$parsedPerfdataString = [
-				'DATATYPE' => 'SERVICEPERFDATA',
-				'TIMET' => $payload->servicecheck->start_time,
-				'HOSTNAME' => $payload->servicecheck->host_name,
-				'SERVICEDESC' => $payload->servicecheck->service_description,
-				'SERVICEPERFDATA' => $payload->servicecheck->perf_data,
-				'SERVICECHECKCOMMAND' => $payload->servicecheck->command_name,
-				'SERVICESTATE' => $payload->servicecheck->state,
-				'SERVICESTATETYPE' => $payload->servicecheck->state_type 
-			];
+			//process_performance_data == 1 ?
+			if(isset($this->processPerfdataCache[$service_object_id])){
+				$parsedPerfdataString = [
+					'DATATYPE' => 'SERVICEPERFDATA',
+					'TIMET' => $payload->servicecheck->start_time,
+					'HOSTNAME' => $payload->servicecheck->host_name,
+					'SERVICEDESC' => $payload->servicecheck->service_description,
+					'SERVICEPERFDATA' => $payload->servicecheck->perf_data,
+					'SERVICECHECKCOMMAND' => $payload->servicecheck->command_name,
+					'SERVICESTATE' => $payload->servicecheck->state,
+					'SERVICESTATETYPE' => $payload->servicecheck->state_type 
+				];
 			
-			$parsedPerfdata = $this->Perfdata->parsePerfdataString($payload->servicecheck->perf_data);
-			$rrdReturn = $this->Perfdata->writeToRrd($parsedPerfdataString, $parsedPerfdata);
-			if($this->PerfdataConfig['XML']['write_xml_files'] === true){
-				$this->Perfdata->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
+				$parsedPerfdata = $this->Perfdata->parsePerfdataString($payload->servicecheck->perf_data);
+				$rrdReturn = $this->Perfdata->writeToRrd($parsedPerfdataString, $parsedPerfdata);
+				if($this->PerfdataConfig['XML']['write_xml_files'] === true){
+					$this->Perfdata->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
+				}
 			}
 		}
 	}
@@ -2488,6 +2497,21 @@ class StatusengineLegacyShell extends AppShell{
 		return null;
 	}
 	
+	public function buildProcessPerfdataCache(){
+		$this->processPerfdataCache = [];
+		$result = $this->Service->find('all', [
+			'conditions' => [
+				'process_performance_data' => 1,
+			],
+			'fields' => [
+				'service_object_id'
+			]
+		]);
+		foreach($result as $service){
+			$this->processPerfdataCache[$service['Service']['service_object_id']] = true;
+		}
+	}
+	
 	/**
 	 * For each CRUD operation we need the object_id
 	 * this function will return us the object id for the given $payload
@@ -2721,8 +2745,16 @@ class StatusengineLegacyShell extends AppShell{
 				$this->Logfile->clog('Build up new servicestatus cache');
 				$this->buildServicestatusCache();
 				
+				if($this->processPerfdata === true){
+					if(isset($this->queues['statusngin_servicechecks'])){
+						$this->Logfile->clog('Build up new process perfdata cache');
+						$this->buildProcessPerfdataCache();
+					}
+				}
+				
 				$this->Logfile->clog('I will continue my work');
 				$this->childWork();
+				
 			}
 			pcntl_signal_dispatch();
 			usleep(250000);
