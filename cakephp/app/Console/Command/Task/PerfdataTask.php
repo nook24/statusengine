@@ -121,11 +121,15 @@ class PerfdataTask extends AppShell{
 	}
 	
 	public function writeToRrd($parsedPerfdataString, $parsedPerfdata){
-		if(!is_dir($this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'])){
-			mkdir($this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME']);
+		$replacedHostname = preg_replace($this->Config['replace_characters'], '_', $parsedPerfdataString['HOSTNAME']);
+		$replacedServicename = preg_replace($this->Config['replace_characters'], '_', $parsedPerfdataString['SERVICEDESC']);
+		
+		
+		if(!is_dir($this->Config['PERFDATA']['dir'].$replacedHostname)){
+			mkdir($this->Config['PERFDATA']['dir'].$$replacedHostname);
 		}
 		
-		$perfdataFile = $this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].'.rrd';
+		$perfdataFile = $this->Config['PERFDATA']['dir'].$replacedHostname.'/'.$replacedServicename.'.rrd';
 		$error = '';
 		$return = true;
 		
@@ -194,7 +198,10 @@ class PerfdataTask extends AppShell{
 	}
 	
 	public function updateXML($parsedPerfdataString, $parsedPerfdata, $rrdReturn){
-		$xmlFile = new File($this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].'.xml');
+		$replacedHostname = preg_replace($this->Config['replace_characters'], '_', $parsedPerfdataString['HOSTNAME']);
+		$replacedServicename = preg_replace($this->Config['replace_characters'], '_', $parsedPerfdataString['SERVICEDESC']);
+		
+		$xmlFile = new File($this->Config['PERFDATA']['dir'].$replacedHostname.'/'.$replacedServicename.'.xml');
 		if(!$xmlFile->exists()){
 			$xmlFile->create();
 		}
@@ -212,9 +219,11 @@ $xml .= "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 $dataSourceCounter = 1;
 $template = $this->parseCheckCommand($parsedPerfdataString['SERVICECHECKCOMMAND'])[0];
 foreach($parsedPerfdata as $ds => $data){
+$warnThresholds = $this->thresholds($data['warning'], 'warn');
+$critThresholds = $this->thresholds($data['critical'], 'crit');
 $xml.="  <DATASOURCE>
     <TEMPLATE>".$template."</TEMPLATE>
-    <RRDFILE>".$this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].".rrd</RRDFILE>
+    <RRDFILE>".$this->Config['PERFDATA']['dir'].$replacedHostname.'/'.$replacedServicename.".rrd</RRDFILE>
     <RRD_STORAGE_TYPE>SINGLE</RRD_STORAGE_TYPE>
     <RRD_HEARTBEAT>".$this->Config['RRD']['heartbeat']."</RRD_HEARTBEAT>
     <IS_MULTI>0</IS_MULTI>
@@ -223,13 +232,13 @@ $xml.="  <DATASOURCE>
     <LABEL>".$ds."</LABEL>
     <UNIT>".$data['unit']."</UNIT>
     <ACT>".$data['current']."</ACT>
-    <WARN>".$data['warning']."</WARN>
-    <WARN_MIN></WARN_MIN>
-    <WARN_MAX></WARN_MAX>
+    <WARN>".$warnThresholds['warn']."</WARN>
+    <WARN_MIN>".$warnThresholds['warn_min']."</WARN_MIN>
+    <WARN_MAX>".$warnThresholds['warn_max']."</WARN_MAX>
     <WARN_RANGE_TYPE></WARN_RANGE_TYPE>
-    <CRIT>".$data['critical']."</CRIT>
-    <CRIT_MIN></CRIT_MIN>
-    <CRIT_MAX></CRIT_MAX>
+    <CRIT>".$critThresholds['crit']."</CRIT>
+    <CRIT_MIN>".$critThresholds['crit_min']."</CRIT_MIN>
+    <CRIT_MAX>".$critThresholds['crit_max']."</CRIT_MAX>
     <CRIT_RANGE_TYPE></CRIT_RANGE_TYPE>
     <MIN>".$data['min']."</MIN>
     <MAX>".$data['max']."</MAX>
@@ -252,14 +261,14 @@ $xml.="  <RRD>
   <NAGIOS_HOSTSTATETYPE></NAGIOS_HOSTSTATETYPE>
   <NAGIOS_MULTI_PARENT></NAGIOS_MULTI_PARENT>
   <NAGIOS_PERFDATA>".$parsedPerfdataString['SERVICEPERFDATA']."</NAGIOS_PERFDATA>
-  <NAGIOS_RRDFILE>".$this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].".rrd</NAGIOS_RRDFILE>
+  <NAGIOS_RRDFILE>".$this->Config['PERFDATA']['dir'].$replacedHostname.'/'.$replacedServicename.".rrd</NAGIOS_RRDFILE>
   <NAGIOS_SERVICECHECKCOMMAND>".$parsedPerfdataString['SERVICECHECKCOMMAND']."</NAGIOS_SERVICECHECKCOMMAND>
   <NAGIOS_SERVICEDESC>".$parsedPerfdataString['SERVICEDESC']."</NAGIOS_SERVICEDESC>
   <NAGIOS_SERVICEPERFDATA>".$parsedPerfdataString['SERVICEPERFDATA']."</NAGIOS_SERVICEPERFDATA>
   <NAGIOS_SERVICESTATE>".$this->servicestate[$parsedPerfdataString['SERVICESTATE']]."</NAGIOS_SERVICESTATE>
   <NAGIOS_SERVICESTATETYPE>".($parsedPerfdataString['SERVICESTATETYPE'] == 1 ? 'HARD' : 'SOFT')."</NAGIOS_SERVICESTATETYPE>
   <NAGIOS_TIMET>".$parsedPerfdataString['TIMET']."</NAGIOS_TIMET>
-  <NAGIOS_XMLFILE>".$this->Config['PERFDATA']['dir'].$parsedPerfdataString['HOSTNAME'].'/'.$parsedPerfdataString['SERVICEDESC'].".xml</NAGIOS_XMLFILE>
+  <NAGIOS_XMLFILE>".$this->Config['PERFDATA']['dir'].$replacedHostname.'/'.$replacedServicename.".xml</NAGIOS_XMLFILE>
   <XML>
    <VERSION>4</VERSION>
   </XML>
@@ -292,6 +301,36 @@ $xml.="  <RRD>
 		}else{
 			$return[1] = '';
 		}
+		return $return;
+	}
+	
+	/**
+	 * Parse the thresholds like 50:100 to warn_min and warn_max
+	 *
+	 * @since 1.1.0
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param  string thresholds
+	 * @param  string key for the return array
+	 * @return array  [warn] => null, [warn_min] => 50, [warn_max] => 100
+	 */
+	public function thresholds($threshold, $key = 'warn'){
+		$result = explode(':', $threshold);
+		
+		if(sizeof($result) == 1){
+			$return = [
+				$key => $result[0],
+				$key.'_min' => null,
+				$key.'_max' => null
+			];
+		}else{
+			$return = [
+				$key => null,
+				$key.'_min' => $return[0],
+				$key.'_max' => $return[1]
+			];
+		}
+		
 		return $return;
 	}
 }

@@ -1,8 +1,13 @@
 <?php
+/* Main configuration file of Statusengine's ModPerfdata
+ * This is a PHP file, please check for syntax errors!
+ * Example command to check for any syntax erros:
+ *   php --syntax-check /opt/statusengine/cakephp/app/Config/Perfdata.php
+ */
 $config = [
 	'perfdata' => [
 		//Version of Statusengine's Perfdata extension
-		'version' => '1.0.0',
+		'version' => '1.1.0',
 		
 		/* Logfile of Statusengin's ModPerfdata
 		 * Type: String
@@ -15,6 +20,13 @@ $config = [
 		 * Default: 2
 		 */
 		'worker' => 2,
+		
+		/* Every character that will not match the RegEx will be replaced with _
+		 * in the file name of .rrd and .xml files
+		 * Type: String
+		 * Default: /[^a-zA-Z^0-9\-\.]/
+		 */
+		'replace_characters' => '/[^a-zA-Z^0-9\-\.]/',
 	
 		'RRA' => [
 			'step' => 60,

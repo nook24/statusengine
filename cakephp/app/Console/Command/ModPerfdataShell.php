@@ -108,6 +108,9 @@ class ModPerfdataShell extends AppShell{
 				if(!$pid){
 					$this->Logfile->clog('Hey, I\'m a new child');
 					pcntl_signal(SIGTERM, [$this, 'childSignalHandler']);
+					//Run while(true) to prevent a forkcalypse
+					$this->createWorker();
+					$this->work();
 				}else{
 					//we are the parrent
 					$this->childPids[] = $pid;
