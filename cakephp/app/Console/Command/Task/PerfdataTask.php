@@ -326,8 +326,8 @@ $xml.="  <RRD>
 		}else{
 			$return = [
 				$key => null,
-				$key.'_min' => $return[0],
-				$key.'_max' => $return[1]
+				$key.'_min' => $result[0],
+				$key.'_max' => $result[1]
 			];
 		}
 		
