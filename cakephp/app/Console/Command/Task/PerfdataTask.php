@@ -126,7 +126,7 @@ class PerfdataTask extends AppShell{
 		
 		
 		if(!is_dir($this->Config['PERFDATA']['dir'].$replacedHostname)){
-			mkdir($this->Config['PERFDATA']['dir'].$$replacedHostname);
+			mkdir($this->Config['PERFDATA']['dir'].$replacedHostname);
 		}
 		
 		$perfdataFile = $this->Config['PERFDATA']['dir'].$replacedHostname.'/'.$replacedServicename.'.rrd';
