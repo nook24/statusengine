@@ -27,6 +27,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	</title>
 	<?php
 		echo $this->Html->meta('icon');
+		echo $this->element('assets');
 
 		echo $this->Html->css('cake.generic');
 
