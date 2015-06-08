@@ -21,6 +21,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 <html>
 <head>
 	<?php echo $this->Html->charset(); ?>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>
 		<?php echo $cakeDescription ?>:
 		<?php echo $title_for_layout; ?>
@@ -29,7 +30,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 		echo $this->Html->meta('icon');
 		echo $this->element('assets');
 
-		echo $this->Html->css('cake.generic');
+		//echo $this->Html->css('cake.generic');
 
 		echo $this->fetch('meta');
 		echo $this->fetch('css');
@@ -37,28 +38,40 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	?>
 </head>
 <body>
-	<div id="container">
-		<div id="header">
-			<h1><?php echo $this->Html->link($cakeDescription, 'http://cakephp.org'); ?></h1>
-		</div>
+	
+	<?php echo $this->element('menu'); ?>
+	
+	<div class="container">
+		
+		<?php echo $this->Session->flash(); ?>
+
 		<div id="content">
-
-			<?php echo $this->Session->flash(); ?>
-
 			<?php echo $this->fetch('content'); ?>
 		</div>
-		<div id="footer">
-			<?php echo $this->Html->link(
-					$this->Html->image('cake.power.gif', array('alt' => $cakeDescription, 'border' => '0')),
-					'http://www.cakephp.org/',
-					array('target' => '_blank', 'escape' => false, 'id' => 'cake-powered')
-				);
-			?>
-			<p>
-				<?php echo $cakeVersion; ?>
-			</p>
-		</div>
+
 	</div>
+	
+	<footer class="footer">
+		<div class="container">
+			<div class="row text-muted">
+				<div class="col-xs-12 col-md-6">
+					<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
+						<i class="fa fa-github"></i> 
+						<?php echo __('Contribute to Statusengine');?>
+					</a>
+				</div>
+				<div class="col-xs-12 col-md-6">
+					<div class="pull-right">
+						<a href="http://cakephp.org" target="_blank">
+							<?php echo $this->Html->image('cake-logo-smaller2.png', ['border' => '0']); ?>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</footer>
+	
 	<?php echo $this->element('sql_dump'); ?>
+	
 </body>
 </html>

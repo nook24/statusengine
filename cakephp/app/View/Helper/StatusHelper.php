@@ -1,6 +1,6 @@
 <?php
 /**
-*Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
+* Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
 * 
 * This file is part of Statusengine.
 * 

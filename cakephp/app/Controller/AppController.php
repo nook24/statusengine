@@ -34,7 +34,9 @@ class AppController extends Controller {
 	public $components = [
 		'Paginator',
 		'RequestHandler',
-		'Frontend.Frontend'
+		'Frontend.Frontend',
+		'Session',
+		'Filter'
 	];
 	
 	public $helpers = [
@@ -42,6 +44,17 @@ class AppController extends Controller {
 		'Frontend.Frontend',
 		'Html' => ['className' => 'BoostCake.BoostCakeHtml'],
 		'Form' => ['className' => 'BoostCake.BoostCakeForm'],
-		'Paginator' => ['className' => 'BoostCake.BoostCakePaginator']
+		'Paginator' => ['className' => 'BoostCake.BoostCakePaginator'],
+		'Filter'
 	];
+	
+	public function beforeFilter(){
+		$this->Filter->setRequest($this->request);
+	}
+	
+	public function setFlash($message, $success = true, $key = 'flash'){
+		$this->Session->setFlash($message, 'default', array(
+			'class' => 'alert alert-' . ($success ? 'success' : 'danger')
+		), $key);
+	}
 }

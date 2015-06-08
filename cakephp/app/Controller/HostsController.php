@@ -1,6 +1,6 @@
 <?php
 /**
-*Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
+* Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
 * 
 * This file is part of Statusengine.
 * 
@@ -23,7 +23,6 @@ class HostsController extends AppController{
 	public $helpers = ['Status'];
 	
 	public function index(){
-
 		//Models are not linked for StatusengineLegacyShell, so we need to to the dirty job now :(
 		$this->Hoststatus->primaryKey = 'host_object_id';
 		$this->Host->bindModel([
@@ -52,13 +51,19 @@ class HostsController extends AppController{
 				
 				'Hoststatus.current_state',
 				'Hoststatus.last_check',
+				'Hoststatus.last_state_change',
 				'Hoststatus.problem_has_been_acknowledged',
 				'Hoststatus.scheduled_downtime_depth'
+			],
+			'order' => [
+				'Objects.name1' => 'asc'
+			],
+			'conditions' => [
+				$this->Filter->hosts()
 			]
 		];
 		
 		$this->Paginator->settings = Hash::merge($options, $this->Paginator->settings);
-		
 		$hosts = $this->Paginator->paginate();
 		$this->set(compact(['hosts']));
 		$this->set('_serialize', ['hosts']);
