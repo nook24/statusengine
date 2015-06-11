@@ -48,10 +48,6 @@ class AppController extends Controller {
 		'Filter'
 	];
 	
-	public function beforeFilter(){
-		$this->Filter->setRequest($this->request);
-	}
-	
 	public function setFlash($message, $success = true, $key = 'flash'){
 		$this->Session->setFlash($message, 'default', array(
 			'class' => 'alert alert-' . ($success ? 'success' : 'danger')

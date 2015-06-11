@@ -19,6 +19,20 @@
 */
 class StatusHelper extends AppHelper{
 	
+	public $serviceClasses = [
+		0 => 'success',
+		1 => 'warning',
+		2 => 'danger',
+		3 => 'unknown'
+	];
+	
+	public $serviceState = [
+		0 => 'ok',
+		1 => 'warning',
+		2 => 'critical',
+		3 => 'unknown'
+	];
+	
 	public function hostBorder($state = 0){
 		$states = [
 			0 => 'host_up_border',
@@ -27,5 +41,26 @@ class StatusHelper extends AppHelper{
 		];
 		
 		return $states[$state];
+	}
+	
+	public function serviceProgressbar($servicestatus, $hostObjectId){
+		$html = '<div class="progress">';
+		
+
+		
+		if(isset($servicestatus[$hostObjectId])){
+			$count = array_sum($servicestatus[$hostObjectId]);
+			foreach($servicestatus[$hostObjectId] as $state => $counter){
+				$html .= '<div class="progress-bar progress-bar-'.$this->serviceClasses[$state].'" role="progressbar" style="width:'.round($counter/$count*100).'%;" title="'.round($counter/$count*100).'% '.$this->serviceState[$state].'"></div>';
+			}
+		}else{
+			$html .= '<div class="progress-bar progress-bar-unknown" role="progressbar" style="width:100%;"></div>';
+			
+		}
+		
+		$html .= '</div>';
+		
+		return $html;
+		
 	}
 }

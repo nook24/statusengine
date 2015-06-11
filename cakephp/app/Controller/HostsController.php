@@ -19,8 +19,25 @@
 */
 class HostsController extends AppController{
 	
-	public $uses = ['Legacy.Host', 'Legacy.Hoststatus'];
+	public $uses = ['Legacy.Host', 'Legacy.Hoststatus', 'Legacy.Service', 'Legacy.Objects'];
 	public $helpers = ['Status'];
+	
+	public $filter = [
+		'index' => [
+			'Hoststatus' => [
+				'current_state' => ['type' => 'checkbox', 'value' => [
+					0 => 'Up',
+					1 => 'Down',
+					2 => 'Unreachable'
+				],
+				'class' => 'col-xs-12 col-md-2'
+				]
+			],
+			'Objects' => [
+				'name1' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Search...', 'submit' => true]
+			]
+		]
+	];
 	
 	public function index(){
 		//Models are not linked for StatusengineLegacyShell, so we need to to the dirty job now :(
@@ -34,7 +51,7 @@ class HostsController extends AppController{
 				'Hoststatus' => [
 					'className' => 'Legacy.Hoststatus',
 					'foreignKey' => 'host_object_id'
-				]
+				],
 			]
 		]);
 		
@@ -53,20 +70,73 @@ class HostsController extends AppController{
 				'Hoststatus.last_check',
 				'Hoststatus.last_state_change',
 				'Hoststatus.problem_has_been_acknowledged',
-				'Hoststatus.scheduled_downtime_depth'
+				'Hoststatus.scheduled_downtime_depth',
 			],
 			'order' => [
 				'Objects.name1' => 'asc'
 			],
 			'conditions' => [
 				$this->Filter->hosts()
-			]
+			],
 		];
+		
+		
+		
 		
 		$this->Paginator->settings = Hash::merge($options, $this->Paginator->settings);
 		$hosts = $this->Paginator->paginate();
-		$this->set(compact(['hosts']));
-		$this->set('_serialize', ['hosts']);
 		
+		//Get services + service status
+		$hostObjectIds = Hash::extract($hosts, '{n}.Host.host_object_id');
+		
+		$stateTypes = [
+			0 => 0,
+			1 => 0,
+			2 => 0,
+			3 => 0
+		];
+		
+		foreach($hostObjectIds as $hostObjectId){
+			$servicestatus[$hostObjectId] = $stateTypes;
+			$_servicestatus = $this->Service->find('all', [
+				'fields' => [
+					//'Service.host_object_id',
+					//'Service.service_object_id',
+					'Servicestatus.current_state',
+					'COUNT(*) AS count'
+				],
+				'group' => [
+					'Servicestatus.current_state'
+				],
+				'conditions' => [
+					'Service.host_object_id' => $hostObjectId
+				],
+				'joins' => [
+					[
+						'table' => 'servicestatus',
+						'type' => 'INNER',
+						'alias' => 'Servicestatus',
+						'conditions' => 'Servicestatus.service_object_id = Service.service_object_id'
+					]
+				]
+			]);
+			
+			foreach($_servicestatus as $state){
+				$servicestatus[$hostObjectId][$state['Servicestatus']['current_state']] = $state[0]['count'];
+				
+			}
+		}
+		
+		$this->set(compact(['hosts', 'servicestatus']));
+		$this->set('_serialize', ['hosts']);
+	}
+	
+	public function details($hostObjectId = null){
+		if(!$this->Objects->exists($hostObjectId)){
+			throw new NotFoundException(__('Host not found'));
+		}
+		
+		$object = $this->Objects->findByObjectId($hostObjectId);
+		debug($object);
 	}
 }

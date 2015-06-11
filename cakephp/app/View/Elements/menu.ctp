@@ -11,7 +11,7 @@
 		</div>
 		<div id="navbar" class="navbar-collapse collapse">
 			<ul class="nav navbar-nav">
-				<li class="active"><a href="<?php echo Router::url(['controller' => 'Hosts']); ?>">
+				<li class="active"><a href="<?php echo Router::url(['controller' => 'Hosts', 'action' => 'index']); ?>">
 					<i class="fa fa-hdd-o"></i>
 					<?php echo __('Hosts');?></a>
 				</li>

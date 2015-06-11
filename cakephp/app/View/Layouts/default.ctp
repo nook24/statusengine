@@ -42,25 +42,29 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	<?php echo $this->element('menu'); ?>
 	
 	<div class="container">
-		
 		<?php echo $this->Session->flash(); ?>
-
 		<div id="content">
 			<?php echo $this->fetch('content'); ?>
 		</div>
-
 	</div>
+	
+	<?php echo $this->element('sql_dump'); ?>
 	
 	<footer class="footer">
 		<div class="container">
 			<div class="row text-muted">
-				<div class="col-xs-12 col-md-6">
+				<div class="col-xs-12 col-md-4">
 					<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
 						<i class="fa fa-github"></i> 
 						<?php echo __('Contribute to Statusengine');?>
 					</a>
 				</div>
-				<div class="col-xs-12 col-md-6">
+				<div class="col-xs-12 col-md-4 text-center">
+					<a href="javascript:void(0);" class="text-muted" data-toggle="modal" data-target="#oITCModal">
+						<?php echo __('Want more? Check out openITCOCKPIT!');?>
+					</a>
+				</div>
+				<div class="col-xs-12 col-md-4">
 					<div class="pull-right">
 						<a href="http://cakephp.org" target="_blank">
 							<?php echo $this->Html->image('cake-logo-smaller2.png', ['border' => '0']); ?>
@@ -71,7 +75,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 		</div>
 	</footer>
 	
-	<?php echo $this->element('sql_dump'); ?>
+	<?php echo $this->element('oitc_modal'); ?>
 	
 </body>
 </html>

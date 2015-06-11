@@ -32,5 +32,6 @@
 */
 class Service extends LegacyAppModel{
 	public $useDbConfig = 'legacy';
+	public $useTable = 'services';
 	public $primaryKey = 'service_id';
 }

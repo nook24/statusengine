@@ -23,30 +23,35 @@ $this->Paginator->options(['url' => $this->params['named']]);
 <div class="container">
 	<div class="row">
 		<div class="col-xs-12">
-			<h3><?php echo __('Hosts'); ?></h3>
+			<h3><i class="fa fa-hdd-o fa-lg"></i> <?php echo __('Hosts'); ?></h3>
+			<hr />
 		</div>
 		
-		<?php $this->Filter->hosts();?>
-		
+		<?php echo $this->Filter->render();?>
+
 		<div class="col-sm-3 hidden-xs"><?php echo $this->Paginator->sort('Objects.name1', __('Name')); ?></div>
 		<div class="col-sm-3 hidden-xs"><?php echo $this->Paginator->sort('Host.address', __('Address')); ?></div>
-		<div class="col-sm-3 hidden-xs"><?php echo $this->Paginator->sort('Hoststatus.last_check', __('Last Check')); ?></div>
-		<div class="col-sm-3 hidden-xs"><?php echo $this->Paginator->sort('Hoststatus.last_state_change', __('State since')); ?></div>
+		<div class="col-sm-2 hidden-xs"><?php echo $this->Paginator->sort('Hoststatus.last_check', __('Last Check')); ?></div>
+		<div class="col-sm-2 hidden-xs"><?php echo $this->Paginator->sort('Hoststatus.last_state_change', __('State since')); ?></div>
+		<div class="col-sm-2 hidden-xs"><?php echo __('Service summary');?></div>
 		
 		
 		<?php foreach($hosts as $host): ?>
 			<?php $borderClass = $this->Status->hostBorder($host['Hoststatus']['current_state']);?>
-			<div class="col-xs-12 col-md-3 <?php echo $borderClass; ?> host_up_border_first">
-				<?php echo h($host['Objects']['name1']);?>
+			<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?> host_up_border_first">
+				<a href="<?php echo Router::url(['action' => 'details', $host['Host']['host_object_id']]); ?>"><?php echo h($host['Objects']['name1']);?></a>
 			</div>
 			<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?>">
 				<?php echo h($host['Host']['address']);?>
 			</div>
-			<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?>">
-				<?php echo h($host['Hoststatus']['last_check']);?>
+			<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?>">
+				<?php echo $this->Time->format($host['Hoststatus']['last_check'], '%H:%M %d.%m.%Y');?>
 			</div>
-			<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?>">
-				<?php echo h($host['Hoststatus']['last_state_change']);?>
+			<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?>">
+				<?php echo $this->Time->format($host['Hoststatus']['last_state_change'], '%H:%M %d.%m.%Y');?>
+			</div>
+			<div class="col-sm-2 hidden-xs">
+				<?php echo $this->Status->serviceProgressbar($servicestatus, $host['Host']['host_object_id']); ?>
 			</div>
 		<?php endforeach; ?>
 	</div>
