@@ -54,5 +54,8 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				<?php echo $this->Status->serviceProgressbar($servicestatus, $host['Host']['host_object_id']); ?>
 			</div>
 		<?php endforeach; ?>
+		
+		<?php echo $this->element('paginator'); ?>
+		
 	</div>
 </div>

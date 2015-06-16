@@ -12,7 +12,7 @@
 				</p>
 				<br />
 				<center>
-					<a href="http://oepnitcockpit.org/v3" class="btn btn-primary" target="_blank">
+					<a href="http://openitcockpit.org/v3" class="btn btn-primary" target="_blank">
 						<i class="fa fa-download"></i> <?php echo __('Download now!');?>
 					</a>
 				</center>

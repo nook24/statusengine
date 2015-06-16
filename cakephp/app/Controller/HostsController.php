@@ -19,7 +19,12 @@
 */
 class HostsController extends AppController{
 	
-	public $uses = ['Legacy.Host', 'Legacy.Hoststatus', 'Legacy.Service', 'Legacy.Objects'];
+	public $uses = [
+		'Legacy.Host',
+		'Legacy.Hoststatus',
+		'Legacy.Service',
+		'Legacy.Objects'
+	];
 	public $helpers = ['Status'];
 	
 	public $filter = [
@@ -80,9 +85,6 @@ class HostsController extends AppController{
 			],
 		];
 		
-		
-		
-		
 		$this->Paginator->settings = Hash::merge($options, $this->Paginator->settings);
 		$hosts = $this->Paginator->paginate();
 		
@@ -127,7 +129,10 @@ class HostsController extends AppController{
 			}
 		}
 		
-		$this->set(compact(['hosts', 'servicestatus']));
+		$this->set(compact([
+			'hosts',
+			'servicestatus'
+		]));
 		$this->set('_serialize', ['hosts']);
 	}
 	
@@ -136,7 +141,16 @@ class HostsController extends AppController{
 			throw new NotFoundException(__('Host not found'));
 		}
 		
+		$hoststatus = $this->Hoststatus->findByHostObjectId($hostObjectId);
 		$object = $this->Objects->findByObjectId($hostObjectId);
-		debug($object);
+		
+		$this->set(compact([
+			'hoststatus',
+			'object'
+		]));
+		$this->set('_serialize', [
+			'hoststatus',
+			'object'
+		]);
 	}
 }

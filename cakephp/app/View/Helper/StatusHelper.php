@@ -19,6 +19,18 @@
 */
 class StatusHelper extends AppHelper{
 	
+	public $hostClasses = [
+		0 => 'success',
+		1 => 'danger',
+		2 => 'unknown'
+	];
+	
+	public $hostState = [
+		0 => 'Up',
+		1 => 'Down',
+		2 => 'Unreachable'
+	];
+	
 	public $serviceClasses = [
 		0 => 'success',
 		1 => 'warning',
@@ -27,10 +39,10 @@ class StatusHelper extends AppHelper{
 	];
 	
 	public $serviceState = [
-		0 => 'ok',
-		1 => 'warning',
-		2 => 'critical',
-		3 => 'unknown'
+		0 => 'Ok',
+		1 => 'Warning',
+		2 => 'Critical',
+		3 => 'Unknown'
 	];
 	
 	public function hostBorder($state = 0){
@@ -45,9 +57,6 @@ class StatusHelper extends AppHelper{
 	
 	public function serviceProgressbar($servicestatus, $hostObjectId){
 		$html = '<div class="progress">';
-		
-
-		
 		if(isset($servicestatus[$hostObjectId])){
 			$count = array_sum($servicestatus[$hostObjectId]);
 			foreach($servicestatus[$hostObjectId] as $state => $counter){
@@ -55,12 +64,38 @@ class StatusHelper extends AppHelper{
 			}
 		}else{
 			$html .= '<div class="progress-bar progress-bar-unknown" role="progressbar" style="width:100%;"></div>';
-			
 		}
-		
 		$html .= '</div>';
-		
 		return $html;
+	}
+	
+	public function hoststatus($currentState){
+		if(isset($this->hostState[$currentState])){
+			return __($this->hostState[$currentState]);
+		}
+		return __('???');
+	}
+	
+	public function hostStateIcon($currentState){
+		if(isset($this->hostClasses[$currentState]) && isset($this->hostState[$currentState])){
+			return '<span class="label label-default label-'.$this->hostClasses[$currentState].'">'.__($this->hostState[$currentState]).'</span>';
+		}
+		return '<span class="label label-default">'.__('???').'</span>';
+	}
+	
+	public function booleanValue($value, $options = []){
+		$_options = [
+			'text' => [
+				1 => __('Enabled'),
+				0 => __('Disabled')
+			]
+		];
 		
+		$options = Hash::merge($_options, $options);
+		
+		if($value == 1){
+			return '<span class="label label-success">'.$options['text'][1].'</span>';
+		}
+		return '<span class="label label-danger">'.$options['text'][0].'</span>';
 	}
 }
