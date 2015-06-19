@@ -143,12 +143,24 @@ class HostsController extends AppController{
 		
 		$hoststatus = $this->Hoststatus->findByHostObjectId($hostObjectId);
 		$object = $this->Objects->findByObjectId($hostObjectId);
+		$host = $this->Host->find('first', [
+			'conditions' => [
+				'Host.host_object_id' => $hostObjectId
+			],
+			'fields' => [
+				'Host.address',
+				'Host.display_name'
+			]
+		]);
 		
+		$this->Frontend->setJson('hostObectId', $hostObjectId);
 		$this->set(compact([
+			'host',
 			'hoststatus',
 			'object'
 		]));
 		$this->set('_serialize', [
+			'host',
 			'hoststatus',
 			'object'
 		]);

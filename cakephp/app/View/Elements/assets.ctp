@@ -21,13 +21,7 @@ if(Configure::read('debug') == 0 && file_exists(WWW_ROOT . 'js/app_build.js') &&
  <![endif]-->
 
 <?php
-#if(in_array(Inflector::underscore($this->name), array('system_contents', 'articles', 'galleries'))) {
-	echo $this->Html->script(array(
-		'/ck_editor/js/ckeditor/ckeditor.js',
-		'/ck_editor/js/ckeditor/adapters/jquery.js',
-		'vendor/ckfinder/ckfinder.js'
-	));
-#}
+
 
 echo $this->fetch('meta');
 echo $this->fetch('css');

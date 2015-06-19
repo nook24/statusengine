@@ -21,9 +21,19 @@ $this->Paginator->options(['url' => $this->params['named']]);
 ?>
 
 <div class="container">
+	<div class="alert alert-success externalcommand" role="alert">
+		<p><?php echo __('External command send successfully.')?></p>
+		<p><?php echo __('Automatically reload in'); ?> <span>5</span> <?php echo __('seconds');?></p>
+	</div>
 	<div class="row">
 		<div class="col-xs-12 col-sm-8 col-md-9">
-			<h3><?php echo $this->Status->hostStateIcon($hoststatus['Hoststatus']['current_state']);?> <?php echo h($object['Objects']['name1']); ?></h3>
+			<h3>
+				<?php echo $this->Status->hostStateIcon($hoststatus['Hoststatus']['current_state']);?>
+			<?php echo h($object['Objects']['name1']); ?>
+			<?php if(isset($host['Host']['address'])):?>
+				(<?php echo h($host['Host']['address']);?>)
+			<?php endif;?>
+		</h3>
 		</div>
 		<div class="col-xs-12 col-sm-2 col-md-1">
 			<div class="dropdown" style="padding-top: 15px;">
@@ -45,12 +55,12 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					<span class="caret"></span>
 				</button>
 				<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-					<li><a href="#"><?php echo __('Reschedule'); ?></a></li>
-					<li><a href="#"><?php echo __('Submit passive check result'); ?></a></li>
-					<li><a href="#"><?php echo __('Schedule downtime'); ?></a></li>
-					<li><a href="#"><?php echo __('Send custom notification'); ?></a></li>
+					<li><a href="javascript:void(0);" class="sendCommand" task="reschedule"><?php echo __('Reschedule'); ?></a></li>
+					<li><a href="javascript:void(0);" class="sendCommand" task="passive"><?php echo __('Submit passive check result'); ?></a></li>
+					<li><a href="javascript:void(0);" class="sendCommand" task=""><?php echo __('Schedule downtime'); ?></a></li>
+					<li><a href="javascript:void(0);" class="sendCommand" task="notify"><?php echo __('Send custom notification'); ?></a></li>
 					<?php if($hoststatus['Hoststatus']['current_state'] > 0):?>
-						<li><a href="#"><?php echo __('Set acknowledgment'); ?></a></li>
+						<li><a href="javascript:void(0);" class="sendCommand" task="ack"><?php echo __('Set acknowledgment'); ?></a></li>
 					<?php endif; ?>
 				</ul>
 			</div>
