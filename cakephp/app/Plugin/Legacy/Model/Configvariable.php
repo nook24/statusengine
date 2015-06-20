@@ -34,4 +34,12 @@ class Configvariable extends LegacyAppModel{
 	public $useDbConfig = 'legacy';
 	public $useTable = 'configfilevariables';
 	public $primaryKey = 'configfilevariable_id';
+	
+	public function getCommandFile(){
+		$result = $this->findByVarname('command_file');
+		if(empty($result)){
+			return false;
+		}
+		return $result['Configvariable']['varvalue'];
+	}
 }

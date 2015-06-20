@@ -23,7 +23,8 @@ class HostsController extends AppController{
 		'Legacy.Host',
 		'Legacy.Hoststatus',
 		'Legacy.Service',
-		'Legacy.Objects'
+		'Legacy.Objects',
+		'Legacy.Configvariable'
 	];
 	public $helpers = ['Status'];
 	
@@ -149,13 +150,17 @@ class HostsController extends AppController{
 			]
 		]);
 		
-		Configure::load('Interface');
+		$commandFile = $this->Configvariable->getCommandFile();
 		$commandFileError = false;
-		if(!is_writable(Configure::read('Interface.command_file'))){
-			$commandFileError = 'External command file '.Configure::read('Interface.command_file').' is not writable';
-		}
-		if(!file_exists(Configure::read('Interface.command_file'))){
-			$commandFileError = 'External command file '.Configure::read('Interface.command_file').' does not exists';
+		if($commandFile === false){
+			$commandFileError = 'External command file not found in database! Check your app/Config/Statusengine.php => coreconfig settings!';
+		}else{
+			if(!is_writable($commandFile)){
+				$commandFileError = 'External command file '.Configure::read('Interface.command_file').' is not writable';
+			}
+			if(!file_exists($commandFile)){
+				$commandFileError = 'External command file '.Configure::read('Interface.command_file').' does not exists';
+			}
 		}
 		
 		$this->Frontend->setJson('hostObectId', $hostObjectId);
