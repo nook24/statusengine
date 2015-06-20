@@ -150,16 +150,27 @@ class HostsController extends AppController{
 			]
 		]);
 		
+		Configure::load('Interface');
+		$commandFileError = false;
+		if(!is_writable(Configure::read('Interface.command_file'))){
+			$commandFileError = 'External command file '.Configure::read('Interface.command_file').' is not writable';
+		}
+		if(!file_exists(Configure::read('Interface.command_file'))){
+			$commandFileError = 'External command file '.Configure::read('Interface.command_file').' does not exists';
+		}
+		
 		$this->Frontend->setJson('hostObectId', $hostObjectId);
 		$this->set(compact([
 			'host',
 			'hoststatus',
-			'object'
+			'object',
+			'commandFileError'
 		]));
 		$this->set('_serialize', [
 			'host',
 			'hoststatus',
-			'object'
+			'object',
+			'commandFileError'
 		]);
 	}
 }

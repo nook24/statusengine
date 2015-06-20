@@ -26,6 +26,13 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<p><?php echo __('Automatically reload in'); ?> <span>5</span> <?php echo __('seconds');?></p>
 	</div>
 	<div class="row">
+		<?php if($commandFileError !== false): ?>
+			<div class="col-xs-12">
+				<div class="alert alert-danger" role="alert">
+					<?php echo h($commandFileError); ?>
+				</div>
+			</div>
+		<?php endif; ?>
 		<div class="col-xs-12 col-sm-8 col-md-9">
 			<h3>
 				<?php echo $this->Status->hostStateIcon($hoststatus['Hoststatus']['current_state']);?>
