@@ -9,5 +9,8 @@ $config = [
 		//Path to Naemons command file, to send external commands
 		//like SCHEDULE_FORCED_HOST_CHECK etc..
 		'command_file' => '/opt/openitc/nagios/var/rw/naemon.cmd',
+		
+		//Path to naemonstats binary
+		'naemonstats' => '/opt/openitc/nagios/bin/naemonstats',
 	]
 ];

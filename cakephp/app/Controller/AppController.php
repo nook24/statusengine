@@ -48,6 +48,12 @@ class AppController extends Controller {
 		'Filter'
 	];
 	
+	function beforeFilter(){
+		parent::beforeFilter();
+		//Set global default limit for pagination
+		$this->Paginator->settings['limit'] = 50;
+	}
+	
 	public function setFlash($message, $success = true, $key = 'flash'){
 		$this->Session->setFlash($message, 'default', array(
 			'class' => 'alert alert-' . ($success ? 'success' : 'danger')

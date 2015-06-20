@@ -43,18 +43,16 @@ class FilterComponent extends Component{
 		
 		if(!isset($this->_filter[$this->Controller->action])){
 			$this->Controller->set('FilterComponent_filter', []);
+			$this->Controller->set('FilterComponent_isFilter', $this->isFilter);
 			return;
 		}
 		
 		//Set filter settings for view
-		$filter = $this->_filter[$this->Controller->action];
-		$this->Controller->set('FilterComponent_filter', $filter);
-		
 		if(isset($this->request->data['Filter'])){
 			$this->isFilter = true;
 		}
-		
-		//debug($this->request->named);
+		$filter = $this->_filter[$this->Controller->action];
+		$this->Controller->set('FilterComponent_filter', $filter);
 		
 		if(isset($this->request->data['Filter'])){
 			$url = [];
@@ -69,7 +67,7 @@ class FilterComponent extends Component{
 									foreach($value as $key => $value){
 										if($value == 1){
 											$conditions[$modelName.'.'.$fieldName][] = $key;
-											$url['Filter'][$modelName][$fieldName][$key] = $value;
+											$url['Filter'][$modelName][$fieldName][$key] = $key;
 										}
 									}
 								}else{
@@ -123,10 +121,10 @@ class FilterComponent extends Component{
 								case 'checkbox':
 									if(is_array($value)){
 										//We have an array of checkboxes, for status for example
-										foreach($value as $key => $value){
-											if($value == 1){
-												$conditions[$modelName.'.'.$fieldName][] = $key;
-											}
+										foreach($value as $crap => $value){
+											//if($value > 0){
+											$conditions[$modelName.'.'.$fieldName][] = $value;
+											//}
 										}
 									}else{
 										if($value > 0){
@@ -145,38 +143,13 @@ class FilterComponent extends Component{
 					}
 				}
 				//Set conditions for paginator
-				$this->Controller->paginate = Hash::merge($this->Controller->paginate, [
-					'conditions' => $conditions
-				]);
+				if(isset($conditions)){
+					$this->Controller->paginate = Hash::merge($this->Controller->paginate, [
+						'conditions' => $conditions
+					]);
+				}
 			}
 		}
-	}
-	
-	
-	
-	public function setFilter($filter){
-		$this->_filter = $filter;
-		$this->Controller->set('FilterComponent_filter', $filter);
-	}
-	
-	public function hosts(){
-		$conditions = [];
-		if(isset($this->request->data['Filter']['Hoststatus']) && is_array($this->request->data['Filter']['Hoststatus'])){
-			$conditions['Hoststatus.current_state'] = array_keys($this->request->data['Filter']['Hoststatus']);
-			
-			//The user selected all host state types (0,1,2)
-			//So we unset the filter, because its useless
-			if(sizeof($conditions['Hoststatus.current_state']) == 3){
-				unset($conditions['Hoststatus.current_state']);
-			}
-		}
-
-		if(isset($this->request->data['Filter']['Objects']['name1'])){
-			if($this->request->data['Filter']['Objects']['name1'] != ''){
-				$conditions['Objects.name1 LIKE'] = '%'.$this->request->data['Filter']['Objects']['name1'].'%';
-			}
-		}
-		
-		return $conditions;
+		$this->Controller->set('FilterComponent_isFilter', $this->isFilter);
 	}
 }

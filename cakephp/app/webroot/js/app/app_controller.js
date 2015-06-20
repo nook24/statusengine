@@ -37,7 +37,15 @@ Frontend.AppController = Frontend.Controller.extend({
 	 * @return void
 	 */
 	_initialize: function(){
-
+		//Bind click evento to Search button
+		$('#openFilter').click(function(){
+			var $filterDiv = $('#filterInputs');
+			if($filterDiv.is(":visible")){
+				$filterDiv.hide();
+			}else{
+				$filterDiv.show();
+			}
+		});
 	},
 
 	/**

@@ -79,10 +79,7 @@ class HostsController extends AppController{
 			],
 			'order' => [
 				'Objects.name1' => 'asc'
-			],
-			'conditions' => [
-				$this->Filter->hosts()
-			],
+			]
 		];
 		
 		$this->Paginator->settings = Hash::merge($options, $this->Paginator->settings);
