@@ -55,7 +55,29 @@ class StatusHelper extends AppHelper{
 		return $states[$state];
 	}
 	
-	public function serviceProgressbar($servicestatus, $hostObjectId){
+	public function hostProgressbar($hoststatus, $hostObjectId = false){
+		//Dirty workaround for HomeController
+		if($hostObjectId === false){
+			$hoststatus = [$hoststatus];
+		}
+		$html = '<div class="progress">';
+		if(isset($hoststatus[$hostObjectId])){
+			$count = array_sum($hoststatus[$hostObjectId]);
+			foreach($hoststatus[$hostObjectId] as $state => $counter){
+				$html .= '<div class="progress-bar progress-bar-'.$this->hostClasses[$state].'" role="progressbar" style="width:'.round($counter/$count*100).'%;" title="'.round($counter/$count*100).'% '.$this->hostState[$state].'"></div>';
+			}
+		}else{
+			$html .= '<div class="progress-bar progress-bar-unknown" role="progressbar" style="width:100%;"></div>';
+		}
+		$html .= '</div>';
+		return $html;
+	}
+	
+	public function serviceProgressbar($servicestatus, $hostObjectId = false){
+		//Dirty workaround for HomeController
+		if($hostObjectId === false){
+			$servicestatus = [$servicestatus];
+		}
 		$html = '<div class="progress">';
 		if(isset($servicestatus[$hostObjectId])){
 			$count = array_sum($servicestatus[$hostObjectId]);

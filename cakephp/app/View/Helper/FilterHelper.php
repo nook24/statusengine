@@ -30,6 +30,9 @@ class FilterHelper extends AppHelper{
 	}
 	
 	public function render(){
+		if(empty($this->_filter)){
+			return;
+		}
 		$html = '<div class="row" style="padding-bottom: 15px;">';
 		$html .= '<div class="col-xs-12">';
 		if($this->_isFilter === true){

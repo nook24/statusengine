@@ -122,7 +122,6 @@ class HostsController extends AppController{
 			
 			foreach($_servicestatus as $state){
 				$servicestatus[$hostObjectId][$state['Servicestatus']['current_state']] = $state[0]['count'];
-				
 			}
 		}
 		

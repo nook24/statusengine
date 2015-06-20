@@ -29,6 +29,10 @@ body > .container {
 	background-color: #eee;
 }
 
+.text-unknown{
+	color: #696969;
+}
+
 @media (max-width: 767px) {
 	.host_up_border {
 		border-left: 2px solid green;

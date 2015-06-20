@@ -1,0 +1,87 @@
+<?php
+/**
+* Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
+* 
+* This file is part of Statusengine.
+* 
+* Statusengine is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 2 of the License, or
+* (at your option) any later version.
+* 
+* Statusengine is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* 
+* You should have received a copy of the GNU General Public License
+* along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
+*/
+class HomeController extends AppController{
+	public $uses = [
+		'Legacy.Host',
+		'Legacy.Hoststatus',
+		'Legacy.Service',
+		'Legacy.Objects'
+	];
+	public $helpers = ['Status'];
+	
+	public function index(){
+		$hostStatusCount = [
+			0 => 0,
+			1 => 0,
+			2 => 0
+		];
+		$hoststatus = $this->Host->find('all', [
+			'fields' => [
+				'Hoststatus.current_state',
+				'COUNT(*) AS count'
+			],
+			'group' => [
+				'Hoststatus.current_state'
+			],
+			'joins' => [
+				[
+					'table' => 'hoststatus',
+					'type' => 'INNER',
+					'alias' => 'Hoststatus',
+					'conditions' => 'Hoststatus.host_object_id = Host.host_object_id'
+				]
+			]
+		]);
+		foreach($hoststatus as $state){
+			$hostStatusCount[$state['Hoststatus']['current_state']] = $state[0]['count'];
+		}
+		
+		$serviceStatusCount = [
+			0 => 0,
+			1 => 0,
+			2 => 0,
+			3 => 0
+		];
+		$servicestatus = $this->Service->find('all', [
+			'fields' => [
+				'Servicestatus.current_state',
+				'COUNT(*) AS count'
+			],
+			'group' => [
+				'Servicestatus.current_state'
+			],
+			'joins' => [
+				[
+					'table' => 'servicestatus',
+					'type' => 'INNER',
+					'alias' => 'Servicestatus',
+					'conditions' => 'Servicestatus.service_object_id = Service.service_object_id'
+				]
+			]
+		]);
+		foreach($servicestatus as $state){
+			$serviceStatusCount[$state['Servicestatus']['current_state']] = $state[0]['count'];
+		}
+		$this->set(compact([
+			'hostStatusCount',
+			'serviceStatusCount'
+		]));
+	}
+}
