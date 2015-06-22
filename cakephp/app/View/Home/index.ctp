@@ -121,7 +121,7 @@
 								]
 							]
 						]
-						]); ?>" class="btn btn-danger" style="margin-bottom: 5px;">
+						]); ?>" class="btn btn-warning" style="margin-bottom: 5px;">
 						<?php echo $serviceStatusCount[1]; ?>
 					</a>
 				</div>
@@ -136,7 +136,7 @@
 								]
 							]
 						]
-						]); ?>" class="btn btn-warning" style="margin-bottom: 5px;">
+						]); ?>" class="btn btn-danger" style="margin-bottom: 5px;">
 						<?php echo $serviceStatusCount[2]; ?>
 					</a>
 				</div>
