@@ -34,14 +34,44 @@ body > .container {
 }
 
 @media (max-width: 767px) {
-	.host_up_border {
-		border-left: 2px solid green;
+	.host_up_border,
+	.service_ok_border {
+		border-left: 2px solid #96FFBB;
+	}
+	
+	.host_down_border,
+	.service_critical_border{
+		border-left: 2px solid red;
+	}
+	
+	.host_unreachable_border,
+	.service_unknown_border{
+		border-left: 2px solid #8C8C8C;
+	}
+	
+	.service_warnign_border{
+		border-left: 2px solid #FFFF57;
 	}
 }
 
 @media (min-width: 768px) {
-	.host_up_border_first {
-		border-left: 2px solid green;
+	.host_up_border_first,
+	.service_ok_border_first{
+		border-left: 4px solid #96FFBB;
+	}
+	
+	.host_down_border_first,
+	.service_critical_border_first{
+		border-left: 4px solid red;
+	}
+	
+	.host_unreachable_border_first,
+	.service_unknown_border_first{
+		border-left: 4px solid #8C8C8C;
+	}
+	
+	.service_warnign_border_first{
+		border-left: 4px solid #FFFF57;
 	}
 }
 

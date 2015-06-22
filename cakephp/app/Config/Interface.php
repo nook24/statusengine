@@ -6,7 +6,16 @@
  */
 $config = [
 	'Interface' => [
-		//Path to naemonstats binary
+		// Path to naemonstats binary
 		'naemonstats' => '/opt/openitc/nagios/bin/naemonstats',
+		
+		// common web server user groups
+		'webserver_usergroups' => [
+			'www-data',
+			'www',
+			'httpd',
+			'apache',
+			'nginx'
+		]
 	]
 ];

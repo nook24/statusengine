@@ -38,7 +38,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		
 		<?php foreach($hosts as $host): ?>
 			<?php $borderClass = $this->Status->hostBorder($host['Hoststatus']['current_state']);?>
-			<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?> host_up_border_first">
+			<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?> <?php echo $borderClass; ?>_first">
 				<a href="<?php echo Router::url(['action' => 'details', $host['Host']['host_object_id']]); ?>"><?php echo h($host['Objects']['name1']);?></a>
 			</div>
 			<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?>">
@@ -52,6 +52,9 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			</div>
 			<div class="col-sm-2 hidden-xs">
 				<?php echo $this->Status->serviceProgressbar($servicestatus, $host['Host']['host_object_id']); ?>
+			</div>
+			<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
+				&nbsp;
 			</div>
 		<?php endforeach; ?>
 		

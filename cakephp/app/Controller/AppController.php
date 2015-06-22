@@ -59,4 +59,11 @@ class AppController extends Controller {
 			'class' => 'alert alert-' . ($success ? 'success' : 'danger')
 		), $key);
 	}
+	
+	public function fixPaginatorOrder($defaultOrder = []){
+		if(isset($this->request->params['named']['sort'])){
+			return [$this->request->params['named']['sort']];
+		}
+		return $defaultOrder;
+	}
 }

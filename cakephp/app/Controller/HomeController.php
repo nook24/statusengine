@@ -22,11 +22,17 @@ class HomeController extends AppController{
 		'Legacy.Host',
 		'Legacy.Hoststatus',
 		'Legacy.Service',
-		'Legacy.Objects'
+		'Legacy.Objects',
+		'Legacy.Configvariable'
 	];
 	public $helpers = ['Status'];
 	
 	public function index(){
+		if(!$this->Configvariable->isRightNaemonUsergroup()){
+			$this->setFlash(
+				'<p>'.__('Statusengine requres that Naemon runs as the web servers user group (www-data for example)').'</p><p>'
+				.__('Please check "naemon_group=" in your naemon.cfg').'</p>', false);
+		}
 		$hostStatusCount = [
 			0 => 0,
 			1 => 0,
@@ -81,7 +87,7 @@ class HomeController extends AppController{
 		}
 		$this->set(compact([
 			'hostStatusCount',
-			'serviceStatusCount'
+			'serviceStatusCount',
 		]));
 	}
 }

@@ -27,6 +27,7 @@ class HostsController extends AppController{
 		'Legacy.Configvariable'
 	];
 	public $helpers = ['Status'];
+	public $components = ['Externalcommands'];
 	
 	public $filter = [
 		'index' => [
@@ -61,7 +62,7 @@ class HostsController extends AppController{
 			]
 		]);
 		
-		$options = [
+		$query = [
 			'fields' => [
 				'Objects.object_id',
 				'Objects.name1',
@@ -83,7 +84,7 @@ class HostsController extends AppController{
 			]
 		];
 		
-		$this->Paginator->settings = Hash::merge($options, $this->Paginator->settings);
+		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
 		$hosts = $this->Paginator->paginate();
 		
 		//Get services + service status
@@ -150,31 +151,18 @@ class HostsController extends AppController{
 			]
 		]);
 		
-		$commandFile = $this->Configvariable->getCommandFile();
-		$commandFileError = false;
-		if($commandFile === false){
-			$commandFileError = 'External command file not found in database! Check your app/Config/Statusengine.php => coreconfig settings!';
-		}else{
-			if(!is_writable($commandFile)){
-				$commandFileError = 'External command file '.Configure::read('Interface.command_file').' is not writable';
-			}
-			if(!file_exists($commandFile)){
-				$commandFileError = 'External command file '.Configure::read('Interface.command_file').' does not exists';
-			}
-		}
+		$this->Externalcommands->checkCmd();
 		
 		$this->Frontend->setJson('hostObectId', $hostObjectId);
 		$this->set(compact([
 			'host',
 			'hoststatus',
 			'object',
-			'commandFileError'
 		]));
 		$this->set('_serialize', [
 			'host',
 			'hoststatus',
 			'object',
-			'commandFileError'
 		]);
 	}
 }

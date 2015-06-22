@@ -15,7 +15,7 @@
 					<i class="fa fa-hdd-o"></i>
 					<?php echo __('Hosts');?></a>
 				</li>
-				<li><a href="#">
+				<li><a href="<?php echo Router::url(['controller' => 'Services', 'action' => 'index']); ?>">
 					<i class="fa fa-cog"></i>
 					<?php echo __('Services');?></a>
 				</li>

@@ -55,6 +55,17 @@ class StatusHelper extends AppHelper{
 		return $states[$state];
 	}
 	
+	public function serviceBorder($state = 0){
+		$states = [
+			0 => 'service_ok_border',
+			1 => 'service_warnign_border',
+			2 => 'service_critical_border',
+			3 => 'service_unknown_border'
+		];
+		
+		return $states[$state];
+	}
+	
 	public function hostProgressbar($hoststatus, $hostObjectId = false){
 		//Dirty workaround for HomeController
 		if($hostObjectId === false){

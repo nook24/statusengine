@@ -21,6 +21,18 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 <html>
 <head>
 	<?php echo $this->Html->charset(); ?>
+	
+	<!--
+		 ____  _        _                              _            
+		/ ___|| |_ __ _| |_ _   _ ___  ___ _ __   __ _(_)_ __   ___ 
+		\___ \| __/ _` | __| | | / __|/ _ \ '_ \ / _` | | '_ \ / _ \
+		 ___) | || (_| | |_| |_| \__ \  __/ | | | (_| | | | | |  __/
+		|____/ \__\__,_|\__|\__,_|___/\___|_| |_|\__, |_|_| |_|\___|
+		                                         |___/
+		                  the missing event broker
+		                http://www.statusengine.org
+		            https://github.com/nook24/statusengine
+	-->
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>
 		<?php echo $cakeDescription ?>:
