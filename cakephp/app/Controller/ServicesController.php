@@ -25,7 +25,8 @@ class ServicesController extends AppController{
 		'Legacy.Servicestatus',
 		//'Legacy.Hoststatus',
 		'Legacy.Objects',
-		'Legacy.Configvariable'
+		'Legacy.Configvariable',
+		'Rrdtool',
 	];
 	public $helpers = ['Status'];
 	public $components = ['Externalcommands'];
@@ -97,30 +98,35 @@ class ServicesController extends AppController{
 			throw new NotFoundException(__('Service not found'));
 		}
 		
-		$servicestatus = $this->Servicestatus->findByHostObjectId($serviceObjectId);
+		$servicestatus = $this->Servicestatus->findByServiceObjectId($serviceObjectId);
 		$object = $this->Objects->findByObjectId($serviceObjectId);
-		$service = $this->Host->find('first', [
+		$service = $this->Service->find('first', [
 			'conditions' => [
 				'Service.service_object_id' => $serviceObjectId
 			],
 			'fields' => [
-				'Service.address',
-				'Host.display_name'
+				'Service.host_object_id',
 			]
 		]);
 		
 		$this->Externalcommands->checkCmd();
 		
-		$this->Frontend->setJson('hostObectId', $hostObjectId);
+		$datasources = [];
+		if($this->Rrdtool->hasGraph($object['Objects']['name1'], $object['Objects']['name2'])){
+			$datasources = $this->Rrdtool->parseXml($object['Objects']['name1'], $object['Objects']['name2']);
+		}
+		
+		$this->Frontend->setJson('serviceObjectId', $serviceObjectId);
 		$this->set(compact([
-			'host',
-			'hoststatus',
+			'service',
+			'servicestatus',
 			'object',
-			'commandFileError'
+			'commandFileError',
+			'datasources'
 		]));
 		$this->set('_serialize', [
-			'host',
-			'hoststatus',
+			'service',
+			'servicestatus',
 			'object',
 			'commandFileError'
 		]);

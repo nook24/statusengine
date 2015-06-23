@@ -62,6 +62,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	
 	<?php echo $this->element('sql_dump'); ?>
 	
+	<?php echo $this->element('oitc_modal'); ?>
 	<footer class="footer">
 		<div class="container">
 			<div class="row text-muted">
@@ -86,8 +87,5 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 			</div>
 		</div>
 	</footer>
-	
-	<?php echo $this->element('oitc_modal'); ?>
-	
 </body>
 </html>

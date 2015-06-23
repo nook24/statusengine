@@ -16,6 +16,6 @@ $config = [
 			'httpd',
 			'apache',
 			'nginx'
-		]
+		],
 	]
 ];

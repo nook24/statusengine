@@ -109,9 +109,23 @@ class StatusHelper extends AppHelper{
 		return __('???');
 	}
 	
+	public function servicestatus($currentState){
+		if(isset($this->serviceState[$currentState])){
+			return __($this->serviceState[$currentState]);
+		}
+		return __('???');
+	}
+	
 	public function hostStateIcon($currentState){
 		if(isset($this->hostClasses[$currentState]) && isset($this->hostState[$currentState])){
 			return '<span class="label label-default label-'.$this->hostClasses[$currentState].'">'.__($this->hostState[$currentState]).'</span>';
+		}
+		return '<span class="label label-default">'.__('???').'</span>';
+	}
+	
+	public function serviceStateIcon($currentState){
+		if(isset($this->serviceClasses[$currentState]) && isset($this->serviceState[$currentState])){
+			return '<span class="label label-default label-'.$this->serviceClasses[$currentState].'">'.__($this->serviceState[$currentState]).'</span>';
 		}
 		return '<span class="label label-default">'.__('???').'</span>';
 	}
