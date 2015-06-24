@@ -18,16 +18,27 @@
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
 class RrdtoolController extends AppController{
-	public $uses = 'Rrdtool';
+	public $uses = [
+		'Rrdtool',
+		'Legacy.Objects'
+	];
 	public $datasources = null;
 	
 	public function service($serviceObjectId = null){
 		$this->layout = false;
 		$this->render = false;
 		
-		$hostName = $this->request->params['named']['hostName'];
-		$serviceName = $this->request->params['named']['serviceName'];
+		$serviceObjectId = $this->request->params['named']['serviceObjectId'];
+		$timespan = 3600 * 2.5;
+		if(isset($this->request->params['named']['timespan']) && is_numeric($this->request->params['named']['timespan'])){
+			$timespan = $this->request->params['named']['timespan'];
+		}
+		
 		$ds = $this->request->params['named']['ds'];
+		
+		$object = $this->Objects->findByObjectId($serviceObjectId);
+		$hostName = $object['Objects']['name1'];
+		$serviceName = $object['Objects']['name2'];
 		
 		if(!isset($datasources) || !isset($datasources[$ds])){
 			$datasources = $this->Rrdtool->parseXml($hostName, $serviceName);
@@ -39,7 +50,7 @@ class RrdtoolController extends AppController{
 		
 		$rrdCommand = [
 			'--slope-mode',
-			'--start', time() - (2.5 * 3600),
+			'--start', time() - $timespan,
 			'--end', time(),
 			
 			'--width', 740,

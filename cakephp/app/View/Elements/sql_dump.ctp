@@ -51,6 +51,9 @@ if ($noLogs || isset($_forced_from_dbo_)):
 	</thead>
 	<tbody>
 	<?php
+		//CAN HAS RESPONSIVE?
+		SqlFormatter::$pre_attributes = 'style="color: black; background-color: white; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word; "';
+		//KTHXBYE
 		foreach ($logInfo['log'] as $k => $i) :
 			$i += array('error' => '');
 			if (!empty($i['params']) && is_array($i['params'])) {
@@ -69,8 +72,8 @@ if ($noLogs || isset($_forced_from_dbo_)):
 			}
 			printf('<tr><td>%d</td><td>%s</td><td>%s</td><td style="text-align: right">%d</td><td style="text-align: right">%d</td><td style="text-align: right">%d</td></tr>%s',
 				$k + 1,
-				//SqlFormatter::highlight($i['query']),
-				SqlFormatter::format($i['query']),
+				SqlFormatter::highlight($i['query']),
+				//SqlFormatter::format($i['query']),
 				$i['error'],
 				$i['affected'],
 				$i['numRows'],

@@ -36,7 +36,11 @@ class FilterHelper extends AppHelper{
 		$html = '<div class="row" style="padding-bottom: 15px;">';
 		$html .= '<div class="col-xs-12">';
 		if($this->_isFilter === true){
-			$html .= '<a href="'.Router::url(['controller' => $this->params['controller'], 'action' => $this->params['action'], 'plugin' => $this->params['plugin']]).'" class="btn btn-danger pull-right" style="margin-right: 15px;"><i class="fa fa-times"></i> '.__('Reset filter').'</a>';
+			$id = null;
+			if(isset($this->params['pass'][0])){
+				$id = $this->params['pass'][0];
+			}
+			$html .= '<a href="'.Router::url(['controller' => $this->params['controller'], 'action' => $this->params['action'], 'plugin' => $this->params['plugin'], $id]).'" class="btn btn-danger pull-right" style="margin-right: 15px;"><i class="fa fa-times"></i> '.__('Reset filter').'</a>';
 		}
 		$html .= '<a href="javascript:void(0);" id="openFilter" class="btn btn-default pull-right" style="margin-right: 15px;"><i class="fa fa-search"></i> '.__('Search').'</a>';
 		$html .= '</div>';

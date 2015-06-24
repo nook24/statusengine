@@ -33,7 +33,7 @@
 			<i class="fa fa-cog"></i> <?php echo array_sum($serviceStatusCount);?> <?php echo __('services are monitored'); ?>
 		</div>
 		<div class="col-xs-12 col-md-4">
-			<i class="fa fa-exclamation-triangle"></i> 1337 <?php echo __('problems');?>
+			<i class="fa fa-exclamation-triangle"></i> <?php echo $problems; ?> <?php echo __('problems');?>
 		</div>
 		
 		<div class="col-xs-12">

@@ -23,6 +23,7 @@ class HostsController extends AppController{
 		'Legacy.Host',
 		'Legacy.Hoststatus',
 		'Legacy.Service',
+		'Legacy.Servicestatus',
 		'Legacy.Objects',
 		'Legacy.Configvariable'
 	];
@@ -114,7 +115,7 @@ class HostsController extends AppController{
 				],
 				'joins' => [
 					[
-						'table' => 'servicestatus',
+						'table' => $this->Servicestatus->tablePrefix.$this->Servicestatus->table,
 						'type' => 'INNER',
 						'alias' => 'Servicestatus',
 						'conditions' => 'Servicestatus.service_object_id = Service.service_object_id'

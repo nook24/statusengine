@@ -42,20 +42,10 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				'action' => 'details',
 				$service['Service']['host_object_id']
 			]); ?>"><?php echo h($object['Objects']['name1']);?></a>)
-		</h3>
+			</h3>
 		</div>
 		<div class="col-xs-12 col-sm-2 col-md-1">
-			<div class="dropdown" style="padding-top: 15px;">
-				<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-				<?php echo __('History'); ?>
-					<span class="caret"></span>
-				</button>
-				<ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
-					<li><a href="#"><?php echo __('Notificatios'); ?></a></li>
-					<li><a href="#"><?php echo __('State history'); ?></a></li>
-					<li><a href="#"><?php echo __('Comments'); ?></a></li>
-				</ul>
-			</div>
+			<?php echo $this->element('service_commands'); ?>
 		</div>
 		<div class="col-xs-12 col-sm-2 col-md-2">
 			<div class="dropdown" style="padding-top: 15px;">
@@ -178,16 +168,26 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<?php endif;?>
 		
 		<?php if(!empty($datasources)):?>
+			<div class="col-xs-12 text-right">
+				<?php echo __('Graph timespan')?>
+				<div class="btn-group" role="group" aria-label="...">
+					<button type="button" class="selectGraphTimespan btn btn-default active" timespan="<?php echo 3600 * 2.5; ?>"><?php echo __('2.5h');?></button>
+					<button type="button" class="selectGraphTimespan btn btn-default" timespan="<?php echo 3600 * 8; ?>"><?php echo __('8h');?></button>
+					<button type="button" class="selectGraphTimespan btn btn-default" timespan="<?php echo 3600 * 24; ?>"><?php echo __('24h');?></button>
+					<button type="button" class="selectGraphTimespan btn btn-default" timespan="<?php echo 3600 * 24 * 5; ?>"><?php echo __('1w');?></button>
+					<button type="button" class="selectGraphTimespan btn btn-default" timespan="<?php echo 3600 * 24 * 30; ?>"><?php echo __('30d');?></button>
+				</div>
+			</div>
 			<div class="col-xs-12">
 				<center>
 					<?php foreach($datasources as $ds):?>
-					<img src="<?php echo Router::url([
-						'controller' => 'Rrdtool',
-						'action' => 'service',
-						'hostName' => $object['Objects']['name1'],
-						'serviceName' => $object['Objects']['name2'],
-						'ds' => $ds['ds']
-					]); ?>" class="img-responsive" width="740" height="250" style="padding-top: 15px;">
+						<?php $url = Router::url([
+							'controller' => 'Rrdtool',
+							'action' => 'service',
+							'serviceObjectId' => $object['Objects']['object_id'],
+							'ds' => $ds['ds'],
+						]); ?>
+					<img src="<?php echo $url; ?>" org-src="<?php echo $url; ?>" class="img-responsive serviceGraphImg" width="740" height="250" style="padding-top: 15px;">
 					<?php endforeach; ?>
 				</center>
 			</div>

@@ -22,6 +22,7 @@ class HomeController extends AppController{
 		'Legacy.Host',
 		'Legacy.Hoststatus',
 		'Legacy.Service',
+		'Legacy.Servicestatus',
 		'Legacy.Objects',
 		'Legacy.Configvariable'
 	];
@@ -48,7 +49,7 @@ class HomeController extends AppController{
 			],
 			'joins' => [
 				[
-					'table' => 'hoststatus',
+					'table' => $this->Hoststatus->tablePrefix.$this->Hoststatus->table,
 					'type' => 'INNER',
 					'alias' => 'Hoststatus',
 					'conditions' => 'Hoststatus.host_object_id = Host.host_object_id'
@@ -75,7 +76,7 @@ class HomeController extends AppController{
 			],
 			'joins' => [
 				[
-					'table' => 'servicestatus',
+					'table' => $this->Servicestatus->tablePrefix.$this->Servicestatus->table,
 					'type' => 'INNER',
 					'alias' => 'Servicestatus',
 					'conditions' => 'Servicestatus.service_object_id = Service.service_object_id'
@@ -85,9 +86,19 @@ class HomeController extends AppController{
 		foreach($servicestatus as $state){
 			$serviceStatusCount[$state['Servicestatus']['current_state']] = $state[0]['count'];
 		}
+		
+		$problems = $this->Servicestatus->find('count', [
+			'conditions' => [
+				'Servicestatus.current_state > ' => 0,
+				'Servicestatus.problem_has_been_acknowledged' => 0,
+				'Servicestatus.scheduled_downtime_depth' => 0
+			]
+		]);
+		
 		$this->set(compact([
 			'hostStatusCount',
 			'serviceStatusCount',
+			'problems'
 		]));
 	}
 }

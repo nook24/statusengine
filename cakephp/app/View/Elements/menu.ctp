@@ -19,8 +19,7 @@
 					<i class="fa fa-cog"></i>
 					<?php echo __('Services');?></a>
 				</li>
-				<li>
-					<a href="#">
+				<li><a href="<?php echo Router::url(['controller' => 'Services', 'action' => 'problem']); ?>">
 						<i class="fa fa-exclamation-triangle"></i>
 						<?php echo __('Problems');?></a>
 				</li>

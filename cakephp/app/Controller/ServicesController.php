@@ -131,4 +131,51 @@ class ServicesController extends AppController{
 			'commandFileError'
 		]);
 	}
+	
+	public function problem(){
+		$this->Service->primaryKey = 'service_object_id';
+		$this->Servicestatus->primaryKey = 'service_object_id';
+		$this->Host->primaryKey = 'host_object_id';
+		
+		$query = [
+			'bindModels' => true,
+			'fields' => [
+				'Objects.name1',
+				'Objects.name2',
+				
+				'Host.host_object_id',
+				
+				'Service.service_id',
+				'Service.service_object_id',
+				'Service.host_object_id',
+				
+				'Servicestatus.current_state',
+				'Servicestatus.last_check',
+				'Servicestatus.last_state_change',
+				'Servicestatus.problem_has_been_acknowledged',
+				'Servicestatus.scheduled_downtime_depth',
+				'Servicestatus.output',
+				
+			],
+			'order' => [
+				'Objects.name1' => 'asc'
+			],
+			'conditions' => [
+				'Servicestatus.current_state > ' => 0,
+				'Servicestatus.problem_has_been_acknowledged' => 0,
+				'Servicestatus.scheduled_downtime_depth' => 0
+			] 
+		];
+		if(isset($this->Paginator->settings['order'])){
+			unset($this->Paginator->settings['order']);
+		}
+		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
+		
+		//Read: https://github.com/cakephp/cakephp/blob/2.7/lib/Cake/Controller/Component/PaginatorComponent.php#L121-L128
+		$services = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Objects.name1']));
+		$this->set(compact([
+			'services',
+		]));
+		$this->set('_serialize', ['services']);
+	}
 }
