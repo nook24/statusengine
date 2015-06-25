@@ -35,7 +35,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<?php endif; ?>
 		<div class="col-xs-12 col-sm-8 col-md-9">
 			<h3>
-				<?php echo $this->Status->hostStateIcon($hoststatus['Hoststatus']['current_state']);?>
+				<?php echo $this->Status->hostStateIcon((isset($hoststatus['Hoststatus']['current_state'])?$hoststatus['Hoststatus']['current_state']:null));?>
 			<?php echo h($object['Objects']['name1']); ?>
 			<?php if(isset($host['Host']['address'])):?>
 				(<?php echo h($host['Host']['address']);?>)
@@ -66,7 +66,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					<li><a href="javascript:void(0);" class="sendCommand" task="passive"><?php echo __('Submit passive check result'); ?></a></li>
 					<li><a href="javascript:void(0);" class="sendCommand" task=""><?php echo __('Schedule downtime'); ?></a></li>
 					<li><a href="javascript:void(0);" class="sendCommand" task="notify"><?php echo __('Send custom notification'); ?></a></li>
-					<?php if($hoststatus['Hoststatus']['current_state'] > 0):?>
+					<?php if(isset($hoststatus['Hoststatus']['current_state']) && $hoststatus['Hoststatus']['current_state'] > 0):?>
 						<li><a href="javascript:void(0);" class="sendCommand" task="ack"><?php echo __('Set acknowledgment'); ?></a></li>
 					<?php endif; ?>
 				</ul>
@@ -74,6 +74,14 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		</div>
 	</div>
 	<hr />
+	<?php if(!isset($hoststatus['Hoststatus'])):?>
+		<div class="alert alert-danger" role="alert">
+			<h4><?php echo __('No host status available!');?></h4>
+			<p><?php echo __('Try to reschedule the host!');?></p>
+		</div>
+	</div>
+	<?php return; ?>
+	<?php endif;?>
 	<div class="row">
 		<?php if($hoststatus['Hoststatus']['is_flapping'] == 1):?>
 			<div class="col-xs-12">

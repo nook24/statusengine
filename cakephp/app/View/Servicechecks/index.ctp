@@ -83,6 +83,14 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 			</div>
 		<?php endforeach; ?>
 		
+		<?php if(empty($servicechecks)):?>
+			<div class="col-xs-12 text-center text-danger">
+				<em>
+					<?php echo __('No service checks found for this service'); ?>
+				</em>
+			</div>
+		<?php endif;?>
+		
 		<?php echo $this->element('paginator'); ?>
 		
 	</div>

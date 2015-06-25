@@ -175,7 +175,14 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					<button type="button" class="selectGraphTimespan btn btn-default" timespan="<?php echo 3600 * 8; ?>"><?php echo __('8h');?></button>
 					<button type="button" class="selectGraphTimespan btn btn-default" timespan="<?php echo 3600 * 24; ?>"><?php echo __('24h');?></button>
 					<button type="button" class="selectGraphTimespan btn btn-default" timespan="<?php echo 3600 * 24 * 5; ?>"><?php echo __('1w');?></button>
-					<button type="button" class="selectGraphTimespan btn btn-default" timespan="<?php echo 3600 * 24 * 30; ?>"><?php echo __('30d');?></button>
+					<button type="button" class="selectGraphTimespan btn btn-default" timespan="<?php echo 3600 * 24 * 30; ?>"><?php echo __('1m');?></button>
+					<a href="<?php echo Router::url([
+						'controller' => 'pnp',
+						'action' => 'index',
+						$object['Objects']['object_id']
+					]); ?>" class="btn btn-default" title="<?php echo __('Open PNP4Nagios'); ?>" >
+						<i class="fa fa-area-chart"></i>
+					</a>
 				</div>
 			</div>
 			<div class="col-xs-12">

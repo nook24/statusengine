@@ -17,5 +17,8 @@ $config = [
 			'apache',
 			'nginx'
 		],
+		
+		//Path to PNP$Nagios index.php
+		'pnp4nagios' => '/usr/share/pnp4nagios/html/index.php'
 	]
 ];

@@ -33,6 +33,11 @@ body > .container {
 	color: #696969;
 }
 
+.pnpFrame{
+	border: 0;
+	width: 100%;
+}
+
 @media (max-width: 767px) {
 	.host_up_border,
 	.service_ok_border {
@@ -47,6 +52,11 @@ body > .container {
 	.host_unreachable_border,
 	.service_unknown_border{
 		border-left: 2px solid #8C8C8C;
+	}
+	
+	.host_nostate_border,
+	.service_nostate_border {
+		border-left: 2px solid #337AB7;
 	}
 	
 	.service_warnign_border{
@@ -68,6 +78,11 @@ body > .container {
 	.host_unreachable_border_first,
 	.service_unknown_border_first{
 		border-left: 4px solid #8C8C8C;
+	}
+	
+	.host_nostate_border_first,
+	.service_nostate_border_first {
+		border-left: 4px solid #337AB7;
 	}
 	
 	.service_warnign_border_first{

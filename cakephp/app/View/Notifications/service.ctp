@@ -69,6 +69,14 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 			</div>
 		<?php endforeach; ?>
 		
+		<?php if(empty($notifications)):?>
+			<div class="col-xs-12 text-center text-danger">
+				<em>
+					<?php echo __('No notifications found for this service'); ?>
+				</em>
+			</div>
+		<?php endif;?>
+		
 		<?php echo $this->element('paginator'); ?>
 		
 	</div>

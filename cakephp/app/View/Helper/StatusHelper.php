@@ -52,6 +52,10 @@ class StatusHelper extends AppHelper{
 			2 => 'host_unreachable_border'
 		];
 		
+		if(!isset($states[$state])){
+			return 'host_nostate_border';
+		}
+		
 		return $states[$state];
 	}
 	
@@ -62,6 +66,10 @@ class StatusHelper extends AppHelper{
 			2 => 'service_critical_border',
 			3 => 'service_unknown_border'
 		];
+		
+		if(!isset($states[$state])){
+			return 'service_nostate_border';
+		}
 		
 		return $states[$state];
 	}
@@ -92,8 +100,12 @@ class StatusHelper extends AppHelper{
 		$html = '<div class="progress">';
 		if(isset($servicestatus[$hostObjectId])){
 			$count = array_sum($servicestatus[$hostObjectId]);
-			foreach($servicestatus[$hostObjectId] as $state => $counter){
-				$html .= '<div class="progress-bar progress-bar-'.$this->serviceClasses[$state].'" role="progressbar" style="width:'.round($counter/$count*100).'%;" title="'.round($counter/$count*100).'% '.$this->serviceState[$state].'"></div>';
+			if($count > 0){
+				foreach($servicestatus[$hostObjectId] as $state => $counter){
+					$html .= '<div class="progress-bar progress-bar-'.$this->serviceClasses[$state].'" role="progressbar" style="width:'.round($counter/$count*100).'%;" title="'.round($counter/$count*100).'% '.$this->serviceState[$state].'"></div>';
+				}
+			}else{
+				$html .= '<div class="progress-bar progress-bar-primary" role="progressbar" style="width:100%;"></div>';
 			}
 		}else{
 			$html .= '<div class="progress-bar progress-bar-unknown" role="progressbar" style="width:100%;"></div>';

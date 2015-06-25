@@ -78,7 +78,7 @@ class RrdtoolController extends AppController{
 		}
 		
 		putenv('TZ='.$defaultTimezone);
-		$fileName = TMP.sha1(rand().rand().rand()).'_graph.png';
+		$fileName = TMP.sha1(mt_rand().mt_rand().mt_rand().microtime()).'_graph.png';
 		$res = rrd_graph($fileName, $rrdCommand);
 		
 		if($res){
