@@ -17,29 +17,16 @@
 * You should have received a copy of the GNU General Public License
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
-class StatehistoryController extends AppController{
+class HostchecksController extends AppController{
 	
 	public $uses = [
-		'Legacy.Statehistory',
+		'Legacy.Hostcheck',
 		'Legacy.Objects',
 	];
 	public $helpers = ['Status'];
 	public $filter = [
-		'service' => [
-			'Statehistory' => [
-				'state' => ['type' => 'checkbox', 'value' => [
-					0 => 'Ok',
-					1 => 'Warning',
-					2 => 'Critical',
-					3 => 'Unknown'
-				],
-				'class' => 'col-xs-12 col-md-3'
-				],
-				'output' => ['type' => 'text', 'class' => 'col-xs-12', 'label' => 'Output', 'submit' => true]
-			],
-		],
-		'host' => [
-			'Statehistory' => [
+		'index' => [
+			'Hostcheck' => [
 				'state' => ['type' => 'checkbox', 'value' => [
 					0 => 'Ok',
 					1 => 'Down',
@@ -52,39 +39,7 @@ class StatehistoryController extends AppController{
 		]
 	];
 	
-	public function service($serviceObjectId = null){
-		if(!$this->Objects->exists($serviceObjectId)){
-			throw new NotFoundException(__('Service not found'));
-		}
-		
-		$object = $this->Objects->findByObjectId($serviceObjectId);
-		
-		$query = [
-			'conditions' => [
-				'object_id' => $serviceObjectId,
-			],
-			'fields' => [
-				'state_time',
-				'state',
-				'state_type',
-				'current_check_attempt',
-				'max_check_attempts',
-				'output'
-			]
-		];
-		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
-		$statehistory = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Statehistory.state_time']));
-		$this->set(compact([
-			'statehistory',
-			'object'
-		]));
-		$this->set('_serialize', [
-			'statehistory',
-			'object'
-		]);
-	}
-	
-	public function host($hostObjectId = null){
+	public function index($hostObjectId = null){
 		if(!$this->Objects->exists($hostObjectId)){
 			throw new NotFoundException(__('Host not found'));
 		}
@@ -93,25 +48,26 @@ class StatehistoryController extends AppController{
 		
 		$query = [
 			'conditions' => [
-				'object_id' => $hostObjectId,
+				'Hostcheck.host_object_id' => $hostObjectId
 			],
 			'fields' => [
-				'state_time',
-				'state',
-				'state_type',
 				'current_check_attempt',
 				'max_check_attempts',
-				'output'
+				'state',
+				'state_type',
+				'start_time',
+				'output',
+				'perfdata'
 			]
 		];
 		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
-		$statehistory = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Statehistory.state_time']));
+		$hostchecks = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Hostcheck.start_time']));
 		$this->set(compact([
-			'statehistory',
+			'hostchecks',
 			'object'
 		]));
 		$this->set('_serialize', [
-			'statehistory',
+			'hostchecks',
 			'object'
 		]);
 	}

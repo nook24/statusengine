@@ -37,7 +37,7 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 			
 		</div>
 		<div class="col-xs-12 col-sm-2">
-			<?php echo $this->element('service_commands'); ?>
+			<?php echo $this->element('service_history'); ?>
 		</div>
 		<div class="col-xs-12">
 			<h5><?php echo __('Acknowledgements'); ?></h5>

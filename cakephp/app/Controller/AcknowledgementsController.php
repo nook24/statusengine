@@ -73,4 +73,37 @@ class AcknowledgementsController extends AppController{
 			'object'
 		]);
 	}
+	
+	public function host($hostObjectId = null){
+		if(!$this->Objects->exists($hostObjectId)){
+			throw new NotFoundException(__('Host not found'));
+		}
+		
+		$object = $this->Objects->findByObjectId($hostObjectId);
+		
+		$query = [
+			'conditions' => [
+				'Acknowledgement.acknowledgement_type' => 0,
+				'Acknowledgement.object_id' => $hostObjectId,
+			],
+			'fields' => [
+				'Acknowledgement.entry_time',
+				'Acknowledgement.object_id',
+				'Acknowledgement.state',
+				'Acknowledgement.author_name',
+				'Acknowledgement.comment_data',
+				'Acknowledgement.is_sticky'
+			]
+		];
+		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
+		$acknowledgements = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Acknowledgement.entry_time']));
+		$this->set(compact([
+			'acknowledgements',
+			'object'
+		]));
+		$this->set('_serialize', [
+			'acknowledgements',
+			'object'
+		]);
+	}
 }

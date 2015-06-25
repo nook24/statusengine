@@ -26,42 +26,41 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 			<h3>
 			<i class="fa fa-cogs fa-lg"></i>&nbsp;
 			<a href="<?php echo Router::url([
-					'controller' => 'Services',
+					'controller' => 'Hosts',
 					'action' => 'details',
 					$object['Objects']['object_id']
 				]); ?>">
-				<?php echo h($object['Objects']['name2']); ?> 
+				<?php echo h($object['Objects']['name1']); ?> 
 			</a>
-			(<?php echo h($object['Objects']['name1']);?>)
-			</h3>
+		</h3>
 			
 		</div>
 		<div class="col-xs-12 col-sm-2">
-			<?php echo $this->element('service_history'); ?>
+			<?php echo $this->element('host_history'); ?>
 		</div>
 		<div class="col-xs-12">
-			<h5><?php echo __('Servicecheck'); ?></h5>
+			<h5><?php echo __('Hostcheck'); ?></h5>
 		</div>
 	</div>
 	<hr />
 	<div class="row">
 		<?php echo $this->Filter->render();?>
-		<div class="col-md-2 hidden-xs"><?php echo $this->Paginator->sort('Servicecheck.start_time', __('Date')); ?></div>
+		<div class="col-md-2 hidden-xs"><?php echo $this->Paginator->sort('Hostcheck.start_time', __('Date')); ?></div>
 		<div class="col-md-2 hidden-xs"><?php echo __('Check attempt'); ?></div>
-		<div class="col-md-1 hidden-xs"><?php echo $this->Paginator->sort('Servicecheck.state_type', __('State type')); ?></div>
-		<div class="col-md-3 hidden-xs"><?php echo $this->Paginator->sort('Servicecheck.output', __('Output')); ?></div>
-		<div class="col-md-4 hidden-xs"><?php echo $this->Paginator->sort('Servicecheck.perfdata', __('Perfdata')); ?></div>
-		<?php foreach($servicechecks as $servicecheck): ?>
-			<?php $borderClass = $this->Status->serviceBorder($servicecheck['Servicecheck']['state']); ?>
+		<div class="col-md-1 hidden-xs"><?php echo $this->Paginator->sort('Hostcheck.state_type', __('State type')); ?></div>
+		<div class="col-md-3 hidden-xs"><?php echo $this->Paginator->sort('Hostcheck.output', __('Output')); ?></div>
+		<div class="col-md-4 hidden-xs"><?php echo $this->Paginator->sort('Hostcheck.perfdata', __('Perfdata')); ?></div>
+		<?php foreach($hostchecks as $hostcheck): ?>
+			<?php $borderClass = $this->Status->serviceBorder($hostcheck['Hostcheck']['state']); ?>
 			<div class="col-xs-12 col-md-2 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
-				<?php echo $this->Time->format($servicecheck['Servicecheck']['start_time'], '%H:%M %d.%m.%Y');?>
+				<?php echo $this->Time->format($hostcheck['Hostcheck']['start_time'], '%H:%M %d.%m.%Y');?>
 			</div>
 			<div class="col-xs-12 col-md-2 <?php echo $borderClass; ?>">
-				<?php echo h($servicecheck['Servicecheck']['current_check_attempt']); ?> / <?php echo h($servicecheck['Servicecheck']['max_check_attempts']); ?>
+				<?php echo h($hostcheck['Hostcheck']['current_check_attempt']); ?> / <?php echo h($hostcheck['Hostcheck']['max_check_attempts']); ?>
 			</div>
 			<div class="col-xs-12 col-md-1 <?php echo $borderClass; ?>">
 				<?php
-				if($servicecheck['Servicecheck']['state_type'] == 0):
+				if($hostcheck['Hostcheck']['state_type'] == 0):
 					echo __('Soft');
 				else:
 					echo __('Hard');
@@ -69,13 +68,13 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 				?>
 			</div>
 			<div class=" col-xs-12 col-md-3 <?php echo $borderClass; ?>">
-				<?php echo h($servicecheck['Servicecheck']['output']); ?>
+				<?php echo h($hostcheck['Hostcheck']['output']); ?>
 			</div>
 			<div class=" col-xs-12 col-md-4 <?php echo $borderClass; ?>">
-				<?php if(strlen($servicecheck['Servicecheck']['perfdata']) == 0):?>
+				<?php if(strlen($hostcheck['Hostcheck']['perfdata']) == 0):?>
 					&nbsp;
 				<?php else: ?>
-					<?php echo h($servicecheck['Servicecheck']['perfdata']); ?>
+					<?php echo h($hostcheck['Hostcheck']['perfdata']); ?>
 				<?php endif;?>
 			</div>
 			<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
@@ -83,10 +82,10 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 			</div>
 		<?php endforeach; ?>
 		
-		<?php if(empty($servicechecks)):?>
+		<?php if(empty($hostchecks)):?>
 			<div class="col-xs-12 text-center text-danger">
 				<em>
-					<?php echo __('No service checks found for this service'); ?>
+					<?php echo __('No host checks found for this host'); ?>
 				</em>
 			</div>
 		<?php endif;?>

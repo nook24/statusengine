@@ -43,17 +43,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		</h3>
 		</div>
 		<div class="col-xs-12 col-sm-2 col-md-1">
-			<div class="dropdown" style="padding-top: 15px;">
-				<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-				<?php echo __('History'); ?>
-					<span class="caret"></span>
-				</button>
-				<ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
-					<li><a href="#"><?php echo __('Notificatios'); ?></a></li>
-					<li><a href="#"><?php echo __('State history'); ?></a></li>
-					<li><a href="#"><?php echo __('Comments'); ?></a></li>
-				</ul>
-			</div>
+			<?php echo $this->element('host_history'); ?>
 		</div>
 		<div class="col-xs-12 col-sm-2 col-md-2">
 			<div class="dropdown" style="padding-top: 15px;">
@@ -80,7 +70,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			<p><?php echo __('Try to reschedule the host!');?></p>
 		</div>
 	</div>
-	<?php return; ?>
+	<?php return; //Return to avoid undefinde index errors?>
 	<?php endif;?>
 	<div class="row">
 		<?php if($hoststatus['Hoststatus']['is_flapping'] == 1):?>

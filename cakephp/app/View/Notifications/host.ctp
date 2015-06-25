@@ -26,18 +26,17 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 			<h3>
 			<i class="fa fa-envelope-o fa-lg"></i>&nbsp;
 			<a href="<?php echo Router::url([
-					'controller' => 'Services',
+					'controller' => 'Hosts',
 					'action' => 'details',
 					$object['Objects']['object_id']
 				]); ?>">
-				<?php echo h($object['Objects']['name2']); ?> 
+				<?php echo h($object['Objects']['name1']); ?> 
 			</a>
-			(<?php echo h($object['Objects']['name1']);?>)
-			</h3>
+		</h3>
 			
 		</div>
 		<div class="col-xs-12 col-sm-2">
-			<?php echo $this->element('service_history'); ?>
+			<?php echo $this->element('host_history'); ?>
 		</div>
 		<div class="col-xs-12">
 			<h5><?php echo __('Notifications'); ?></h5>
@@ -72,7 +71,7 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 		<?php if(empty($notifications)):?>
 			<div class="col-xs-12 text-center text-danger">
 				<em>
-					<?php echo __('No notifications found for this service'); ?>
+					<?php echo __('No notifications found for this host'); ?>
 				</em>
 			</div>
 		<?php endif;?>

@@ -24,61 +24,60 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 	<div class="row">
 		<div class="col-xs-12 col-sm-10">
 			<h3>
-			<i class="fa fa-history fa-lg"></i>&nbsp;
+			<i class="fa fa-wrench fa-lg"></i>&nbsp;
 			<a href="<?php echo Router::url([
-					'controller' => 'Services',
+					'controller' => 'Hosts',
 					'action' => 'details',
 					$object['Objects']['object_id']
 				]); ?>">
-				<?php echo h($object['Objects']['name2']); ?> 
+				<?php echo h($object['Objects']['name1']); ?> 
 			</a>
-			(<?php echo h($object['Objects']['name1']);?>)
 			</h3>
 			
 		</div>
 		<div class="col-xs-12 col-sm-2">
-			<?php echo $this->element('service_history'); ?>
+			<?php echo $this->element('host_history'); ?>
 		</div>
 		<div class="col-xs-12">
-			<h5><?php echo __('Statehistory'); ?></h5>
+			<h5><?php echo __('Acknowledgements'); ?></h5>
 		</div>
 	</div>
 	<hr />
 	<div class="row">
 		<?php echo $this->Filter->render();?>
-		<div class="col-md-2 hidden-xs"><?php echo $this->Paginator->sort('Statehistory.state_time', __('Date')); ?></div>
-		<div class="col-md-2 hidden-xs"><?php echo __('Check attempt'); ?></div>
-		<div class="col-md-1 hidden-xs"><?php echo $this->Paginator->sort('Statehistory.state_type', __('State type')); ?></div>
-		<div class="col-md-7 hidden-xs"><?php echo $this->Paginator->sort('Statehistory.output', __('Output')); ?></div>
-		<?php foreach($statehistory as $record): ?>
-			<?php $borderClass = $this->Status->serviceBorder($record['Statehistory']['state']); ?>
+		<div class="col-md-2 hidden-xs"><?php echo $this->Paginator->sort('Acknowledgement.entry_time', __('Date')); ?></div>
+		<div class="col-md-3 hidden-xs"><?php echo $this->Paginator->sort('Acknowledgement.author_name', __('Author')); ?></div>
+		<div class="col-md-6 hidden-xs"><?php echo $this->Paginator->sort('Acknowledgement.comment_data', __('Comment')); ?></div>
+		<div class="col-md-1 hidden-xs"><?php echo $this->Paginator->sort('Acknowledgement.is_sticky', __('Sticky')); ?></div>
+		<?php foreach($acknowledgements as $acknowledgement): ?>
+			<?php $borderClass = $this->Status->serviceBorder($acknowledgement['Acknowledgement']['state']); ?>
 			<div class="col-xs-12 col-md-2 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
-				<?php echo $this->Time->format($record['Statehistory']['state_time'], '%H:%M %d.%m.%Y');?>
+				<?php echo $this->Time->format($acknowledgement['Acknowledgement']['entry_time'], '%H:%M %d.%m.%Y');?>
 			</div>
-			<div class="col-xs-12 col-md-2 <?php echo $borderClass; ?>">
-				<?php echo h($record['Statehistory']['current_check_attempt']); ?> / <?php echo h($record['Statehistory']['max_check_attempts']); ?>
+			<div class="col-xs-12 col-md-3 <?php echo $borderClass; ?>">
+				<?php echo h($acknowledgement['Acknowledgement']['author_name']); ?>
 			</div>
-			<div class="col-xs-12 col-md-1 <?php echo $borderClass; ?>">
+			<div class="col-xs-12 col-md-6 <?php echo $borderClass; ?>">
+				<?php echo h($acknowledgement['Acknowledgement']['comment_data']); ?>
+			</div>
+			<div class=" col-xs-12 col-md-1 <?php echo $borderClass; ?>">
 				<?php
-				if($record['Statehistory']['state_type'] == 0):
-					echo __('Soft');
+				if($acknowledgement['Acknowledgement']['is_sticky'] == 0):
+					echo __('No');
 				else:
-					echo __('Hard');
+					echo __('Yes');
 				endif;
 				?>
-			</div>
-			<div class=" col-xs-12 col-md-7 <?php echo $borderClass; ?>">
-				<?php echo h($record['Statehistory']['output']); ?>
 			</div>
 			<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
 				&nbsp;
 			</div>
 		<?php endforeach; ?>
 		
-		<?php if(empty($statehistory)):?>
+		<?php if(empty($acknowledgements)):?>
 			<div class="col-xs-12 text-center text-danger">
 				<em>
-					<?php echo __('No state history records found for this service'); ?>
+					<?php echo __('No acknowledgements found for this service'); ?>
 				</em>
 			</div>
 		<?php endif;?>

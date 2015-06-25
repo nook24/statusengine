@@ -35,7 +35,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<?php endif; ?>
 		<div class="col-xs-12 col-sm-8 col-md-9">
 			<h3>
-				<?php echo $this->Status->serviceStateIcon($servicestatus['Servicestatus']['current_state']);?>
+				<?php echo $this->Status->serviceStateIcon((isset($servicestatus['Servicestatus']['current_state'])?$servicestatus['Servicestatus']['current_state']:null));?>
 			<?php echo h($object['Objects']['name2']); ?> 
 			(<a href="<?php echo Router::url([
 				'controller' => 'Hosts',
@@ -45,7 +45,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			</h3>
 		</div>
 		<div class="col-xs-12 col-sm-2 col-md-1">
-			<?php echo $this->element('service_commands'); ?>
+			<?php echo $this->element('service_history'); ?>
 		</div>
 		<div class="col-xs-12 col-sm-2 col-md-2">
 			<div class="dropdown" style="padding-top: 15px;">
@@ -58,7 +58,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					<li><a href="javascript:void(0);" class="sendCommand" task="passive"><?php echo __('Submit passive check result'); ?></a></li>
 					<li><a href="javascript:void(0);" class="sendCommand" task=""><?php echo __('Schedule downtime'); ?></a></li>
 					<li><a href="javascript:void(0);" class="sendCommand" task="notify"><?php echo __('Send custom notification'); ?></a></li>
-					<?php if($servicestatus['Servicestatus']['current_state'] > 0):?>
+					<?php if(isset($servicestatus['Servicestatus']['current_state']) && $servicestatus['Servicestatus']['current_state'] > 0):?>
 						<li><a href="javascript:void(0);" class="sendCommand" task="ack"><?php echo __('Set acknowledgment'); ?></a></li>
 					<?php endif; ?>
 				</ul>
@@ -66,6 +66,14 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		</div>
 	</div>
 	<hr />
+	<?php if(!isset($servicestatus['Servicestatus'])):?>
+		<div class="alert alert-danger" role="alert">
+			<h4><?php echo __('No service status available!');?></h4>
+			<p><?php echo __('Try to reschedule the service!');?></p>
+		</div>
+	</div>
+	<?php return; //Return to avoid undefinde index errors?>
+	<?php endif;?>
 	<div class="row">
 		<?php if($servicestatus['Servicestatus']['is_flapping'] == 1):?>
 			<div class="col-xs-12">

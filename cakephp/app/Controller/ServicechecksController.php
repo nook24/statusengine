@@ -62,7 +62,7 @@ class ServicechecksController extends AppController{
 			]
 		];
 		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
-		$servicechecks = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Notification.start_time']));
+		$servicechecks = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Servicecheck.start_time']));
 		$this->set(compact([
 			'servicechecks',
 			'object'

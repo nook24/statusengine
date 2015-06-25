@@ -44,6 +44,21 @@ class NotificationsController extends AppController{
 			'ContactObject' => [
 				'name1' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Contact', 'submit' => true]
 			]
+		],
+		'host' => [
+			'Notification' => [
+				'state' => ['type' => 'checkbox', 'value' => [
+					0 => 'Ok',
+					1 => 'Down',
+					2 => 'Unreachable',
+				],
+				'class' => 'col-xs-12 col-md-4'
+				],
+				'output' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Output', 'submit' => false]
+			],
+			'ContactObject' => [
+				'name1' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Contact', 'submit' => true]
+			]
 		]
 	];
 	
@@ -55,6 +70,52 @@ class NotificationsController extends AppController{
 		$object = $this->Objects->findByObjectId($serviceObjectId);
 		
 		$query = [
+			'conditions' => [
+				'Notification.notification_type' => 1, //Service notifications
+				'Notification.object_id' => $serviceObjectId,
+			]
+		];
+		$query = Hash::merge($query, $this->__baseQuery());
+		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
+		$notifications = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Notification.start_time']));
+		$this->set(compact([
+			'notifications',
+			'object'
+		]));
+		$this->set('_serialize', [
+			'notifications',
+			'object'
+		]);
+	}
+	
+	public function host($hosteObjectId = null){
+		if(!$this->Objects->exists($hosteObjectId)){
+			throw new NotFoundException(__('Host not found'));
+		}
+		
+		$object = $this->Objects->findByObjectId($hosteObjectId);
+		
+		$query = [
+			'conditions' => [
+				'Notification.notification_type' => 0, //Host notifications
+				'Notification.object_id' => $hosteObjectId,
+			]
+		];
+		$query = Hash::merge($query, $this->__baseQuery());
+		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
+		$notifications = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Notification.start_time']));
+		$this->set(compact([
+			'notifications',
+			'object'
+		]));
+		$this->set('_serialize', [
+			'notifications',
+			'object'
+		]);
+	}
+	
+	protected function __baseQuery(){
+		return [
 			'joins' => [
 				[
 					'table' => $this->Contactnotification->tablePrefix.$this->Contactnotification->table,
@@ -82,8 +143,6 @@ class NotificationsController extends AppController{
 				],
 			],
 			'conditions' => [
-				'Notification.notification_type' => 1, //Service notifications
-				'Notification.object_id' => $serviceObjectId,
 				'Notification.contacts_notified >' => 0, 
 			],
 			'fields' => [
@@ -106,15 +165,5 @@ class NotificationsController extends AppController{
 				'CommandObject.name1'
 			]
 		];
-		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
-		$notifications = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Notification.start_time']));
-		$this->set(compact([
-			'notifications',
-			'object'
-		]));
-		$this->set('_serialize', [
-			'notifications',
-			'object'
-		]);
 	}
 }
