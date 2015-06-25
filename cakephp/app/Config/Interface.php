@@ -23,5 +23,8 @@ $config = [
 		
 		//If true the interface will show all SQL queries, if false not
 		'sql_dump' => true,
+		
+		//Hide the openITCOCKPIT notice in footer
+		'hide_oitc' => false
 	]
 ];

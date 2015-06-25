@@ -64,25 +64,33 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 		if(Configure::read('Interface.sql_dump') === true):
 			 echo $this->element('sql_dump');
 		endif;
-	?>
-	
-	<?php echo $this->element('oitc_modal'); ?>
+
+		$hideOitc = false;
+		$class ="col-xs-12 col-md-4";
+		if(Configure::read('Interface.hide_oitc') === true):
+			echo $this->element('oitc_modal');
+			$class ="col-xs-12 col-md-6";
+			$hideOitc = true;
+		endif;
+		?>
 	<br />
 	<footer class="footer">
 		<div class="container">
 			<div class="row text-muted">
-				<div class="col-xs-12 col-md-4">
+				<div class="<?php echo $class; ?>">
 					<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
 						<i class="fa fa-github"></i> 
 						<?php echo __('Contribute to Statusengine');?>
 					</a>
 				</div>
-				<div class="col-xs-12 col-md-4 text-center">
-					<a href="javascript:void(0);" class="text-muted" data-toggle="modal" data-target="#oITCModal">
-						<?php echo __('Want more? Check out openITCOCKPIT!');?>
-					</a>
-				</div>
-				<div class="col-xs-12 col-md-4">
+				<?php if($hideOitc === false): ?>
+					<div class="col-xs-12 col-md-4 text-center">
+						<a href="javascript:void(0);" class="text-muted" data-toggle="modal" data-target="#oITCModal">
+							<?php echo __('Want more? Check out openITCOCKPIT');?>
+						</a>
+					</div>
+				<?php endif;?>
+				<div class="<?php echo $class; ?>">
 					<div class="pull-right">
 						<a href="http://cakephp.org" target="_blank">
 							<?php echo $this->Html->image('cake-logo-smaller2.png', ['border' => '0']); ?>
