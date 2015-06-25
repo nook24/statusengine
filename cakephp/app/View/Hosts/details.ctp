@@ -185,7 +185,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			$currentServiceStats = Hash::merge([0 => null, 1 => null, 2 => null, 3 => null], $currentServiceStats);
 			?>
 			<div class="col-xs-12">
-				<?php echo $this->Status->serviceProgressbar($currentServiceStats, false); ?>
+				<?php echo $this->Status->serviceProgressbar($currentServiceStats, false, true); ?>
 			</div>
 		<?php
 		endif;

@@ -92,7 +92,7 @@ class StatusHelper extends AppHelper{
 		return $html;
 	}
 	
-	public function serviceProgressbar($servicestatus, $hostObjectId = false){
+	public function serviceProgressbar($servicestatus, $hostObjectId = false, $showValue = false){
 		//Dirty workaround for HomeController
 		if($hostObjectId === false){
 			$servicestatus = [$servicestatus];
@@ -102,7 +102,11 @@ class StatusHelper extends AppHelper{
 			$count = array_sum($servicestatus[$hostObjectId]);
 			if($count > 0){
 				foreach($servicestatus[$hostObjectId] as $state => $counter){
-					$html .= '<div class="progress-bar progress-bar-'.$this->serviceClasses[$state].'" role="progressbar" style="width:'.round($counter/$count*100).'%;" title="'.round($counter/$count*100).'% '.$this->serviceState[$state].'"></div>';
+					$html .= '<div class="progress-bar progress-bar-'.$this->serviceClasses[$state].'" role="progressbar" style="width:'.round($counter/$count*100).'%;" title="'.round($counter/$count*100).'% '.$this->serviceState[$state].'">';
+					if($showValue === true){
+						$html .= '<span style="color: black;">'.round($counter/$count*100).'%</span>';
+					}
+					$html .= '</div>';
 				}
 			}else{
 				$html .= '<div class="progress-bar progress-bar-primary" role="progressbar" style="width:100%;"></div>';
