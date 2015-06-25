@@ -59,10 +59,15 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 			<?php echo $this->fetch('content'); ?>
 		</div>
 	</div>
-	
-	<?php echo $this->element('sql_dump'); ?>
+	<?php
+		Configure::load('Interface');
+		if(Configure::read('Interface.sql_dump') === true):
+			 echo $this->element('sql_dump');
+		endif;
+	?>
 	
 	<?php echo $this->element('oitc_modal'); ?>
+	<br />
 	<footer class="footer">
 		<div class="container">
 			<div class="row text-muted">

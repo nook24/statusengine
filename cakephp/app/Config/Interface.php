@@ -19,6 +19,9 @@ $config = [
 		],
 		
 		//Path to PNP$Nagios index.php
-		'pnp4nagios' => '/usr/share/pnp4nagios/html/index.php'
+		'pnp4nagios' => '/usr/share/pnp4nagios/html/index.php',
+		
+		//If true the interface will show all SQL queries, if false not
+		'sql_dump' => true,
 	]
 ];
