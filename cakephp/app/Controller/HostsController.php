@@ -152,6 +152,42 @@ class HostsController extends AppController{
 			]
 		]);
 		
+		$this->Service->primaryKey = 'service_object_id';
+		$this->Servicestatus->primaryKey = 'service_object_id';
+		$this->Service->bindModel([
+			'hasOne' => [
+				'Servicestatus' => [
+					'foreignKey' => 'service_object_id'
+				]
+			],
+			'belongsTo' => [
+				'Objects' => [
+					'foreignKey' => 'service_object_id'
+				]
+			]
+		]);
+		$services = $this->Service->find('all', [
+			'conditions' => [
+				'Service.host_object_id' => $hostObjectId
+			],
+			'fields' => [
+				'Objects.name2',
+				'Service.service_object_id',
+				'Servicestatus.current_state',
+				'Servicestatus.current_state',
+				'Servicestatus.last_state_change',
+				'Servicestatus.last_check',
+				'Servicestatus.next_check',
+				'Servicestatus.output',
+				'Servicestatus.problem_has_been_acknowledged',
+				'Servicestatus.scheduled_downtime_depth',
+			],
+			'order' => [
+				'Servicestatus.current_state' => 'DESC',
+				'Servicestatus.last_state_change' => 'DESC'
+			]
+		]);
+		
 		$this->Externalcommands->checkCmd();
 		
 		$this->Frontend->setJson('hostObectId', $hostObjectId);
@@ -159,11 +195,13 @@ class HostsController extends AppController{
 			'host',
 			'hoststatus',
 			'object',
+			'services'
 		]));
 		$this->set('_serialize', [
 			'host',
 			'hoststatus',
 			'object',
+			'services'
 		]);
 	}
 }

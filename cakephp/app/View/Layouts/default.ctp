@@ -68,9 +68,10 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 		$hideOitc = false;
 		$class ="col-xs-12 col-md-4";
 		if(Configure::read('Interface.hide_oitc') === true):
-			echo $this->element('oitc_modal');
 			$class ="col-xs-12 col-md-6";
 			$hideOitc = true;
+		else:
+			echo $this->element('oitc_modal');
 		endif;
 		?>
 	<br />

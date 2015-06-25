@@ -25,6 +25,6 @@ $config = [
 		'sql_dump' => true,
 		
 		//Hide the openITCOCKPIT notice in footer
-		'hide_oitc' => false
+		'hide_oitc' => false,
 	]
 ];

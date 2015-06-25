@@ -173,4 +173,56 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			</div>
 		<?php endif;?>
 	</div>
+	<br />
+	<div class="row">
+		<div class="col-xs-12">
+			<h4><?php echo __('Services');?></h4>
+		</div>
+		
+		<?php
+		if(!empty($services)):
+			$currentServiceStats = array_count_values(Hash::extract($services, '{n}.Servicestatus.current_state'));
+			$currentServiceStats = Hash::merge([0 => null, 1 => null, 2 => null, 3 => null], $currentServiceStats);
+			?>
+			<div class="col-xs-12">
+				<?php echo $this->Status->serviceProgressbar($currentServiceStats, false); ?>
+			</div>
+		<?php
+		endif;
+		?>
+		
+		<div class="col-sm-3 hidden-xs"><?php echo __('Service description'); ?></div>
+		<div class="col-sm-2 hidden-xs"><?php echo __('Last Check'); ?></div>
+		<div class="col-sm-2 hidden-xs"><?php echo __('State since'); ?></div>
+		<div class="col-sm-5 hidden-xs"><?php echo __('Output'); ?></div>
+	</div>
+	<div class="row">
+			<?php foreach($services as $service): ?>
+				<?php $borderClass = $this->Status->serviceBorder($service['Servicestatus']['current_state']); ?>
+				<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
+					<a href="<?php echo Router::url(['controller' => 'Services', 'action' => 'details', $service['Service']['service_object_id']]); ?>"><?php echo h($service['Objects']['name2']);?></a>
+				</div>
+				<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?>">
+					<?php echo $this->Time->format($service['Servicestatus']['last_check'], '%H:%M %d.%m.%Y');?>
+				</div>
+				<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?>">
+					<?php echo $this->Time->format($service['Servicestatus']['last_state_change'], '%H:%M %d.%m.%Y');?>
+				</div>
+				<div class="col-sm-5 hidden-xs">
+					<?php //var_dump($service['Servicestatus']['output']); ?>
+					<?php echo h($service['Servicestatus']['output']); ?>
+				</div>
+				<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
+					&nbsp;
+				</div>
+			<?php endforeach; ?>
+		
+		<?php if(empty($services)):?>
+			<div class="col-xs-12 text-center text-danger">
+				<em>
+					<?php echo __('No services associated with this host'); ?>
+				</em>
+			</div>
+		<?php endif;?>
+	</div>
 </div>
