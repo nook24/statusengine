@@ -37,7 +37,7 @@ endif;
 if ($noLogs || isset($_forced_from_dbo_)):
 	foreach ($sqlLogs as $source => $logInfo):
 		?>
-		<div class="container"><div class="col col-xs-12"><br /><hr />
+		<div class="container"><div class="col col-xs-12 hidden-xs"><br /><hr />
 		<?php
 		$text = $logInfo['count'] > 1 ? 'queries' : 'query';
 		printf(
