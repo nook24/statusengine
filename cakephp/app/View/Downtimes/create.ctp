@@ -30,17 +30,6 @@ $this->Paginator->options(['url' => $this->params['named']]);
 	
 	<div class="row">
 		<?php
-		$options = [];
-		if($type == 'host'):
-			$options = [
-				0 => __('Only host'),
-				1 => __('Host including services'),
-				2 => __('Host including all child hosts'),
-				3 => __('Host including all child hosts (non-triggered)')
-			];
-		else:
-			//be cool
-		endif;
 		echo $this->Form->create('Downtimehistory',[
 			'inputDefaults' => [
 				'div' => 'form-group',
@@ -56,10 +45,22 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			'options' => $hosts,
 			'label' => __('Host')
 		]);
-		echo $this->Form->input('type', [
-			'options' => $options,
-			'label' => __('Target')
-		]);
+		if($type == 'host'):
+			echo $this->Form->input('type', [
+				'options' => [
+					0 => __('Only host'),
+					1 => __('Host including services'),
+					2 => __('Host including all child hosts'),
+					3 => __('Host including all child hosts (non-triggered)')
+				],
+				'label' => __('Target')
+			]);
+		else:
+			echo $this->Form->input('service', [
+				'options' => $services,
+				'label' => __('Service')
+			]);
+		endif;
 		echo $this->Form->input('start', [
 			'label' => __('Start'),
 			'type' => 'text',

@@ -22,6 +22,7 @@ class DowntimesController extends AppController{
 	public $uses = [
 		'Legacy.Downtimehistory',
 		'Legacy.Objects',
+		'Legacy.Service',
 		'Legacy.Configvariable'
 	];
 	public $helpers = ['Status'];
@@ -75,6 +76,13 @@ class DowntimesController extends AppController{
 			if(!$this->Objects->exists($this->request->data('Downtimehistory.host'))){
 				throw new NotFoundException(__('Host not found'));
 			}
+			if($type == 'service'){
+				$serviceObjectId = $this->request->data('Downtimehistory.service');
+				if(!$this->Objects->exists($serviceObjectId)){
+					throw new NotFoundException(__('Service not found'));
+				}
+				$service = $this->Objects->findByObjectId($serviceObjectId);
+			}
 			$host = $this->Objects->findByObjectId($this->request->data('Downtimehistory.host'));
 			$start = strtotime($this->request->data('Downtimehistory.start'));
 			$end = strtotime($this->request->data('Downtimehistory.end'));
@@ -93,6 +101,18 @@ class DowntimesController extends AppController{
 							'Daniel',
 							$comment
 						]
+					];
+				}else{
+					$downtimeOptions = [
+						$service['Objects']['name1'],
+						$service['Objects']['name2'],
+						$start,
+						$end,
+						1,
+						0,
+						($end - $start),
+						'Daniel',
+						$comment
 					];
 				}
 
@@ -113,10 +133,49 @@ class DowntimesController extends AppController{
 		$this->request->data = Hash::merge($defaults, $this->request->data);
 		
 		$hosts = $this->Objects->findList(1);
+		$services = [];
+		if($type == 'service' && !empty($hosts)){
+			$_hosts = $hosts;
+			$services = $this->Objects->findList(2, 'name2', ['Objects.name1' => array_shift($_hosts)]);
+		}
 		$this->Externalcommands->checkCmd();
+		$this->Frontend->setJson('url', Router::url(['controller' => 'Downtimes', 'action' => 'getServices']).'/');
 		$this->set(compact([
 			'type',
-			'hosts'
+			'hosts',
+			'services'
 		]));
+	}
+	
+	public function getServices($hostObjectId = null){
+		if(!$this->request->is('ajax')){
+			throw new MethodNotAllowedException();
+		}
+		if(!$this->Objects->exists($hostObjectId)){
+			throw new NotFoundException(__('Host not found'));
+		}
+		
+		$services = $this->Service->find('all', [
+			'conditions' => [
+				'Service.host_object_id' => $hostObjectId
+			],
+			'joins' => [
+				[
+					'table' => $this->Objects->tablePrefix.$this->Objects->table,
+					'type' => 'INNER',
+					'alias' => 'Objects',
+					'conditions' => 'Objects.object_id = Service.service_object_id'
+				]
+			],
+			'fields' => [
+				'Service.service_object_id',
+				'Objects.name2'
+			],
+			'order' => [
+				'Objects.name2' => 'asc'
+			]
+		]);
+		$this->set('services', $services);
+		$this->set('_serialize', ['services']);
 	}
 }

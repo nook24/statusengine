@@ -75,7 +75,9 @@ class ExternalcommandsComponent extends Component{
 					break;
 			}
 		}else{
-			//Create service downtime
+			$template = '%s;%s;%s;%u;%u;%d;%d;%u;%s;%s';
+			array_unshift($options, 'SCHEDULE_SVC_DOWNTIME');
+			$this->write(vsprintf($template, $options));
 		}
 	}
 	
