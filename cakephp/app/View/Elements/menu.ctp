@@ -26,13 +26,57 @@
 				<li class="dropdown">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><?php echo __('More');?> <span class="caret"></span></a>
 					<ul class="dropdown-menu" role="menu">
-						<li><a href="<?php echo Router::url(['controller' => 'Hostgroups', 'action' => 'index']); ?>"><?php echo __('Host groups');?></a></li>
-						<li><a href="<?php echo Router::url(['controller' => 'Servicegroups', 'action' => 'index']); ?>"><?php echo __('Service groups');?></a></li>
-						<li><a href="<?php echo Router::url(['controller' => 'Objects', 'action' => 'index']); ?>"><?php echo __('Objects');?></a></li>
+						<li>
+							<a href="<?php echo Router::url(['controller' => 'Hostgroups', 'action' => 'index']); ?>">
+								<i class="fa fa-server"></i>&nbsp;
+								<?php echo __('Host groups');?>
+							</a>
+						</li>
+						<li>
+							<a href="<?php echo Router::url(['controller' => 'Servicegroups', 'action' => 'index']); ?>">
+								<i class="fa fa-cogs"></i>&nbsp;
+								<?php echo __('Service groups');?>
+							</a>
+						</li>
+						<li>
+							<a href="<?php echo Router::url(['controller' => 'Objects', 'action' => 'index']); ?>">
+								<i class="fa fa-database"></i>&nbsp;
+								<?php echo __('Objects');?>
+							</a>
+						</li>
 						<li class="divider"></li>
-						<li><a href="<?php echo Router::url(['controller' => 'Downtimes', 'action' => 'index']); ?>"><?php echo __('Downtimes');?></a></li>
-						<li><a href="#"><?php echo __('Acknowledgements');?></a></li>
-						<li><a href="<?php echo Router::url(['controller' => 'Performance', 'action' => 'index']); ?>"><?php echo __('Performance info');?></a></li>
+						<li>
+							<a href="<?php echo Router::url(['controller' => 'Downtimes', 'action' => 'host']); ?>">
+								<i class="fa fa-pause"></i>&nbsp;
+								<?php echo __('Host downtimes');?>
+							</a>
+						</li>
+						<li>
+							<a href="<?php echo Router::url(['controller' => 'Downtimes', 'action' => 'service']); ?>">
+								<i class="fa fa-pause"></i>&nbsp;
+								<?php echo __('Service downtimes');?>
+							</a>
+						</li>
+						<li>
+							<a href="<?php echo Router::url(['controller' => 'Acknowledgements', 'action' => 'index']); ?>">
+								<i class="fa fa-comments"></i>&nbsp;
+								<?php echo __('Acknowledgements');?>
+							</a>
+						</li>
+						<li class="divider"></li>
+						<li>
+							<a href="<?php echo Router::url(['controller' => 'Performance', 'action' => 'index']); ?>">
+								<i class="fa fa-rocket"></i>&nbsp;
+								<?php echo __('Performance info');?>
+							</a>
+						</li>
+						<li>
+							<a href="<?php echo Router::url(['controller' => 'Logentries', 'action' => 'index']); ?>">
+								<i class="fa fa-align-left"></i>&nbsp;
+								<?php echo __('Log entries');?>
+							</a>
+						</li>
+						
 					</ul>
 				</li>
 			</ul>
