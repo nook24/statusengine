@@ -59,7 +59,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			</div>
 			<div class="col-sm-5 hidden-xs">
 				<?php //var_dump($service['Servicestatus']['output']); ?>
-				<?php echo h($service['Servicestatus']['output']); ?>
+				<?php echo $this->Status->h($service['Servicestatus']['output']); ?>
 			</div>
 			<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
 				&nbsp;

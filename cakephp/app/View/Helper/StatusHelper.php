@@ -161,4 +161,12 @@ class StatusHelper extends AppHelper{
 		}
 		return '<span class="label label-danger">'.$options['text'][0].'</span>';
 	}
+	
+	public function h($string = ''){
+		$string = h($string);
+		if(strlen($string) == 0){
+			return '&nbsp;';
+		}
+		return $string;
+	}
 }

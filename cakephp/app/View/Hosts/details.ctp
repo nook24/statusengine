@@ -110,10 +110,10 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				<div class="col-xs-12 col-md-9"><?php echo $this->Time->format($hoststatus['Hoststatus']['last_state_change'], '%H:%M %d.%m.%Y');?></div>
 				
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Output');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo h($hoststatus['Hoststatus']['output']);?></div>
+				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['output']);?></div>
 				
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Performance data');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo h($hoststatus['Hoststatus']['perfdata']);?></div>
+				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['perfdata']);?></div>
 				
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Last check');?></div>
 				<div class="col-xs-12 col-md-9">
@@ -127,11 +127,11 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				
 				<?php if($hoststatus['Hoststatus']['normal_check_interval'] > 0):?>
 					<div class="col-xs-12 col-md-3 bold"><?php echo __('Check interval');?></div>
-					<div class="col-xs-12 col-md-9"><?php echo h($hoststatus['Hoststatus']['normal_check_interval']);?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['normal_check_interval']);?></div>
 				<?php endif;?>
 				
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Check command');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo h($hoststatus['Hoststatus']['check_command']);?></div>
+				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['check_command']);?></div>
 				
 			</div>
 		</div>
@@ -200,7 +200,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			<?php foreach($services as $service): ?>
 				<?php $borderClass = $this->Status->serviceBorder($service['Servicestatus']['current_state']); ?>
 				<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
-					<a href="<?php echo Router::url(['controller' => 'Services', 'action' => 'details', $service['Service']['service_object_id']]); ?>"><?php echo h($service['Objects']['name2']);?></a>
+					<a href="<?php echo Router::url(['controller' => 'Services', 'action' => 'details', $service['Service']['service_object_id']]); ?>"><?php echo $this->Status->h($service['Objects']['name2']);?></a>
 				</div>
 				<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?>">
 					<?php echo $this->Time->format($service['Servicestatus']['last_check'], '%H:%M %d.%m.%Y');?>
@@ -210,7 +210,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				</div>
 				<div class="col-sm-5 hidden-xs">
 					<?php //var_dump($service['Servicestatus']['output']); ?>
-					<?php echo h($service['Servicestatus']['output']); ?>
+					<?php echo $this->Status->h($service['Servicestatus']['output']); ?>
 				</div>
 				<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
 					&nbsp;
