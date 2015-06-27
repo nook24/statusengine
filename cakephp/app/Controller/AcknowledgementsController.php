@@ -25,6 +25,12 @@ class AcknowledgementsController extends AppController{
 	];
 	public $helpers = ['Status'];
 	public $filter = [
+		'index' => [
+			'Acknowledgement' => [
+				'author_name' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Author', 'submit' => false],
+				'comment_data' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Comment', 'submit' => true]
+			]
+		],
 		'service' => [
 			'Acknowledgement' => [
 				'state' => ['type' => 'checkbox', 'value' => [
@@ -38,8 +44,62 @@ class AcknowledgementsController extends AppController{
 				'author_name' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Author', 'submit' => false],
 				'comment_data' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Comment', 'submit' => true]
 			]
+		],
+		'host' => [
+			'Acknowledgement' => [
+				'state' => ['type' => 'checkbox', 'value' => [
+					0 => 'Up',
+					1 => 'Down',
+					2 => 'Unreachable',
+				],
+				'class' => 'col-xs-12 col-md-4'
+				],
+				'author_name' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Author', 'submit' => false],
+				'comment_data' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Comment', 'submit' => true]
+			]
 		]
 	];
+	
+	public function index(){
+		$query = [
+			'joins' => [
+				[
+					'table' => $this->Objects->tablePrefix.$this->Objects->table,
+					'type' => 'INNER',
+					'alias' => 'Objects',
+					'conditions' => 'Objects.object_id = Acknowledgement.object_id'
+				]
+			],
+			'fields' => [
+				'Acknowledgement.entry_time',
+				'Acknowledgement.object_id',
+				'Acknowledgement.acknowledgement_type',
+				'Acknowledgement.state',
+				'Acknowledgement.author_name',
+				'Acknowledgement.comment_data',
+				'Acknowledgement.is_sticky',
+				
+				'Objects.object_id',
+				'Objects.objecttype_id',
+				'Objects.name1',
+				'Objects.name2',
+			],
+			'order' => [
+				'Acknowledgement.entry_time' => 'desc',
+				'Objects.name1' => 'asc'
+			],
+		];
+		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
+		$acknowledgements = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Acknowledgement.entry_time']));
+		$this->set(compact([
+			'acknowledgements',
+			'object'
+		]));
+		$this->set('_serialize', [
+			'acknowledgements',
+			'object'
+		]);
+	}
 	
 	public function service($serviceObjectId = null){
 		if(!$this->Objects->exists($serviceObjectId)){

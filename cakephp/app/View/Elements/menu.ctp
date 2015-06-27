@@ -46,15 +46,9 @@
 						</li>
 						<li class="divider"></li>
 						<li>
-							<a href="<?php echo Router::url(['controller' => 'Downtimes', 'action' => 'host']); ?>">
+							<a href="<?php echo Router::url(['controller' => 'Downtimes', 'action' => 'index']); ?>">
 								<i class="fa fa-pause"></i>&nbsp;
-								<?php echo __('Host downtimes');?>
-							</a>
-						</li>
-						<li>
-							<a href="<?php echo Router::url(['controller' => 'Downtimes', 'action' => 'service']); ?>">
-								<i class="fa fa-pause"></i>&nbsp;
-								<?php echo __('Service downtimes');?>
+								<?php echo __('Downtimes');?>
 							</a>
 						</li>
 						<li>

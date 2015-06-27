@@ -27,29 +27,18 @@ class DowntimesController extends AppController{
 	public $helpers = ['Status'];
 	public $filter = [
 		'index' => [
-			'Hoststatus' => [
-				'current_state' => ['type' => 'checkbox', 'value' => [
-					0 => 'Up',
-					1 => 'Down',
-					2 => 'Unreachable',
-				],
-				'class' => 'col-xs-12 col-md-4'
-				]
-			],
 			'Objects' => [
-				'name1' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Host group name', 'submit' => false],
+				'name1' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Host name', 'submit' => false],
+				'name2' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Service description', 'submit' => false],
 			],
-			'HostObject' => [
-				'name1' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Host name', 'submit' => true]
+			'Downtimehistory' => [
+				'author_name' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Author', 'submit' => false],
+				'comment_data' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Comment', 'submit' => true],
 			]
 		]
 	];
 	
 	public function index(){
-		$this->redirect(['action' => 'host']);
-	}
-	
-	public function host(){
 		$query = [
 			'joins' => [
 				[
@@ -65,16 +54,13 @@ class DowntimesController extends AppController{
 			],
 			'order' => [
 				'Objects.name1' => 'asc',
-			],
-			'conditions' => [
-				'Downtimehistory.downtime_type' => 2 //Host
 			]
 		];
 		
 		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
 		//Read: https://github.com/cakephp/cakephp/blob/2.7/lib/Cake/Controller/Component/PaginatorComponent.php#L121-L128
-		$hostgroups = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Objects.name1']));
-		$this->set(compact(['hostgroups']));
-		$this->set('_serialize', ['hostgroups']);
+		$downtimes = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Objects.name1']));
+		$this->set(compact(['downtimes']));
+		$this->set('_serialize', ['downtimes']);
 	}
 }

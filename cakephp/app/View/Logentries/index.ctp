@@ -23,7 +23,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 <div class="container">
 	<div class="row">
 		<div class="col-xs-12">
-			<h3><i class="fa fa-hdd-o fa-lg"></i> <?php echo __('Hosts'); ?></h3>
+			<h3><i class="fa fa-align-left fa-lg"></i> <?php echo __('Logentries'); ?></h3>
 			<hr />
 		</div>
 		
