@@ -26,8 +26,8 @@
 				<li class="dropdown">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><?php echo __('More');?> <span class="caret"></span></a>
 					<ul class="dropdown-menu" role="menu">
-						<li><a href="#"><?php echo __('Host groups');?></a></li>
-						<li><a href="#"><?php echo __('Service groups');?></a></li>
+						<li><a href="<?php echo Router::url(['controller' => 'Hostgroups', 'action' => 'index']); ?>"><?php echo __('Host groups');?></a></li>
+						<li><a href="<?php echo Router::url(['controller' => 'Servicegroups', 'action' => 'index']); ?>"><?php echo __('Service groups');?></a></li>
 						<li><a href="<?php echo Router::url(['controller' => 'Objects', 'action' => 'index']); ?>"><?php echo __('Objects');?></a></li>
 						<li class="divider"></li>
 						<li><a href="#"><?php echo __('Downtimes');?></a></li>
