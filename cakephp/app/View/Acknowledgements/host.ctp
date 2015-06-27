@@ -24,7 +24,7 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 	<div class="row">
 		<div class="col-xs-12 col-sm-10">
 			<h3>
-			<i class="fa fa-wrench fa-lg"></i>&nbsp;
+			<i class="fa fa-comments fa-lg"></i>&nbsp;
 			<a href="<?php echo Router::url([
 					'controller' => 'Hosts',
 					'action' => 'details',

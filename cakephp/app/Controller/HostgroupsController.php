@@ -22,7 +22,7 @@ class HostgroupsController extends AppController{
 	public $uses = [
 		'Legacy.Hostgroup',
 		'Legacy.Hostgroupmember',
-		'Legacy.Host',
+		//'Legacy.Host',
 		'Legacy.Hoststatus',
 		'Legacy.Objects',
 		'Legacy.Configvariable'
@@ -42,7 +42,7 @@ class HostgroupsController extends AppController{
 			'Objects' => [
 				'name1' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Host group name', 'submit' => false],
 			],
-			'HostObjects' => [
+			'HostObject' => [
 				'name1' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Host name', 'submit' => true]
 			]
 		]
@@ -63,36 +63,48 @@ class HostgroupsController extends AppController{
 					'alias' => 'Hostgroupmember',
 					'conditions' => 'Hostgroupmember.hostgroup_id = Hostgroup.hostgroup_id'
 				],
-				[
-					'table' => $this->Host->tablePrefix.$this->Host->table,
-					'type' => 'INNER',
-					'alias' => 'Host',
-					'conditions' => 'Host.host_object_id = Hostgroupmember.host_object_id'
-				],
+				//[
+				//	'table' => $this->Host->tablePrefix.$this->Host->table,
+				//	'type' => 'INNER',
+				//	'alias' => 'Host',
+				//	'conditions' => 'Host.host_object_id = Hostgroupmember.host_object_id'
+				//],
 				[
 					'table' => $this->Hoststatus->tablePrefix.$this->Hoststatus->table,
 					'type' => 'INNER',
 					'alias' => 'Hoststatus',
-					'conditions' => 'Hoststatus.host_object_id = Host.host_object_id'
+					'conditions' => 'Hoststatus.host_object_id = Hostgroupmember.host_object_id'
 				],
 				[
 					'table' => $this->Objects->tablePrefix.$this->Objects->table,
 					'type' => 'INNER',
-					'alias' => 'HostObjects',
-					'conditions' => 'HostObjects.object_id = Host.host_object_id'
+					'alias' => 'HostObject',
+					'conditions' => 'HostObject.object_id = Hostgroupmember.host_object_id'
 				]
 			],
 			'fields' => [
-				'Hostgroup.*',
-				'Hostgroupmember.*',
-				'Host.*',
-				'Hoststatus.*',
-				'Objects.*',
-				'HostObjects.*',
+				'Hostgroup.hostgroup_id',
+				'Hostgroup.hostgroup_object_id',
+				'Hostgroup.alias',
+				
+				'Hostgroupmember.hostgroup_id',
+				'Hostgroupmember.host_object_id',
+				
+				//'Host.*',
+				'Hoststatus.current_state',
+				'Hoststatus.last_check',
+				'Hoststatus.last_state_change',
+				'Hoststatus.output',
+				
+				'Objects.object_id',
+				'Objects.name1',
+				
+				'HostObject.object_id',
+				'HostObject.name1',
 			],
 			'order' => [
 				'Objects.name1' => 'asc',
-				'HostObjects.name1' => 'asc'
+				'HostObject.name1' => 'asc'
 			]
 		];
 		

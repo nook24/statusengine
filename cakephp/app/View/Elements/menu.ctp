@@ -30,7 +30,7 @@
 						<li><a href="<?php echo Router::url(['controller' => 'Servicegroups', 'action' => 'index']); ?>"><?php echo __('Service groups');?></a></li>
 						<li><a href="<?php echo Router::url(['controller' => 'Objects', 'action' => 'index']); ?>"><?php echo __('Objects');?></a></li>
 						<li class="divider"></li>
-						<li><a href="#"><?php echo __('Downtimes');?></a></li>
+						<li><a href="<?php echo Router::url(['controller' => 'Downtimes', 'action' => 'index']); ?>"><?php echo __('Downtimes');?></a></li>
 						<li><a href="#"><?php echo __('Acknowledgements');?></a></li>
 						<li><a href="<?php echo Router::url(['controller' => 'Performance', 'action' => 'index']); ?>"><?php echo __('Performance info');?></a></li>
 					</ul>

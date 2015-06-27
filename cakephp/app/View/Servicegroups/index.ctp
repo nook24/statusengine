@@ -23,45 +23,45 @@ $this->Paginator->options(['url' => $this->params['named']]);
 <div class="container">
 	<div class="row">
 		<div class="col-xs-12">
-			<h3><i class="fa fa-server fa-lg"></i> <?php echo __('Host groups'); ?></h3>
+			<h3><i class="fa fa-cogs fa-lg"></i> <?php echo __('Service groups'); ?></h3>
 			<hr />
 		</div>
 		
 		<?php echo $this->Filter->render();?>
 
-		<div class="col-sm-3 hidden-xs"><?php echo $this->Paginator->sort('HostObject.name1', __('Host')); ?></div>
-		<div class="col-sm-2 hidden-xs"><?php echo $this->Paginator->sort('Hoststatus.last_check', __('Last Check')); ?></div>
-		<div class="col-sm-2 hidden-xs"><?php echo $this->Paginator->sort('Hoststatus.last_state_change', __('State since')); ?></div>
-		<div class="col-sm-5 hidden-xs"><?php echo $this->Paginator->sort('Hoststatus.output', __('Output')); ?></div>
+		<div class="col-sm-3 hidden-xs"><?php echo $this->Paginator->sort('ServiceObject.name2', __('Service')); ?></div>
+		<div class="col-sm-2 hidden-xs"><?php echo $this->Paginator->sort('Servicestatus.last_check', __('Last Check')); ?></div>
+		<div class="col-sm-2 hidden-xs"><?php echo $this->Paginator->sort('Servicestatus.last_state_change', __('State since')); ?></div>
+		<div class="col-sm-5 hidden-xs"><?php echo $this->Paginator->sort('Servicestatus.output', __('Output')); ?></div>
 	</div>
 	<div class="row">
-		<?php $hostgroupName = null; ?>
-		<?php foreach($hostgroups as $hostgroupMember): ?>
+		<?php $servicegroupName = null; ?>
+		<?php foreach($servicegroups as $servicegroupMember): ?>
 			<?php
-			$borderClass = $this->Status->hostBorder($hostgroupMember['Hoststatus']['current_state']);
-			if($hostgroupName != $hostgroupMember['Objects']['name1']):
-				$hostgroupName = $hostgroupMember['Objects']['name1'];
+			$borderClass = $this->Status->serviceBorder($servicegroupMember['Servicestatus']['current_state']);
+			if($servicegroupName != $servicegroupMember['Objects']['name1']):
+				$servicegroupName = $servicegroupMember['Objects']['name1'];
 			?>
 				<div class="col-xs-12 <?php echo $borderClass; ?> bg-info">
-					<i class="fa fa-server"></i>
+					<i class="fa fa-cogs"></i>
 					&nbsp;
-					<strong><?php echo h($hostgroupName);?></strong>
+					<strong><?php echo h($servicegroupName);?></strong>
 					&nbsp;-&nbsp;
-					<em><?php echo $this->Status->h($hostgroupMember['Hostgroup']['alias']);?></em>
+					<em><?php echo $this->Status->h($servicegroupMember['Servicegroup']['alias']);?></em>
 				</div>
 			<?php endif;?>
 			<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
-				<a href="<?php echo Router::url(['controller' => 'Hosts', 'action' => 'details', $hostgroupMember['HostObject']['object_id']]); ?>"><?php echo h($hostgroupMember['HostObject']['name1']);?></a>
+				<a href="<?php echo Router::url(['controller' => 'Service', 'action' => 'details', $servicegroupMember['ServiceObject']['object_id']]); ?>"><?php echo h($servicegroupMember['ServiceObject']['name2']);?></a>
 			</div>
 			<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?>">
-				<?php echo $this->Time->format($hostgroupMember['Hoststatus']['last_check'], '%H:%M %d.%m.%Y');?>
+				<?php echo $this->Time->format($servicegroupMember['Servicestatus']['last_check'], '%H:%M %d.%m.%Y');?>
 			</div>
 			<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?>">
-				<?php echo $this->Time->format($hostgroupMember['Hoststatus']['last_state_change'], '%H:%M %d.%m.%Y');?>
+				<?php echo $this->Time->format($servicegroupMember['Servicestatus']['last_state_change'], '%H:%M %d.%m.%Y');?>
 			</div>
 			<div class="col-sm-5 hidden-xs">
 				<?php //var_dump($service['Servicestatus']['output']); ?>
-				<?php echo $this->Status->h($hostgroupMember['Hoststatus']['output']); ?>
+				<?php echo $this->Status->h($servicegroupMember['Servicestatus']['output']); ?>
 			</div>
 			<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
 				&nbsp;
