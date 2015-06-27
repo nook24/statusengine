@@ -100,5 +100,6 @@ class HostgroupsController extends AppController{
 		//Read: https://github.com/cakephp/cakephp/blob/2.7/lib/Cake/Controller/Component/PaginatorComponent.php#L121-L128
 		$hostgroups = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Objects.name1']));
 		$this->set(compact(['hostgroups']));
+		$this->set('_serialize', ['hostgroups']);
 	}
 }
