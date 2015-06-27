@@ -29,13 +29,64 @@ class ExternalcommandsComponent extends Component{
 			$commandFileError = 'External command file not found in database! Check your app/Config/Statusengine.php => coreconfig settings!';
 		}else{
 			if(!is_writable($commandFile)){
-				$commandFileError = 'External command file '.Configure::read('Interface.command_file').' is not writable';
+				$commandFileError = 'External command file '.$commandFile.' is not writable';
 			}
 			if(!file_exists($commandFile)){
-				$commandFileError = 'External command file '.Configure::read('Interface.command_file').' does not exists';
+				$commandFileError = 'External command file '.$commandFile.' does not exists';
 			}
 		}
 		
 		$this->Controller->set('commandFileError', $commandFileError);
+		return $commandFileError;
+	}
+	
+	public function createDowntime($type = 'host', $options = []){
+		if($type == 'host'){
+			$template = '%s;%s;%u;%u;%d;%d;%u;%s;%s';
+			//Create host downtime
+			switch($options['type']){
+				case 1:
+					//SCHEDULE_HOST_SVC_DOWNTIME
+					array_unshift($options['parameters'], 'SCHEDULE_HOST_DOWNTIME');
+					$this->write(vsprintf($template, $options['parameters']));
+					
+					unset($options['parameters'][0]);
+					
+					array_unshift($options['parameters'], 'SCHEDULE_HOST_SVC_DOWNTIME');
+					$this->write(vsprintf($template, $options['parameters']));
+					break;
+				
+				case 2:
+					//SCHEDULE_AND_PROPAGATE_TRIGGERED_HOST_DOWNTIME
+					array_unshift($options['parameters'], 'SCHEDULE_AND_PROPAGATE_TRIGGERED_HOST_DOWNTIME');
+					$this->write(vsprintf($template, $options['parameters']));
+					break;
+				
+				case 3:
+					//SCHEDULE_AND_PROPAGATE_HOST_DOWNTIME
+					array_unshift($options['parameters'], 'SCHEDULE_AND_PROPAGATE_HOST_DOWNTIME');
+					$this->write(vsprintf($template, $options['parameters']));
+					break;
+				
+				default:
+					//SCHEDULE_HOST_DOWNTIME
+					array_unshift($options['parameters'], 'SCHEDULE_HOST_DOWNTIME');
+					$this->write(vsprintf($template, $options['parameters']));
+					break;
+			}
+		}else{
+			//Create service downtime
+		}
+	}
+	
+	public function write($command){
+		if($this->checkCmd() === false){
+			$file = $this->Controller->Configvariable->getCommandFile();
+			$cmd = fopen($file, 'a+');
+			fwrite($cmd, '['.time().'] '.$command.PHP_EOL);
+			fclose($cmd);
+			return true;
+		}
+		return false;
 	}
 }

@@ -33,4 +33,26 @@
 class Objects extends LegacyAppModel{
 	public $useDbConfig = 'legacy';
 	public $primaryKey = 'object_id';
+	
+	public function findList($objecttype_id = 1, $key = 'name1'){
+		$results = $this->find('all', [
+			'conditions' => [
+				'Objects.objecttype_id' => $objecttype_id
+			],
+			'fields' => [
+				'Objects.object_id',
+				'Objects.name1',
+				'Objects.name2'
+			],
+			'order' => [
+				'Objects.'.$key => 'asc'
+			]
+		]);
+		
+		$list = [];
+		foreach($results as $result){
+			$list[$result['Objects']['object_id']] = $result['Objects'][$key];
+		}
+		return $list;
+	}
 }

@@ -25,6 +25,7 @@ class DowntimesController extends AppController{
 		'Legacy.Configvariable'
 	];
 	public $helpers = ['Status'];
+	public $components = ['Externalcommands'];
 	public $filter = [
 		'index' => [
 			'Objects' => [
@@ -62,5 +63,60 @@ class DowntimesController extends AppController{
 		$downtimes = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Objects.name1']));
 		$this->set(compact(['downtimes']));
 		$this->set('_serialize', ['downtimes']);
+	}
+	
+	public function create($type = 'host'){
+		$types = ['host', 'service'];
+		if(!in_array($type, $types)){
+			$this->redirect(['action' => 'create', 'host']);
+		}
+		
+		if($this->request->is('post') || $this->request->is('put')){
+			if(!$this->Objects->exists($this->request->data('Downtimehistory.host'))){
+				throw new NotFoundException(__('Host not found'));
+			}
+			$host = $this->Objects->findByObjectId($this->request->data('Downtimehistory.host'));
+			$start = strtotime($this->request->data('Downtimehistory.start'));
+			$end = strtotime($this->request->data('Downtimehistory.end'));
+			$comment = $this->request->data('Downtimehistory.comment');
+			if($start > 0 && $end > 0 && strlen($comment) > 0){
+				if($type == 'host'){
+					$downtimeOptions = [
+						'type' => $this->request->data('Downtimehistory.type'),
+						'parameters' => [
+							$host['Objects']['name1'],
+							$start,
+							$end,
+							1,
+							0,
+							($end - $start),
+							'Daniel',
+							$comment
+						]
+					];
+				}
+
+				$this->Externalcommands->createDowntime($type, $downtimeOptions);
+				$this->redirect(['action' => 'index']);
+			}else{
+				$this->setFlash(__('Data validation error'), false);
+			}
+		}
+		
+		//Set default values
+		$defaults = [
+			'Downtimehistory' => [
+				'start' => date('H:m d.m.y'),
+				'end' => date('H:m d.m.y', strtotime('+3 days'))
+			]
+		];
+		$this->request->data = Hash::merge($defaults, $this->request->data);
+		
+		$hosts = $this->Objects->findList(1);
+		$this->Externalcommands->checkCmd();
+		$this->set(compact([
+			'type',
+			'hosts'
+		]));
 	}
 }
