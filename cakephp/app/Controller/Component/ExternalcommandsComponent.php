@@ -103,6 +103,18 @@ class ExternalcommandsComponent extends Component{
 		$this->write(vsprintf($template, $options));
 	}
 	
+	public function rescheduleHost($options){
+		$template = '%s;%s;%u';
+		array_unshift($options, 'SCHEDULE_FORCED_HOST_CHECK');
+		$this->write(vsprintf($template, $options));
+	}
+	
+	public function rescheduleHostAndServices($options){
+		$template = '%s;%s;%u';
+		array_unshift($options, 'SCHEDULE_FORCED_HOST_SVC_CHECKS');
+		$this->write(vsprintf($template, $options));
+	}
+	
 	public function write($command){
 		if($this->checkCmd() === false){
 			$file = $this->Controller->Configvariable->getCommandFile();

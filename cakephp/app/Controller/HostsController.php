@@ -190,7 +190,9 @@ class HostsController extends AppController{
 		
 		$this->Externalcommands->checkCmd();
 		
+		$this->Frontend->setJson('url', Router::url(['controller' => 'Externalcommands', 'action' => 'receiver']));
 		$this->Frontend->setJson('hostObectId', $hostObjectId);
+		
 		$this->set(compact([
 			'host',
 			'hoststatus',

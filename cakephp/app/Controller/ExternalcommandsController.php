@@ -51,7 +51,19 @@ class ExternalcommandsController extends AppController{
 				$this->Externalcommands->rescheduleService($options);
 				break;
 			case 2:
-				//do whatever
+				$options = [
+					$object['Objects']['name1'],
+					time()
+				];
+				$this->Externalcommands->rescheduleHost($options);
+				break;
+			case 3:
+				$options = [
+					$object['Objects']['name1'],
+					time()
+				];
+				$this->Externalcommands->rescheduleHost($options);
+				$this->Externalcommands->rescheduleHostAndServices($options);
 				break;
 		}
 		
