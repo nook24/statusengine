@@ -178,4 +178,13 @@ class DowntimesController extends AppController{
 		$this->set('services', $services);
 		$this->set('_serialize', ['services']);
 	}
+	
+	public function delete($type = 'host', $internalDowntimeId = null){
+		if(!$this->request->is('post')){
+			throw new MethodNotAllowedException();
+		}
+		$this->Externalcommands->deleteDowntime($type, $internalDowntimeId);
+		sleep(1);
+		$this->redirect(['action' => 'index']);
+	}
 }

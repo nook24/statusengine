@@ -54,7 +54,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					<span class="caret"></span>
 				</button>
 				<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-					<li><a href="javascript:void(0);" class="sendCommand" task="reschedule"><?php echo __('Reschedule'); ?></a></li>
+					<li><a href="javascript:void(0);" id="reschedule"><?php echo __('Reschedule'); ?></a></li>
 					<li><a href="javascript:void(0);" class="sendCommand" task="passive"><?php echo __('Submit passive check result'); ?></a></li>
 					<li><a href="javascript:void(0);" class="sendCommand" task=""><?php echo __('Schedule downtime'); ?></a></li>
 					<li><a href="javascript:void(0);" class="sendCommand" task="notify"><?php echo __('Send custom notification'); ?></a></li>

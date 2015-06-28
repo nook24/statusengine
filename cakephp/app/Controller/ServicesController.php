@@ -116,6 +116,7 @@ class ServicesController extends AppController{
 			$datasources = $this->Rrdtool->parseXml($object['Objects']['name1'], $object['Objects']['name2']);
 		}
 		
+		$this->Frontend->setJson('url', Router::url(['controller' => 'Externalcommands', 'action' => 'receiver']));
 		$this->Frontend->setJson('serviceObjectId', $serviceObjectId);
 		$this->set(compact([
 			'service',

@@ -3,6 +3,9 @@
  * This is a PHP file, please check for syntax errors!
  * Example command to check for any syntax erros:
  *   php --syntax-check /opt/statusengine/cakephp/app/Config/Statusengine.php
+ *
+ * To enable your config changes you need to restart Statusengine
+ *   service statusengine restart
  */
 
 $config = [

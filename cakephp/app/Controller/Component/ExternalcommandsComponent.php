@@ -81,6 +81,28 @@ class ExternalcommandsComponent extends Component{
 		}
 	}
 	
+	public function deleteDowntime($type, $internalDowntimeId){
+		$template = '%s;%d';
+		if($type == 'host'){
+			$options = [
+				'DEL_HOST_DOWNTIME',
+				$internalDowntimeId
+			];
+		}else{
+			$options = [
+				'DEL_SVC_DOWNTIME',
+				$internalDowntimeId
+			];
+		}
+		$this->write(vsprintf($template, $options));
+	}
+	
+	public function rescheduleService($options){
+		$template = '%s;%s;%s;%u';
+		array_unshift($options, 'SCHEDULE_FORCED_SVC_CHECK');
+		$this->write(vsprintf($template, $options));
+	}
+	
 	public function write($command){
 		if($this->checkCmd() === false){
 			$file = $this->Controller->Configvariable->getCommandFile();

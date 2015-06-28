@@ -18,11 +18,44 @@
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
 class ExternalcommandsController extends AppController{
-	public function receiver($jsonCommand){
+	public $uses = [
+		'Legacy.Host',
+		'Legacy.Service',
+		'Legacy.Objects',
+		'Legacy.Configvariable',
+	];
+	public $components = ['Externalcommands'];
+	
+	public function receiver(){
 		if(!$this->request->is('ajax')){
 			throw new MethodNotAllowedException(__('This method is not allowed :('));
 		}
-		print_r(json_decode($jsonCommand));
-		print_r($this->request->data);
+		$type = $this->request->data('type');
+		$objectId = $this->request->data('objectId');
+		if(!$this->Objects->exists($objectId)){
+			throw new NotFoundException(__('Object not found'));
+		}
+		
+		$object = $this->Objects->findByObjectId($objectId);
+		
+		if(!in_array($type, ['host', 'service'])){
+			return false;
+		}
+		switch($this->request->data('commandId')){
+			case 1:
+				$options = [
+					$object['Objects']['name1'],
+					$object['Objects']['name2'],
+					time()
+				];
+				$this->Externalcommands->rescheduleService($options);
+				break;
+			case 2:
+				//do whatever
+				break;
+		}
+		
+		$this->set('result', true);
+		$this->set('_serialize', ['result']);
 	}
 }

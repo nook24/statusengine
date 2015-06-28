@@ -77,11 +77,25 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			</div>
 			<div class="col-xs-12 col-sm-2">
 				<?php echo $this->Time->format($downtime['Downtimehistory']['scheduled_end_time'], '%H:%M %d.%m.%Y');?>
-				<?php if((strtotime($downtime['Downtimehistory']['scheduled_start_time']) > time()) &&
-				(strtotime($downtime['Downtimehistory']['scheduled_end_time']) < time()) &&
-				 $downtime['Downtimehistory']['was_cancelled'] == 0): ?>
-					<a href="#" class="btn btn-danger"><i class="fa fa-trash-o"></i></a>
-				<?php endif;?>
+				<?php if((strtotime($downtime['Downtimehistory']['scheduled_end_time']) > time()) &&
+				 $downtime['Downtimehistory']['was_cancelled'] == 0):
+					$type = 'service';
+					if($downtime['Objects']['name2'] === null):
+						$type = 'host';
+				 	endif;
+					$url = [
+						'controller' => 'Downtimes',
+						'action' => 'delete',
+						$type,
+						$downtime['Downtimehistory']['internal_downtime_id']
+					];
+					$options = [
+						'class' => 'btn btn-danger',
+						'style' => 'margin-bottom: 5px;',
+						'escape' => false,
+					];
+					echo $this->Form->postLink('<i class="fa fa-trash-o"></i>', $url, $options);
+				endif;?>
 			</div>
 			<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
 				&nbsp;
