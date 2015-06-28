@@ -91,7 +91,7 @@ class ExternalcommandsController extends AppController{
 					$object['Objects']['name1'],
 					$object['Objects']['name2'],
 					$this->request->data('options'),
-					'author',
+					$this->Auth->user('username'),
 					$this->request->data('comment')
 				];
 				$this->Externalcommands->sendCustomServiceNotification($options);
@@ -104,7 +104,7 @@ class ExternalcommandsController extends AppController{
 					(int)$this->request->data('sticky'),
 					1,
 					1,
-					'author',
+					$this->Auth->user('username'),
 					$this->request->data('comment')
 				];
 				$this->Externalcommands->sendServiceAck($options);
@@ -123,7 +123,7 @@ class ExternalcommandsController extends AppController{
 				$options = [
 					$object['Objects']['name1'],
 					$this->request->data('options'),
-					'author',
+					$this->Auth->user('username'),
 					$this->request->data('comment')
 				];
 				$this->Externalcommands->sendCustomHostNotification($options);
@@ -135,7 +135,7 @@ class ExternalcommandsController extends AppController{
 					(int)$this->request->data('sticky'),
 					1,
 					1,
-					'author',
+					$this->Auth->user('username'),
 					$this->request->data('comment')
 				];
 				$this->Externalcommands->sendHostAck($options);

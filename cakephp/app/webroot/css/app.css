@@ -105,6 +105,12 @@ body > .container {
 	display: none;
 }
 
+.form-signin {
+  max-width: 330px;
+  padding: 15px;
+  margin: 0 auto;
+}
+
 /** Sticky footer out of http://getbootstrap.com/examples/sticky-footer/ **/
 
 html{

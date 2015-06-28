@@ -70,6 +70,13 @@
 								<?php echo __('Log entries');?>
 							</a>
 						</li>
+						<li class="divider"></li>
+						<li>
+							<a href="<?php echo Router::url(['controller' => 'Users', 'action' => 'index']); ?>">
+								<i class="fa fa-users"></i>&nbsp;
+								<?php echo __('Users');?>
+							</a>
+						</li>
 						
 					</ul>
 				</li>
@@ -77,7 +84,7 @@
 			<ul class="nav navbar-nav navbar-right">
 				<li>
 					<a href="<?php echo Router::url([
-						'controller' => 'login',
+						'controller' => 'Users',
 						'action' => 'logout']); ?>">
 							<i class="fa fa-sign-out"></i>
 							<?php echo __('Logout');?>

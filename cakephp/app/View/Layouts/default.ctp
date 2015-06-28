@@ -50,8 +50,13 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	?>
 </head>
 <body>
-	
-	<?php echo $this->element('menu'); ?>
+	<?php
+	if($isLoggedIn === true):
+		echo $this->element('menu');
+	else:
+		echo $this->element('menuLoggedOut');
+	endif;
+	?>
 	
 	<div class="container">
 		<?php echo $this->Session->flash(); ?>
@@ -61,7 +66,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	</div>
 	<?php
 		Configure::load('Interface');
-		if(Configure::read('Interface.sql_dump') === true):
+		if(Configure::read('Interface.sql_dump') === true && $isLoggedIn === true):
 			 echo $this->element('sql_dump');
 		endif;
 
@@ -79,26 +84,43 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	<footer class="footer">
 		<div class="container">
 			<div class="row text-muted">
-				<div class="<?php echo $class; ?>">
-					<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
-						<i class="fa fa-github"></i> 
-						<?php echo __('Contribute to Statusengine');?>
-					</a>
-				</div>
-				<?php if($hideOitc === false): ?>
-					<div class="col-xs-12 col-md-4 text-center">
-						<a href="javascript:void(0);" class="text-muted" data-toggle="modal" data-target="#oITCModal">
-							<?php echo __('Want more? Check out openITCOCKPIT');?>
+				<?php if($isLoggedIn === true):?>
+					<div class="<?php echo $class; ?>">
+						<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
+							<i class="fa fa-github"></i> 
+							<?php echo __('Contribute to Statusengine');?>
 						</a>
+					</div>
+					<?php if($hideOitc === false): ?>
+						<div class="col-xs-12 col-md-4 text-center">
+							<a href="javascript:void(0);" class="text-muted" data-toggle="modal" data-target="#oITCModal">
+								<?php echo __('Want more? Check out openITCOCKPIT');?>
+							</a>
+						</div>
+					<?php endif;?>
+					<div class="<?php echo $class; ?>">
+						<div class="pull-right">
+							<a href="http://cakephp.org" target="_blank">
+								<?php echo $this->Html->image('cake-logo-smaller2.png', ['border' => '0']); ?>
+							</a>
+						</div>
+					</div>
+				<?php else:?>
+					<div class="col-xs-6">
+						<div class="pull-left">
+							<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
+								<i class="fa fa-github"></i> 
+								<?php echo __('Contribute to Statusengine');?>
+							</a>
+						</div>
+					</div>
+					<div class="col-xs-6">
+						<div class="pull-right">
+							<?php Configure::load('Statusengine'); ?>
+							Statusengine - <?php echo h(Configure::read('version'));?>
+						</div>
 					</div>
 				<?php endif;?>
-				<div class="<?php echo $class; ?>">
-					<div class="pull-right">
-						<a href="http://cakephp.org" target="_blank">
-							<?php echo $this->Html->image('cake-logo-smaller2.png', ['border' => '0']); ?>
-						</a>
-					</div>
-				</div>
 			</div>
 		</div>
 	</footer>

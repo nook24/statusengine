@@ -36,7 +36,22 @@ class AppController extends Controller {
 		'RequestHandler',
 		'Frontend.Frontend',
 		'Session',
-		'Filter'
+		'Filter',
+		'Auth' => [
+			'loginRedirect' => [
+				'controller' => 'Home',
+				'action' => 'index'
+			],
+			'logoutRedirect' => [
+				'controller' => 'Users',
+				'action' => 'login',
+			],
+			'authenticate' => [
+				'Form' => [
+					'passwordHasher' => 'Blowfish'
+				]
+			]
+		]
 	];
 	
 	public $helpers = [
@@ -52,6 +67,8 @@ class AppController extends Controller {
 		parent::beforeFilter();
 		//Set global default limit for pagination
 		$this->Paginator->settings['limit'] = 50;
+		$isLoggedIn = $this->Auth->loggedIn();
+		$this->set('isLoggedIn', $isLoggedIn);
 	}
 	
 	public function setFlash($message, $success = true, $key = 'flash'){
