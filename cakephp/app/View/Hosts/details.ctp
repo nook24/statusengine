@@ -33,7 +33,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				</div>
 			</div>
 		<?php endif; ?>
-		<div class="col-xs-12 col-sm-8 col-md-9">
+		<div class="col-xs-12 col-sm-7 col-md-8">
 			<h3>
 				<?php echo $this->Status->hostStateIcon((isset($hoststatus['Hoststatus']['current_state'])?$hoststatus['Hoststatus']['current_state']:null));?>
 			<?php echo h($object['Objects']['name1']); ?>
@@ -45,20 +45,50 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<div class="col-xs-12 col-sm-2 col-md-1">
 			<?php echo $this->element('host_history'); ?>
 		</div>
-		<div class="col-xs-12 col-sm-2 col-md-2">
+		<div class="col-xs-12 col-sm-3 col-md-3">
 			<div class="dropdown" style="padding-top: 15px;">
 				<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
 				<?php echo __('Commands'); ?>
 					<span class="caret"></span>
 				</button>
 				<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-					<li><a href="javascript:void(0);" id="reschedule"><?php echo __('Reschedule'); ?></a></li>
-					<li><a href="javascript:void(0);" id="rescheduleServices"><?php echo __('Reschedule + Services'); ?></a></li>
-					<li><a href="javascript:void(0);" class="sendCommand" task="passive"><?php echo __('Submit passive check result'); ?></a></li>
-					<li><a href="javascript:void(0);" class="sendCommand" task=""><?php echo __('Schedule downtime'); ?></a></li>
-					<li><a href="javascript:void(0);" class="sendCommand" task="notify"><?php echo __('Send custom notification'); ?></a></li>
+					<li>
+						<a href="javascript:void(0);" id="reschedule">
+							<i class="fa fa-refresh"></i>
+							&nbsp;
+							<?php echo __('Reschedule'); ?>
+						</a>
+					</li>
+					<li>
+						<a href="javascript:void(0);" id="rescheduleServices">
+							<i class="fa fa-refresh"></i>
+							&nbsp;
+							<?php echo __('Reschedule + Services'); ?>
+						</a>
+					</li>
+					<li class="divider"></li>
+					<li>
+						<a href="javascript:void(0);">
+							<i class="fa fa-arrow-down"></i>
+							&nbsp;
+							<?php echo __('Submit passive check result'); ?>
+						</a>
+					</li>
+					<li>
+						<a href="javascript:void(0);">
+							<i class="fa fa-envelope-o"></i>
+							&nbsp;
+							<?php echo __('Send custom notification'); ?>
+						</a>
+					</li>
 					<?php if(isset($hoststatus['Hoststatus']['current_state']) && $hoststatus['Hoststatus']['current_state'] > 0):?>
-						<li><a href="javascript:void(0);" class="sendCommand" task="ack"><?php echo __('Set acknowledgment'); ?></a></li>
+						<li>
+							<a href="javascript:void(0);">
+								<i class="fa fa-comments"></i>
+								&nbsp;
+								<?php echo __('Set acknowledgment'); ?>
+							</a>
+						</li>
 					<?php endif; ?>
 				</ul>
 			</div>

@@ -25,6 +25,13 @@ class ExternalcommandsController extends AppController{
 		'Legacy.Configvariable',
 	];
 	public $components = ['Externalcommands'];
+	const SCHEDULE_FORCED_SVC_CHECK       = 1;
+	const SCHEDULE_FORCED_HOST_CHECK      = 2;
+	const SCHEDULE_FORCED_HOST_SVC_CHECKS = 3;
+	const PROCESS_SERVICE_CHECK_RESULT    = 4;
+	const SEND_CUSTOM_SVC_NOTIFICATION    = 5;
+	const ACKNOWLEDGE_SVC_PROBLEM         = 6;
+	
 	
 	public function receiver(){
 		if(!$this->request->is('ajax')){
@@ -42,7 +49,7 @@ class ExternalcommandsController extends AppController{
 			return false;
 		}
 		switch($this->request->data('commandId')){
-			case 1:
+			case self::SCHEDULE_FORCED_SVC_CHECK:
 				$options = [
 					$object['Objects']['name1'],
 					$object['Objects']['name2'],
@@ -50,20 +57,54 @@ class ExternalcommandsController extends AppController{
 				];
 				$this->Externalcommands->rescheduleService($options);
 				break;
-			case 2:
+			case self::SCHEDULE_FORCED_HOST_CHECK:
 				$options = [
 					$object['Objects']['name1'],
 					time()
 				];
 				$this->Externalcommands->rescheduleHost($options);
 				break;
-			case 3:
+			case self::SCHEDULE_FORCED_HOST_SVC_CHECKS:
 				$options = [
 					$object['Objects']['name1'],
 					time()
 				];
 				$this->Externalcommands->rescheduleHost($options);
 				$this->Externalcommands->rescheduleHostAndServices($options);
+				break;
+				
+			case self::PROCESS_SERVICE_CHECK_RESULT:
+				$options = [
+					$object['Objects']['name1'],
+					$object['Objects']['name2'],
+					$this->request->data('state'),
+					$this->request->data('output')
+				];
+				$this->Externalcommands->serviceCheckResult($options);
+				break;
+				
+			case self::SEND_CUSTOM_SVC_NOTIFICATION:
+				$options = [
+					$object['Objects']['name1'],
+					$object['Objects']['name2'],
+					$this->request->data('options'),
+					'author',
+					$this->request->data('comment')
+				];
+				$this->Externalcommands->sendCustomServiceNotification($options);
+				break;
+				
+			case self::ACKNOWLEDGE_SVC_PROBLEM:
+				$options = [
+					$object['Objects']['name1'],
+					$object['Objects']['name2'],
+					(int)$this->request->data('sticky'),
+					1,
+					1,
+					'author',
+					$this->request->data('comment')
+				];
+				$this->Externalcommands->sendServiceAck($options);
 				break;
 		}
 		

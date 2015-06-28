@@ -27,6 +27,8 @@ class ServicesController extends AppController{
 		'Legacy.Objects',
 		'Legacy.Configvariable',
 		'Rrdtool',
+		'Legacy.Downtimehistory',
+		'Legacy.Acknowledgement',
 	];
 	public $helpers = ['Status'];
 	public $components = ['Externalcommands'];
@@ -109,6 +111,16 @@ class ServicesController extends AppController{
 			]
 		]);
 		
+		$downtime = [];
+		if(isset($servicestatus['Servicestatus']['scheduled_downtime_depth']) && $servicestatus['Servicestatus']['scheduled_downtime_depth'] > 0){
+			$downtime = $this->Downtimehistory->findByObjectId($serviceObjectId);
+		}
+		
+		$acknowledgement = [];
+		if(isset($servicestatus['Servicestatus']['problem_has_been_acknowledged']) && $servicestatus['Servicestatus']['problem_has_been_acknowledged'] == 1){
+			$acknowledgement = $this->Acknowledgement->findByObjectId($serviceObjectId);
+		}
+		
 		$this->Externalcommands->checkCmd();
 		
 		$datasources = [];
@@ -123,13 +135,17 @@ class ServicesController extends AppController{
 			'servicestatus',
 			'object',
 			'commandFileError',
-			'datasources'
+			'datasources',
+			'downtime',
+			'acknowledgement',
 		]));
 		$this->set('_serialize', [
 			'service',
 			'servicestatus',
 			'object',
-			'commandFileError'
+			'commandFileError',
+			'downtime',
+			'acknowledgement',
 		]);
 	}
 	

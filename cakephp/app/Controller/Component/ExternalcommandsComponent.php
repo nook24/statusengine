@@ -115,6 +115,24 @@ class ExternalcommandsComponent extends Component{
 		$this->write(vsprintf($template, $options));
 	}
 	
+	public function serviceCheckResult($options){
+		$template = '%s;%s;%s;%d;%s';
+		array_unshift($options, 'PROCESS_SERVICE_CHECK_RESULT');
+		$this->write(vsprintf($template, $options));
+	}
+	
+	public function sendCustomServiceNotification($options){
+		$template = '%s;%s;%s;%d;%s;%s';
+		array_unshift($options, 'SEND_CUSTOM_SVC_NOTIFICATION');
+		$this->write(vsprintf($template, $options));
+	}
+	
+	public function sendServiceAck($options){
+		$template = '%s;%s;%s;%d;%d;%d;%s;%s';
+		array_unshift($options, 'ACKNOWLEDGE_SVC_PROBLEM');
+		$this->write(vsprintf($template, $options));
+	}
+	
 	public function write($command){
 		if($this->checkCmd() === false){
 			$file = $this->Controller->Configvariable->getCommandFile();

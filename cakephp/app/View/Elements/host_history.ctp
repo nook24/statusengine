@@ -9,29 +9,28 @@
 				'controller' => 'Notifications',
 				'action' => 'host',
 				$object['Objects']['object_id']
-			]); ?>"><?php echo __('Notificatios'); ?></a>
+			]); ?>"><i class="fa fa-envelope-o"></i> <?php echo __('Notificatios'); ?></a>
 		</li>
 		<li>
 			<a href="<?php echo Router::url([
 				'controller' => 'Hostchecks',
 				'action' => 'index',
 				$object['Objects']['object_id']
-			]); ?>"><?php echo __('Host checks'); ?></a>
+			]); ?>"><i class="fa fa-ellipsis-h"></i> <?php echo __('Host checks'); ?></a>
 		</li>
 		<li>
 			<a <a href="<?php echo Router::url([
 				'controller' => 'Statehistory',
 				'action' => 'host',
 				$object['Objects']['object_id']
-			]); ?>">
-				<?php echo __('State history'); ?></a>
+			]); ?>"><i class="fa fa-history"></i> <?php echo __('State history'); ?></a>
 		</li>
 		<li>
 			<a href="<?php echo Router::url([
 				'controller' => 'Acknowledgements',
 				'action' => 'host',
 				$object['Objects']['object_id']
-			]); ?>"><?php echo __('Acknowledgements'); ?></a>
+			]); ?>"><i class="fa fa-comments"></i> <?php echo __('Acknowledgements'); ?></a>
 		</li>
 	</ul>
 </div>

@@ -120,6 +120,9 @@ class AcknowledgementsController extends AppController{
 				'Acknowledgement.author_name',
 				'Acknowledgement.comment_data',
 				'Acknowledgement.is_sticky'
+			],
+			'order' => [
+				'Acknowledgement.entry_time' => 'desc'
 			]
 		];
 		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);

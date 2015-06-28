@@ -98,7 +98,7 @@ class DowntimesController extends AppController{
 							1,
 							0,
 							($end - $start),
-							'Daniel',
+							'author',
 							$comment
 						]
 					];
@@ -111,7 +111,7 @@ class DowntimesController extends AppController{
 						1,
 						0,
 						($end - $start),
-						'Daniel',
+						'author',
 						$comment
 					];
 				}
