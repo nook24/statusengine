@@ -50,7 +50,7 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 		<div class="col-md-6 hidden-xs"><?php echo $this->Paginator->sort('Acknowledgement.comment_data', __('Comment')); ?></div>
 		<div class="col-md-1 hidden-xs"><?php echo $this->Paginator->sort('Acknowledgement.is_sticky', __('Sticky')); ?></div>
 		<?php foreach($acknowledgements as $acknowledgement): ?>
-			<?php $borderClass = $this->Status->serviceBorder($acknowledgement['Acknowledgement']['state']); ?>
+			<?php $borderClass = $this->Status->hostBorder($acknowledgement['Acknowledgement']['state']); ?>
 			<div class="col-xs-12 col-md-2 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
 				<?php echo $this->Time->format($acknowledgement['Acknowledgement']['entry_time'], '%H:%M %d.%m.%Y');?>
 			</div>

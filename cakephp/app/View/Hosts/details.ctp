@@ -68,14 +68,14 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					</li>
 					<li class="divider"></li>
 					<li>
-						<a href="javascript:void(0);">
+						<a href="javascript:void(0);" data-toggle="modal" data-target="#passiveResult">
 							<i class="fa fa-arrow-down"></i>
 							&nbsp;
 							<?php echo __('Submit passive check result'); ?>
 						</a>
 					</li>
 					<li>
-						<a href="javascript:void(0);">
+						<a href="javascript:void(0);" data-toggle="modal" data-target="#customNotify">
 							<i class="fa fa-envelope-o"></i>
 							&nbsp;
 							<?php echo __('Send custom notification'); ?>
@@ -83,7 +83,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					</li>
 					<?php if(isset($hoststatus['Hoststatus']['current_state']) && $hoststatus['Hoststatus']['current_state'] > 0):?>
 						<li>
-							<a href="javascript:void(0);">
+							<a href="javascript:void(0);"  data-toggle="modal" data-target="#setAck">
 								<i class="fa fa-comments"></i>
 								&nbsp;
 								<?php echo __('Set acknowledgment'); ?>
@@ -104,6 +104,46 @@ $this->Paginator->options(['url' => $this->params['named']]);
 	<?php return; //Return to avoid undefinde index errors?>
 	<?php endif;?>
 	<div class="row">
+		<?php if($hoststatus['Hoststatus']['problem_has_been_acknowledged'] > 0):?>
+			<div class="col-xs-12">
+				<div class="alert alert-info" role="alert">
+					<i class="fa fa-comments"></i>
+					&nbsp;
+					<?php echo __('Notice: The state of this host is already acknowledged.');?>
+					<?php if(!empty($acknowledgement)):?>
+						<p>
+							<?php echo h($acknowledgement['Acknowledgement']['author_name'])?>:&nbsp;
+							<?php echo h($acknowledgement['Acknowledgement']['comment_data']);?>
+						</p>
+						<p>
+							<?php echo __('Date')?>:&nbsp;
+							<?php echo $this->Time->format($acknowledgement['Acknowledgement']['entry_time'], '%H:%M %d.%m.%Y');?>
+						</p>
+					<?php endif;?>
+				</div>
+			</div>
+		<?php endif;?>
+		<?php if($hoststatus['Hoststatus']['scheduled_downtime_depth'] > 0):?>
+			<div class="col-xs-12">
+				<div class="alert alert-info" role="alert">
+					<i class="fa fa-pause"></i>
+					&nbsp;
+					<?php echo __('Notice: This host is is a scheduled downtime.');?>
+					<?php if(!empty($downtime)):?>
+						<p>
+							<?php echo h($downtime['Downtimehistory']['author_name'])?>:&nbsp;
+							<?php echo h($downtime['Downtimehistory']['comment_data']);?>
+						</p>
+						<p>
+							<?php echo __('Date')?>:&nbsp;
+							<?php echo $this->Time->format($downtime['Downtimehistory']['scheduled_start_time'], '%H:%M %d.%m.%Y');?>
+							&nbsp;-&nbsp;
+							<?php echo $this->Time->format($downtime['Downtimehistory']['scheduled_end_time'], '%H:%M %d.%m.%Y');?>
+						</p>
+					<?php endif;?>
+				</div>
+			</div>
+		<?php endif;?>
 		<?php if($hoststatus['Hoststatus']['is_flapping'] == 1):?>
 			<div class="col-xs-12">
 				<div class="alert alert-info" role="alert">
@@ -255,5 +295,138 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				</em>
 			</div>
 		<?php endif;?>
+	</div>
+</div>
+
+<!-- External commands modals -->
+<div class="modal fade" id="passiveResult" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel"><i class="fa fa-arrow-down"></i> <?php echo __('Submit passive check result'); ?></h4>
+			</div>
+			<div class="modal-body">
+				<?php
+				echo $this->Form->create('PassiveResult',[
+					'inputDefaults' => [
+						'div' => 'form-group',
+						'label' => [
+							'class' => 'col col-md-3 control-label'
+						],
+						'wrapInput' => 'col col-md-5',
+						'class' => 'form-control'
+					],
+					'class' => 'form-horizontal'
+				]);
+				echo $this->Form->input('state', [
+					'options' => [
+						0 => __('Up'),
+						1 => __('Down'),
+						2 => __('Unreachable'),
+					],
+					'label' => __('State')
+				]);
+				echo $this->Form->input('output', [
+					'type' => 'text',
+					'label' => __('Output')
+				]);
+				echo $this->Form->end();
+				?>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-success" data-dismiss="modal" id="submitPassiveResult"><?php echo __('Submit');?></button>
+				<button type="button" class="btn btn-default" data-dismiss="modal"><?php echo __('Close'); ?></button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="customNotify" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel"><i class="fa fa-envelope-o"></i> <?php echo __('Send custom notification'); ?></h4>
+			</div>
+			<div class="modal-body">
+				<?php
+				echo $this->Form->create('CustomNotify',[
+					'inputDefaults' => [
+						'div' => 'form-group',
+						'label' => [
+							'class' => 'col col-md-3 control-label'
+						],
+						'wrapInput' => 'col col-md-5',
+						'class' => 'form-control'
+					],
+					'class' => 'form-horizontal'
+				]);
+					echo $this->Form->input('comment', [
+						'type' => 'text',
+						'label' => __('Comment')
+					]);
+				echo $this->Form->input('broadcast', [
+					'type' => 'checkbox',
+					'class' => false,
+					'label' => __('Broadcast')
+				]);
+				echo $this->Form->input('forced', [
+					'type' => 'checkbox',
+					'class' => false,
+					'label' => __('Forced')
+				]);
+				echo $this->Form->end();
+				?>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-success" data-dismiss="modal" id="submitCustomNotify"><?php echo __('Submit');?></button>
+				<button type="button" class="btn btn-default" data-dismiss="modal"><?php echo __('Close'); ?></button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="setAck" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel"><i class="fa fa-comments"></i> <?php echo __('Set acknowledgment'); ?></h4>
+			</div>
+			<div class="modal-body">
+				<?php
+				echo $this->Form->create('SetAck',[
+					'inputDefaults' => [
+						'div' => 'form-group',
+						'label' => [
+							'class' => 'col col-md-3 control-label'
+						],
+						'wrapInput' => 'col col-md-5',
+						'class' => 'form-control'
+					],
+					'class' => 'form-horizontal'
+				]);
+					echo $this->Form->input('comment', [
+						'type' => 'text',
+						'label' => __('Comment')
+					]);
+				echo $this->Form->input('sticky', [
+					'type' => 'checkbox',
+					'class' => false,
+					'label' => [
+						'class' => 'col col-md-5 control-label',
+						'text' => __('Survive state change? (Sticky)')
+					],
+					'wrapInput' => 'col col-md-12',
+				]);
+				echo $this->Form->end();
+				?>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-success" data-dismiss="modal" id="submitSetAck"><?php echo __('Submit');?></button>
+				<button type="button" class="btn btn-default" data-dismiss="modal"><?php echo __('Close'); ?></button>
+			</div>
+		</div>
 	</div>
 </div>

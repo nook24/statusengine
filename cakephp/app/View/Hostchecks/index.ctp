@@ -51,7 +51,7 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 		<div class="col-md-3 hidden-xs"><?php echo $this->Paginator->sort('Hostcheck.output', __('Output')); ?></div>
 		<div class="col-md-4 hidden-xs"><?php echo $this->Paginator->sort('Hostcheck.perfdata', __('Perfdata')); ?></div>
 		<?php foreach($hostchecks as $hostcheck): ?>
-			<?php $borderClass = $this->Status->serviceBorder($hostcheck['Hostcheck']['state']); ?>
+			<?php $borderClass = $this->Status->hostBorder($hostcheck['Hostcheck']['state']); ?>
 			<div class="col-xs-12 col-md-2 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
 				<?php echo $this->Time->format($hostcheck['Hostcheck']['start_time'], '%H:%M %d.%m.%Y');?>
 			</div>

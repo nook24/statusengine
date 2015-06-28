@@ -25,7 +25,9 @@ class HostsController extends AppController{
 		'Legacy.Service',
 		'Legacy.Servicestatus',
 		'Legacy.Objects',
-		'Legacy.Configvariable'
+		'Legacy.Configvariable',
+		'Legacy.Downtimehistory',
+		'Legacy.Acknowledgement',
 	];
 	public $helpers = ['Status'];
 	public $components = ['Externalcommands'];
@@ -191,19 +193,32 @@ class HostsController extends AppController{
 		$this->Externalcommands->checkCmd();
 		
 		$this->Frontend->setJson('url', Router::url(['controller' => 'Externalcommands', 'action' => 'receiver']));
-		$this->Frontend->setJson('hostObectId', $hostObjectId);
+		$this->Frontend->setJson('hostObjectId', $hostObjectId);
+		
+		$downtime = [];
+		if(isset($hoststatus['Hoststatus']['scheduled_downtime_depth']) && $hoststatus['Hoststatus']['scheduled_downtime_depth'] > 0){
+			$downtime = $this->Downtimehistory->findByObjectId($hostObjectId);
+		}
+		$acknowledgement = [];
+		if(isset($hoststatus['Hoststatus']['problem_has_been_acknowledged']) && $hoststatus['Hoststatus']['problem_has_been_acknowledged'] == 1){
+			$acknowledgement = $this->Acknowledgement->findByObjectId($hostObjectId);
+		}
 		
 		$this->set(compact([
 			'host',
 			'hoststatus',
 			'object',
-			'services'
+			'services',
+			'downtime',
+			'acknowledgement',
 		]));
 		$this->set('_serialize', [
 			'host',
 			'hoststatus',
 			'object',
-			'services'
+			'services',
+			'downtime',
+			'acknowledgement',
 		]);
 	}
 }

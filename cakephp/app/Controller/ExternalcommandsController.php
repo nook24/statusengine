@@ -31,6 +31,9 @@ class ExternalcommandsController extends AppController{
 	const PROCESS_SERVICE_CHECK_RESULT    = 4;
 	const SEND_CUSTOM_SVC_NOTIFICATION    = 5;
 	const ACKNOWLEDGE_SVC_PROBLEM         = 6;
+	const PROCESS_HOST_CHECK_RESULT       = 7;
+	const SEND_CUSTOM_HOST_NOTIFICATION   = 8;
+	const ACKNOWLEDGE_HOST_PROBLEM        = 9;
 	
 	
 	public function receiver(){
@@ -105,6 +108,37 @@ class ExternalcommandsController extends AppController{
 					$this->request->data('comment')
 				];
 				$this->Externalcommands->sendServiceAck($options);
+				break;
+				
+			case self::PROCESS_HOST_CHECK_RESULT:
+				$options = [
+					$object['Objects']['name1'],
+					$this->request->data('state'),
+					$this->request->data('output')
+				];
+				$this->Externalcommands->hostCheckResult($options);
+				break;
+			
+			case self::SEND_CUSTOM_HOST_NOTIFICATION:
+				$options = [
+					$object['Objects']['name1'],
+					$this->request->data('options'),
+					'author',
+					$this->request->data('comment')
+				];
+				$this->Externalcommands->sendCustomHostNotification($options);
+				break;
+			
+			case self::ACKNOWLEDGE_HOST_PROBLEM:
+				$options = [
+					$object['Objects']['name1'],
+					(int)$this->request->data('sticky'),
+					1,
+					1,
+					'author',
+					$this->request->data('comment')
+				];
+				$this->Externalcommands->sendHostAck($options);
 				break;
 		}
 		

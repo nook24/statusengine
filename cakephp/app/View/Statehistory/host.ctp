@@ -50,7 +50,7 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 		<div class="col-md-1 hidden-xs"><?php echo $this->Paginator->sort('Statehistory.state_type', __('State type')); ?></div>
 		<div class="col-md-7 hidden-xs"><?php echo $this->Paginator->sort('Statehistory.output', __('Output')); ?></div>
 		<?php foreach($statehistory as $record): ?>
-			<?php $borderClass = $this->Status->serviceBorder($record['Statehistory']['state']); ?>
+			<?php $borderClass = $this->Status->hostBorder($record['Statehistory']['state']); ?>
 			<div class="col-xs-12 col-md-2 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
 				<?php echo $this->Time->format($record['Statehistory']['state_time'], '%H:%M %d.%m.%Y');?>
 			</div>

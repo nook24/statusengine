@@ -50,7 +50,7 @@ $this->Paginator->options(['url' => Hash::merge($this->params['named'], $this->p
 		<div class="col-sm-3 hidden-xs"><?php echo $this->Paginator->sort('CommandObject.name1', __('Via')); ?></div>
 		<div class="col-sm-5 hidden-xs"><?php echo $this->Paginator->sort('Notification.output', __('Output')); ?></div>
 		<?php foreach($notifications as $notification): ?>
-			<?php $borderClass = $this->Status->serviceBorder($notification['Notification']['state']); ?>
+			<?php $borderClass = $this->Status->hostBorder($notification['Notification']['state']); ?>
 			<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
 				<?php echo h($notification['ContactObject']['name1']);?>
 			</div>
