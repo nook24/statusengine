@@ -136,6 +136,8 @@ class StatusengineLegacyShell extends AppShell{
 		
 		$this->fakeLastInsertId = 1;
 		
+		$this->lastQuery = time();
+		
 	}
 	
 	/**
@@ -170,6 +172,8 @@ class StatusengineLegacyShell extends AppShell{
 		
 		$this->instance_id = Configure::read('instance_id');
 		$this->config_type = Configure::read('config_type');
+		
+		$this->SQLTimeout = (int)Configure::read('sql_timeout');
 		
 		$this->Logfile->init(Configure::read('logfile'));
 		$this->Logfile->welcome();
@@ -217,6 +221,7 @@ class StatusengineLegacyShell extends AppShell{
 			$this->buildHoststatusCache();
 			$this->buildServicestatusCache();
 			$this->Scheduleddowntime->cleanup();
+			$this->checkSqlTimeout();
 			$this->Dbversion->save([
 				'Dbversion' => [
 					'name' => 'Statusengine',
@@ -263,6 +268,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Objects->create();
 		switch($payload->object_type){
 			case START_OBJECT_DUMP:
+				$this->checkSqlTimeout();
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR2);
 				}
@@ -1339,6 +1345,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
+		$this->checkSqlTimeout();
 		if($hoststatusId == null){
 			$result = $this->Hoststatus->save($data);
 		}else{
@@ -1441,6 +1448,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
+		$this->checkSqlTimeout();
 		$result = $this->Servicestatus->rawSaveServicestatus([$data]);
 		
 		/*if($servicestatus_id == null){
@@ -1505,6 +1513,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
+		$this->checkSqlTimeout();
 		$this->Servicecheck->rawInsert([$data], false);
 		
 		if($this->processPerfdata === true && $payload->servicecheck->perf_data !== null){
@@ -1578,6 +1587,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
+		$this->checkSqlTimeout();
 		$this->Hostcheck->rawInsert([$data], false);
 	}
 	
@@ -1618,6 +1628,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
+		$this->checkSqlTimeout();
 		$this->Statehistory->rawInsert([$data], false);
 	}
 	
@@ -1640,6 +1651,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
+		$this->checkSqlTimeout();
 		$this->Logentry->rawInsert([$data], false);
 	}
 	
@@ -1666,6 +1678,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		
+		$this->checkSqlTimeout();
 		$this->Systemcommand->rawInsert([$data], false);
 	}
 	
@@ -1701,6 +1714,8 @@ class StatusengineLegacyShell extends AppShell{
 				'expiration_time' => $payload->comment->expire_time
 			]
 		];
+		
+		$this->checkSqlTimeout();
 		$this->Comment->rawInsert([$data], false);
 	}
 	
@@ -1719,6 +1734,8 @@ class StatusengineLegacyShell extends AppShell{
 				'command_args' => $payload->externalcommand->command_args
 			]
 		];
+		
+		$this->checkSqlTimeout();
 		$this->Externalcommand->rawInsert([$data], false);
 	}
 	
@@ -1756,6 +1773,8 @@ class StatusengineLegacyShell extends AppShell{
 				'notify_contacts' => $payload->acknowledgement->notify_contacts,
 			]
 		];
+		
+		$this->checkSqlTimeout();
 		$this->Acknowledgement->rawInsert([$data], false);
 	}
 	
@@ -1788,6 +1807,8 @@ class StatusengineLegacyShell extends AppShell{
 				'internal_comment_id' => $payload->flapping->comment_id
 			]
 		];
+		
+		$this->checkSqlTimeout();
 		$this->Flapping->rawInsert([$data], false);
 	}
 	
@@ -1806,6 +1827,8 @@ class StatusengineLegacyShell extends AppShell{
 			//Object has gone
 			return;
 		}
+		
+		$this->checkSqlTimeout();
 		
 		if($payload->type == 1100 || $payload->type == 1102){
 			//Add a new downtime
@@ -2014,6 +2037,8 @@ class StatusengineLegacyShell extends AppShell{
 				'program_date' => $payload->processdata->modification_data,
 			]
 		];
+		
+		$this->checkSqlTimeout();
 		$this->Processdata->rawInsert([$data], false);
 	}
 	
@@ -2034,7 +2059,7 @@ class StatusengineLegacyShell extends AppShell{
 			//Object has gone
 			return;
 		}
-		
+		$this->checkSqlTimeout();
 		$this->Notification->create();
 		$data = [
 			'Notification' => [
@@ -2092,6 +2117,8 @@ class StatusengineLegacyShell extends AppShell{
 				'global_service_event_handler' =>$payload->programmstatus->global_service_event_handler,
 			]
 		];
+		
+		$this->checkSqlTimeout();
 		$this->Programmstatus->rawSave([$data], false);
 	}
 	
@@ -2131,6 +2158,8 @@ class StatusengineLegacyShell extends AppShell{
 				'modified_service_attributes' => $payload->contactstatus->modified_service_attributes
 			]
 		];
+		
+		$this->checkSqlTimeout();
 		$this->Contactstatus->save($data);
 	}
 	
@@ -2169,6 +2198,8 @@ class StatusengineLegacyShell extends AppShell{
 					'end_time_usec' => $payload->contactnotificationdata->end_time
 				]
 			];
+			
+			$this->checkSqlTimeout();
 			$this->Contactnotification->rawInsert([$data], false);
 		}
 	}
@@ -2189,6 +2220,8 @@ class StatusengineLegacyShell extends AppShell{
 			//Object has gone
 			return;
 		}
+		
+		$this->checkSqlTimeout();
 		
 		//Find last contactnotification
 		$cn = $this->Contactnotification->find('first', [
@@ -2232,6 +2265,7 @@ class StatusengineLegacyShell extends AppShell{
 			$eventhanderType = 0;
 		}
 		
+		$this->checkSqlTimeout();
 		$this->Eventhandler->create();
 		
 		$data = [
@@ -2324,6 +2358,7 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function createInstance(){
+		$this->checkSqlTimeout();
 		$this->Instance->create();
 		$data = [
 			'Instance' => [
@@ -2370,6 +2405,7 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function buildObjectsCache(){
+		$this->checkSqlTimeout();
 		$objects = $this->Objects->find('all', [
 			'recursive' => -1 //drops associated data, so we dont get an memory limit error, while processing big data ;)
 		]);
@@ -2451,6 +2487,7 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function buildHoststatusCache(){
+		$this->checkSqlTimeout();
 		$this->hoststatusCache = [];
 		foreach($this->Hoststatus->find('all', ['fields' => ['hoststatus_id', 'host_object_id']]) as $hs){
 			$this->hoststatusCache[$hs['Hoststatus']['host_object_id']] = $hs['Hoststatus']['hoststatus_id'];
@@ -2479,6 +2516,7 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function buildServicestatusCache(){
+		$this->checkSqlTimeout();
 		$this->servicestatusCache = [];
 		foreach($this->Servicestatus->find('all', ['fields' => ['servicestatus_id', 'service_object_id']]) as $ss){
 			$this->servicestatusCache[$ss['Servicestatus']['service_object_id']] = $ss['Servicestatus']['servicestatus_id'];
@@ -2498,6 +2536,7 @@ class StatusengineLegacyShell extends AppShell{
 	}
 	
 	public function buildProcessPerfdataCache(){
+		$this->checkSqlTimeout();
 		$this->processPerfdataCache = [];
 		$result = $this->Service->find('all', [
 			'conditions' => [
@@ -2914,5 +2953,14 @@ class StatusengineLegacyShell extends AppShell{
 		}else{
 			$this->Logfile->stlog('ERROR: Core config '.$configFile.' not found!!!');
 		}
+	}
+	
+	public function checkSqlTimeout(){
+		//Avoud MySQL server has gone away
+		$time = time();
+		if(($this->lastQuery - $time) > $this->SQLTimeout){
+			$this->Objects->getDatasource()->reconnect();
+		}
+		$this->lastQuery = $time;
 	}
 }

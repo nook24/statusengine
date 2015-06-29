@@ -33,6 +33,9 @@ $config = [
 	//The number of the config type you would to dump to the database (just an integer value)
 	'config_type' => 1,
 	
+	//You MySQL connection timeout in seconds
+	'sql_timeout' => 28700,
+	
 	//If you want, Statusengine's servicestatus workers are able to
 	//process performacne data for you and save them to RRD files
 	//so you don't need to install any additional software to
