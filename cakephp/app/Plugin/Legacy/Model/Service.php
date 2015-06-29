@@ -32,5 +32,28 @@
 */
 class Service extends LegacyAppModel{
 	public $useDbConfig = 'legacy';
+	public $useTable = 'services';
 	public $primaryKey = 'service_id';
+	
+	public function beforeFind($query){
+		parent::beforeFind($query);
+		if(isset($query['bindModels']) && $query['bindModels'] === true){
+			$this->bindModel([
+				'belongsTo' => [
+					'Objects' => [
+						'className' => 'Legacy.Objects',
+						'foreignKey' => 'service_object_id',
+					],
+					'Host' => [
+						'className' => 'Legacy.Host',
+						'foreignKey' => 'host_object_id',
+					],
+					'Servicestatus' => [
+						'className' => 'Legacy.Servicestatus',
+						'foreignKey' => 'service_object_id',
+					],
+				]
+			]);
+		}
+	}
 }

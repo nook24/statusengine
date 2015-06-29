@@ -3,6 +3,9 @@
  * This is a PHP file, please check for syntax errors!
  * Example command to check for any syntax erros:
  *   php --syntax-check /opt/statusengine/cakephp/app/Config/Statusengine.php
+ *
+ * To enable your config changes you need to restart Statusengine
+ *   service statusengine restart
  */
 
 $config = [
@@ -29,6 +32,9 @@ $config = [
 	
 	//The number of the config type you would to dump to the database (just an integer value)
 	'config_type' => 1,
+	
+	//You MySQL connection timeout in seconds
+	'sql_timeout' => 28700,
 	
 	//If you want, Statusengine's servicestatus workers are able to
 	//process performacne data for you and save them to RRD files

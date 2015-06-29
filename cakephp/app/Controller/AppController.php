@@ -31,4 +31,56 @@ App::uses('Controller', 'Controller');
  * @link		http://book.cakephp.org/2.0/en/controllers.html#the-app-controller
  */
 class AppController extends Controller {
+	public $components = [
+		'Paginator',
+		'RequestHandler',
+		'Frontend.Frontend',
+		'Session',
+		'Filter',
+		'Auth' => [
+			'loginRedirect' => [
+				'controller' => 'Home',
+				'action' => 'index'
+			],
+			'logoutRedirect' => [
+				'controller' => 'Users',
+				'action' => 'login',
+			],
+			'authenticate' => [
+				'Form' => [
+					'passwordHasher' => 'Blowfish'
+				]
+			]
+		]
+	];
+	
+	public $helpers = [
+		'Paginator',
+		'Frontend.Frontend',
+		'Html' => ['className' => 'BoostCake.BoostCakeHtml'],
+		'Form' => ['className' => 'BoostCake.BoostCakeForm'],
+		'Paginator' => ['className' => 'BoostCake.BoostCakePaginator'],
+		'Filter'
+	];
+	
+	function beforeFilter(){
+		parent::beforeFilter();
+		//Set global default limit for pagination
+		$this->Paginator->settings['limit'] = 50;
+		$isLoggedIn = $this->Auth->loggedIn();
+		$this->set('isLoggedIn', $isLoggedIn);
+	}
+	
+	public function setFlash($message, $success = true, $key = 'flash'){
+		$this->Session->setFlash($message, 'default', array(
+			'class' => 'alert alert-' . ($success ? 'success' : 'danger')
+		), $key);
+	}
+	
+	public function fixPaginatorOrder($defaultOrder = []){
+		if(isset($this->request->params['named']['sort'])){
+			return [$this->request->params['named']['sort']];
+		}
+		return $defaultOrder;
+	}
 }

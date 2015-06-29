@@ -34,4 +34,27 @@ class Configvariable extends LegacyAppModel{
 	public $useDbConfig = 'legacy';
 	public $useTable = 'configfilevariables';
 	public $primaryKey = 'configfilevariable_id';
+	
+	public function isRightNaemonUsergroup(){
+		Configure::load('Interface');
+		$result = $this->findByVarname('nagios_group');
+		if(!empty($result)){
+			return in_array($result['Configvariable']['varvalue'], Configure::read('Interface.webserver_usergroups'));
+		}
+		
+		$result = $this->findByVarname('naemon_group');
+		if(!empty($result)){
+			return in_array($result['Configvariable']['varvalue'], Configure::read('Interface.webserver_usergroups'));
+		}
+		
+		return false;
+	}
+	
+	public function getCommandFile(){
+		$result = $this->findByVarname('command_file');
+		if(empty($result)){
+			return false;
+		}
+		return $result['Configvariable']['varvalue'];
+	}
 }
