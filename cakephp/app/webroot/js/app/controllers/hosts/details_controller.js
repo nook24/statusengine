@@ -8,7 +8,7 @@ App.Controllers.HostsDetailsController = Frontend.AppController.extend({
 			var data = {
 				commandId: 2,
 				type: 'host',
-				objectId: self.getVar('hostObectId')
+				objectId: self.getVar('hostObjectId')
 			};
 			self.Ajax.externalcommand(data);
 		});
@@ -17,7 +17,7 @@ App.Controllers.HostsDetailsController = Frontend.AppController.extend({
 			var data = {
 				commandId: 3,
 				type: 'host',
-				objectId: self.getVar('hostObectId')
+				objectId: self.getVar('hostObjectId')
 			};
 			self.Ajax.externalcommand(data);
 		});
