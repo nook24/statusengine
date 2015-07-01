@@ -92,16 +92,35 @@ class Rrdtool extends AppModel{
 		];
 		$xmlAsArray = Xml::toArray($xml);
 		if(isset($xmlAsArray['NAGIOS']['DATASOURCE'])){
-			foreach($xmlAsArray['NAGIOS']['DATASOURCE'] as $datasource){
-				$unit = $datasource['UNIT'];
+			if(isset($xmlAsArray['NAGIOS']['DATASOURCE'][0])){
+				foreach($xmlAsArray['NAGIOS']['DATASOURCE'] as $datasource){
+					if(!isset($datasource['UNIT'])){
+						$datasource['UNIT'] = '';
+					}
+					$unit = $datasource['UNIT'];
+					if($unit == '%%'){
+						$unit = '%';
+					}
+					$return[$datasource['DS']] = Hash::merge($default, [
+						'name' => $datasource['NAME'],
+						'label' => $datasource['LABEL'],
+						'unit' => $unit,
+						'ds' => $datasource['DS']
+					]);
+				}
+			}else{
+				if(!isset($xmlAsArray['NAGIOS']['DATASOURCE']['unit'])){
+					$xmlAsArray['NAGIOS']['DATASOURCE']['unit'] = '';
+				}
+				$unit = $xmlAsArray['NAGIOS']['DATASOURCE']['unit'];
 				if($unit == '%%'){
 					$unit = '%';
 				}
-				$return[$datasource['DS']] = Hash::merge($default, [
-					'name' => $datasource['NAME'],
-					'label' => $datasource['LABEL'],
+				$return[$xmlAsArray['NAGIOS']['DATASOURCE']['DS']] = Hash::merge($default, [
+					'name' => $xmlAsArray['NAGIOS']['DATASOURCE']['NAME'],
+					'label' => $xmlAsArray['NAGIOS']['DATASOURCE']['LABEL'],
 					'unit' => $unit,
-					'ds' => $datasource['DS']
+					'ds' => $xmlAsArray['NAGIOS']['DATASOURCE']['DS']
 				]);
 			}
 		}

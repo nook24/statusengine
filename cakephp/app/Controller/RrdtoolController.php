@@ -43,7 +43,9 @@ class RrdtoolController extends AppController{
 		if(!isset($datasources) || !isset($datasources[$ds])){
 			$datasources = $this->Rrdtool->parseXml($hostName, $serviceName);
 		}
-		
+	
+		//debug($datasources);debug($ds);
+
 		$name = $datasources[$ds]['name'];
 		$label = $datasources[$ds]['label'];
 		$unit = $datasources[$ds]['unit'];
