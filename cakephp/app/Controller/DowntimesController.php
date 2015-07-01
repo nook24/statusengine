@@ -117,6 +117,7 @@ class DowntimesController extends AppController{
 				}
 
 				$this->Externalcommands->createDowntime($type, $downtimeOptions);
+				sleep(1);
 				$this->redirect(['action' => 'index']);
 			}else{
 				$this->setFlash(__('Data validation error'), false);
@@ -126,8 +127,8 @@ class DowntimesController extends AppController{
 		//Set default values
 		$defaults = [
 			'Downtimehistory' => [
-				'start' => date('H:m d.m.y'),
-				'end' => date('H:m d.m.y', strtotime('+3 days'))
+				'start' => date('H:m d.m.Y'),
+				'end' => date('H:m d.m.Y', strtotime('+3 days'))
 			]
 		];
 		$this->request->data = Hash::merge($defaults, $this->request->data);

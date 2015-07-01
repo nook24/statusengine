@@ -36,7 +36,8 @@ class Objects extends LegacyAppModel{
 	
 	public function findList($objecttype_id = 1, $key = 'name1', $conditions = []){
 		$_conditions = [
-			'Objects.objecttype_id' => $objecttype_id
+			'Objects.objecttype_id' => $objecttype_id,
+			'Objects.is_active' => 1
 		];
 		
 		$conditions = Hash::merge($_conditions, $conditions);

@@ -58,7 +58,7 @@ fi
 case $1 in
 	start)
 		echo "Starting Statusengine"
-		start-stop-daemon --start --pidfile $PIDFILE --make-pidfile --background --exec $DAEMON -- $DAEMON_OPTS
+		start-stop-daemon --start --pidfile $PIDFILE --make-pidfile --background --exec $DAEMON --chuid root:www-data -- $DAEMON_OPTS
 	;;
 
 	stop)
