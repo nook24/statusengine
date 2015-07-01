@@ -1,4 +1,4 @@
-CREATE DATABASE statusengine CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS statusengine CHARACTER SET utf8 COLLATE utf8_general_ci;
 use statusengine;
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
