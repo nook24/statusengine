@@ -7,35 +7,35 @@
 
 $config = [
 	//Version of Statusengine
-	'version' => '1.4.1',
-	
+	'version' => '1.5.0',
+
 	//Logfile, where statusengine will log some information
 	'logfile' => '/var/log/statusengine.log',
-	
+
 	//max age of service status records in gearman queue
 	'servicestatus_freshness' => 300,
-	
+
 	//address of gearman-job-server
 	'server' => '127.0.0.1',
-	
+
 	//port of gearman-job-server
 	'port' => 4730,
-	
+
 	//path to your naemon.cfg or nagios.cfg
 	'coreconfig' => '/opt/naemon/etc/naemon/naemon.cfg',
-	
+
 	//Number of your monitoring instance (just an integer value)
 	'instance_id' => 1,
-	
+
 	//The number of the config type you would to dump to the database (just an integer value)
 	'config_type' => 1,
-	
+
 	//If you want, Statusengine's servicestatus workers are able to
 	//process performacne data for you and save them to RRD files
 	//so you don't need to install any additional software to
 	//get the job done.
 	'process_perfdata' => true,
-	
+
 	//Workers Statusengine will fork in worker mode
 	'workers' => [
 		[
@@ -54,7 +54,7 @@ $config = [
 			'queues' => ['statusngin_servicestatus' => 'processServicestatus']
 		],
 		*/
-		
+
 		[
 			'queues' => [
 				'statusngin_hoststatus' => 'processHoststatus',
@@ -77,7 +77,7 @@ $config = [
 			'queues' => ['statusngin_servicechecks' => 'processServicechecks']
 		],
 		*/
-		
+
 		[
 			'queues' => [
 				'statusngin_hostchecks' => 'processHostchecks',
@@ -100,23 +100,23 @@ $config = [
 			]
 		]
 	],
-	
-	
+
+
 	//Memcached settings
 	'memcached' => [
 		//use memcached or not
 		'use_memcached' => false,
-		
+
 		//1 = save only in memcached, 0 = save in db and memcached
 		'processing_type' => 0,
-		
+
 		//clear all memcacehd entries on start up
 		'drop_on_start' => false,
-		
+
 		//address of memcached server
 		'server' => '127.0.0.1',
-		
+
 		//port of memcached server
-		'port' => 11211 
+		'port' => 11211
 	]
 ];
