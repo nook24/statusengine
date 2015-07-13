@@ -39,10 +39,10 @@ class NotificationsController extends AppController{
 				],
 				'class' => 'col-xs-12 col-md-3'
 				],
-				'output' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Output', 'submit' => false]
+				'output' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Output', 'submit' => false]
 			],
 			'ContactObject' => [
-				'name1' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Contact', 'submit' => true]
+				'name1' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Contact', 'submit' => true]
 			]
 		],
 		'host' => [
@@ -54,10 +54,10 @@ class NotificationsController extends AppController{
 				],
 				'class' => 'col-xs-12 col-md-4'
 				],
-				'output' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Output', 'submit' => false]
+				'output' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Output', 'submit' => false]
 			],
 			'ContactObject' => [
-				'name1' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Contact', 'submit' => true]
+				'name1' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Contact', 'submit' => true]
 			]
 		]
 	];

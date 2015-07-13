@@ -27,8 +27,8 @@ class AcknowledgementsController extends AppController{
 	public $filter = [
 		'index' => [
 			'Acknowledgement' => [
-				'author_name' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Author', 'submit' => false],
-				'comment_data' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Comment', 'submit' => true]
+				'author_name' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Author', 'submit' => false],
+				'comment_data' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Comment', 'submit' => true]
 			]
 		],
 		'service' => [
@@ -41,8 +41,8 @@ class AcknowledgementsController extends AppController{
 				],
 				'class' => 'col-xs-12 col-md-3'
 				],
-				'author_name' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Author', 'submit' => false],
-				'comment_data' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Comment', 'submit' => true]
+				'author_name' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Author', 'submit' => false],
+				'comment_data' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Comment', 'submit' => true]
 			]
 		],
 		'host' => [
@@ -54,8 +54,8 @@ class AcknowledgementsController extends AppController{
 				],
 				'class' => 'col-xs-12 col-md-4'
 				],
-				'author_name' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Author', 'submit' => false],
-				'comment_data' => ['type' => 'text', 'class' => 'col-xs-6', 'label' => 'Comment', 'submit' => true]
+				'author_name' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Author', 'submit' => false],
+				'comment_data' => ['type' => 'text', 'class' => 'col-xs-12 col-md-6', 'label' => 'Comment', 'submit' => true]
 			]
 		]
 	];
