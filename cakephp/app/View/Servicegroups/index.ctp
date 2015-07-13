@@ -52,7 +52,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					</div>
 				<?php endif;?>
 				<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
-					<a href="<?php echo Router::url(['controller' => 'Service', 'action' => 'details', $servicegroupMember['ServiceObject']['object_id']]); ?>"><?php echo h($servicegroupMember['ServiceObject']['name2']);?></a>
+					<a href="<?php echo Router::url(['controller' => 'Services', 'action' => 'details', $servicegroupMember['ServiceObject']['object_id']]); ?>"><?php echo h($servicegroupMember['ServiceObject']['name2']);?></a>
 				</div>
 				<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?>">
 					<?php echo $this->Time->format($servicegroupMember['Servicestatus']['last_check'], '%H:%M %d.%m.%Y');?>
