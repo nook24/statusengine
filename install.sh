@@ -55,7 +55,7 @@ if grep -q DISTRIB_CODENAME=trusty /etc/lsb-release; then
 	
 	esac
 
-	mkdir -p /opt/openitc/nagios/share/perfdata/
+	#mkdir -p /opt/openitc/nagios/share/perfdata/
 	mkdir -p /opt/statusengine
 	cp statusengine.o /opt/statusengine/
 	cd ../../
