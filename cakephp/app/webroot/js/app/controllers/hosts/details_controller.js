@@ -3,7 +3,16 @@ App.Controllers.HostsDetailsController = Frontend.AppController.extend({
 	_initialize: function(){
 		this.Ajax.setup(this.getVar('url'));
 		var self = this;
-		
+
+		$('.extClickCommand').click(function(){
+			var data = {
+				commandId: parseInt($(this).attr('ext-command'), 10),
+				type: 'host',
+				objectId: self.getVar('hostObjectId')
+			};
+			self.Ajax.externalcommand(data);
+		});
+
 		$('#reschedule').click(function(){
 			var data = {
 				commandId: 2,
@@ -12,7 +21,7 @@ App.Controllers.HostsDetailsController = Frontend.AppController.extend({
 			};
 			self.Ajax.externalcommand(data);
 		});
-		
+
 		$('#rescheduleServices').click(function(){
 			var data = {
 				commandId: 3,
@@ -21,7 +30,7 @@ App.Controllers.HostsDetailsController = Frontend.AppController.extend({
 			};
 			self.Ajax.externalcommand(data);
 		});
-		
+
 		$('#submitPassiveResult').click(function(){
 			var state = parseInt($('#PassiveResultState').val(), 10);
 			var data = {
@@ -33,12 +42,12 @@ App.Controllers.HostsDetailsController = Frontend.AppController.extend({
 			};
 			self.Ajax.externalcommand(data);
 		});
-		
+
 		$('#submitCustomNotify').click(function(){
 			var options = 0;
 			var isBroadcast = $('#CustomNotifyBroadcast').prop('checked');
 			var isForced = $('#CustomNotifyForced').prop('checked');
-			
+
 			if(isBroadcast){
 				options = 1;
 			}
@@ -57,7 +66,7 @@ App.Controllers.HostsDetailsController = Frontend.AppController.extend({
 			};
 			self.Ajax.externalcommand(data);
 		});
-		
+
 		$('#submitSetAck').click(function(){
 			var sticky = 0;
 			if($('#SetAckSticky').prop('checked')){

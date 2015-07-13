@@ -208,27 +208,27 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			<div class="row">
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Notifications');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['notifications_enabled']);?>
+					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['notifications_enabled'], ['extCommand' => 10]);?>
 				</div>
 
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Active checks');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['active_checks_enabled']);?>
+					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['active_checks_enabled'], ['extCommand' => 16]);?>
 				</div>
 
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Passive checks');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['passive_checks_enabled']);?>
+					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['passive_checks_enabled'], ['extCommand' => 18]);?>
 				</div>
 
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Flap detection');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['flap_detection_enabled']);?>
+					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['flap_detection_enabled'], ['extCommand' => 12]);?>
 				</div>
 
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Event handler');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['event_handler_enabled']);?>
+					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['event_handler_enabled'], ['extCommand' => 14]);?>
 				</div>
 			</div>
 		</div>

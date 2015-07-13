@@ -42,6 +42,10 @@ body > .container {
 	padding:0;
 }
 
+.extClickCommand{
+	cursor: pointer;
+}
+
 @media (max-width: 767px) {
 	.host_up_border,
 	.service_ok_border {

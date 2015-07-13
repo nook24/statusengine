@@ -1,11 +1,20 @@
 App.Controllers.ServicesDetailsController = Frontend.AppController.extend({
-	
+
 	components: ['Ajax'],
-	
+
 	_initialize: function(){
 		this.Ajax.setup(this.getVar('url'));
 		var self = this;
-		
+
+		$('.extClickCommand').click(function(){
+			var data = {
+				commandId: parseInt($(this).attr('ext-command'), 10),
+				type: 'service',
+				objectId: self.getVar('serviceObjectId')
+			};
+			self.Ajax.externalcommand(data);
+		});
+
 		$('#reschedule').click(function(){
 			var data = {
 				commandId: 1,
@@ -14,7 +23,7 @@ App.Controllers.ServicesDetailsController = Frontend.AppController.extend({
 			};
 			self.Ajax.externalcommand(data);
 		});
-		
+
 		$('#submitPassiveResult').click(function(){
 			var state = parseInt($('#PassiveResultState').val(), 10);
 			var data = {
@@ -26,12 +35,12 @@ App.Controllers.ServicesDetailsController = Frontend.AppController.extend({
 			};
 			self.Ajax.externalcommand(data);
 		});
-		
+
 		$('#submitCustomNotify').click(function(){
 			var options = 0;
 			var isBroadcast = $('#CustomNotifyBroadcast').prop('checked');
 			var isForced = $('#CustomNotifyForced').prop('checked');
-			
+
 			if(isBroadcast){
 				options = 1;
 			}
@@ -50,7 +59,7 @@ App.Controllers.ServicesDetailsController = Frontend.AppController.extend({
 			};
 			self.Ajax.externalcommand(data);
 		});
-		
+
 		$('#submitSetAck').click(function(){
 			var sticky = 0;
 			if($('#SetAckSticky').prop('checked')){
@@ -65,7 +74,7 @@ App.Controllers.ServicesDetailsController = Frontend.AppController.extend({
 			};
 			self.Ajax.externalcommand(data);
 		});
-		
+
 		$('.selectGraphTimespan').click(function(){
 			$('.selectGraphTimespan').removeClass('active');
 			var $this = $(this);

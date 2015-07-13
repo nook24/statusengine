@@ -211,27 +211,27 @@ $this->Paginator->options(['url' => $this->params['named']]);
 			<div class="row">
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Notifications');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['notifications_enabled']);?>
+					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['notifications_enabled'], ['extCommand' => 26]);?>
 				</div>
 
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Active checks');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['active_checks_enabled']);?>
+					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['active_checks_enabled'], ['extCommand' => 20]);?>
 				</div>
 
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Passive checks');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['passive_checks_enabled']);?>
+					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['passive_checks_enabled'], ['extCommand' => 28]);?>
 				</div>
 
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Flap detection');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['flap_detection_enabled']);?>
+					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['flap_detection_enabled'], ['extCommand' => 24]);?>
 				</div>
 
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Event handler');?></div>
 				<div class="col-xs-12 col-md-6">
-					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['event_handler_enabled']);?>
+					<?php echo $this->Status->booleanValue($hoststatus['Hoststatus']['event_handler_enabled'], ['extCommand' => 22]);?>
 				</div>
 			</div>
 		</div>
