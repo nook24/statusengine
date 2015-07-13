@@ -1,19 +1,19 @@
 <?php
 /**
 * Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
-* 
+*
 * This file is part of Statusengine.
-* 
+*
 * Statusengine is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 2 of the License, or
 * (at your option) any later version.
-* 
+*
 * Statusengine is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -25,7 +25,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<div class="col-xs-12 col-md-10">
 			<h3><i class="fa fa-pause fa-lg"></i> <?php echo __('Downtimes'); ?></h3>
 		</div>
-		
+
 		<div class="col-xs-12 col-md-2">
 			<div class="dropdown" style="padding-top: 15px;">
 				<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
@@ -48,7 +48,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		</div>
 	</div>
 	<hr />
-	
+
 	<div class="row">
 		<?php echo $this->Filter->render();?>
 
@@ -58,51 +58,53 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<div class="col-sm-2 hidden-xs"><?php echo $this->Paginator->sort('Downtimehistory.comment_data', __('Comment')); ?></div>
 		<div class="col-sm-2 hidden-xs"><?php echo $this->Paginator->sort('Downtimehistory.scheduled_start_time', __('Start')); ?></div>
 		<div class="col-sm-2 hidden-xs"><?php echo $this->Paginator->sort('Downtimehistory.scheduled_end_time', __('End')); ?></div>
-		
+
 		<?php foreach($downtimes as $downtime): ?>
-			<div class="col-xs-12 col-sm-2">
-				<?php echo $this->Status->h($downtime['Objects']['name1']); ?>
-			</div>
-			<div class="col-xs-12 col-sm-2">
-				<?php echo $this->Status->h($downtime['Objects']['name2']); ?>
-			</div>
-			<div class="col-xs-12 col-sm-2">
-				<?php echo $this->Status->h($downtime['Downtimehistory']['author_name']); ?>
-			</div>
-			<div class="col-xs-12 col-sm-2">
-				<?php echo $this->Status->h($downtime['Downtimehistory']['comment_data']); ?>
-			</div>
-			<div class="col-xs-12 col-sm-2">
-				<?php echo $this->Time->format($downtime['Downtimehistory']['scheduled_start_time'], '%H:%M %d.%m.%Y');?>
-			</div>
-			<div class="col-xs-12 col-sm-2">
-				<?php echo $this->Time->format($downtime['Downtimehistory']['scheduled_end_time'], '%H:%M %d.%m.%Y');?>
-				<?php if((strtotime($downtime['Downtimehistory']['scheduled_end_time']) > time()) &&
-				 $downtime['Downtimehistory']['was_cancelled'] == 0):
-					$type = 'service';
-					if($downtime['Objects']['name2'] === null):
-						$type = 'host';
-				 	endif;
-					$url = [
-						'controller' => 'Downtimes',
-						'action' => 'delete',
-						$type,
-						$downtime['Downtimehistory']['internal_downtime_id']
-					];
-					$options = [
-						'class' => 'btn btn-danger',
-						'style' => 'margin-bottom: 5px;',
-						'escape' => false,
-					];
-					echo $this->Form->postLink('<i class="fa fa-trash-o"></i>', $url, $options);
-				endif;?>
-			</div>
-			<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
-				&nbsp;
+			<div class="col-xs-12 no-padding">
+				<div class="col-xs-12 col-sm-2">
+					<?php echo $this->Status->h($downtime['Objects']['name1']); ?>
+				</div>
+				<div class="col-xs-12 col-sm-2">
+					<?php echo $this->Status->h($downtime['Objects']['name2']); ?>
+				</div>
+				<div class="col-xs-12 col-sm-2">
+					<?php echo $this->Status->h($downtime['Downtimehistory']['author_name']); ?>
+				</div>
+				<div class="col-xs-12 col-sm-2">
+					<?php echo $this->Status->h($downtime['Downtimehistory']['comment_data']); ?>
+				</div>
+				<div class="col-xs-12 col-sm-2">
+					<?php echo $this->Time->format($downtime['Downtimehistory']['scheduled_start_time'], '%H:%M %d.%m.%Y');?>
+				</div>
+				<div class="col-xs-12 col-sm-2">
+					<?php echo $this->Time->format($downtime['Downtimehistory']['scheduled_end_time'], '%H:%M %d.%m.%Y');?>
+					<?php if((strtotime($downtime['Downtimehistory']['scheduled_end_time']) > time()) &&
+					 $downtime['Downtimehistory']['was_cancelled'] == 0):
+						$type = 'service';
+						if($downtime['Objects']['name2'] === null):
+							$type = 'host';
+					 	endif;
+						$url = [
+							'controller' => 'Downtimes',
+							'action' => 'delete',
+							$type,
+							$downtime['Downtimehistory']['internal_downtime_id']
+						];
+						$options = [
+							'class' => 'btn btn-danger',
+							'style' => 'margin-bottom: 5px;',
+							'escape' => false,
+						];
+						echo $this->Form->postLink('<i class="fa fa-trash-o"></i>', $url, $options);
+					endif;?>
+				</div>
+				<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
+					&nbsp;
+				</div>
 			</div>
 		<?php endforeach; ?>
-		
+
 		<?php echo $this->element('paginator'); ?>
-		
+
 	</div>
 </div>

@@ -3,14 +3,11 @@
  * This is a PHP file, please check for syntax errors!
  * Example command to check for any syntax erros:
  *   php --syntax-check /opt/statusengine/cakephp/app/Config/Statusengine.php
- *
- * To enable your config changes you need to restart Statusengine
- *   service statusengine restart
  */
 
 $config = [
 	//Version of Statusengine
-	'version' => '1.4.3',
+	'version' => '1.4.1',
 	
 	//Logfile, where statusengine will log some information
 	'logfile' => '/var/log/statusengine.log',
@@ -25,7 +22,7 @@ $config = [
 	'port' => 4730,
 	
 	//path to your naemon.cfg or nagios.cfg
-	'coreconfig' => '/etc/naemon/naemon.cfg',
+	'coreconfig' => '/opt/naemon/etc/naemon/naemon.cfg',
 	
 	//Number of your monitoring instance (just an integer value)
 	'instance_id' => 1,
@@ -33,14 +30,11 @@ $config = [
 	//The number of the config type you would to dump to the database (just an integer value)
 	'config_type' => 1,
 	
-	//You MySQL connection timeout in seconds
-	'sql_timeout' => 28700,
-	
 	//If you want, Statusengine's servicestatus workers are able to
 	//process performacne data for you and save them to RRD files
 	//so you don't need to install any additional software to
 	//get the job done.
-	'process_perfdata' => false,
+	'process_perfdata' => true,
 	
 	//Workers Statusengine will fork in worker mode
 	'workers' => [

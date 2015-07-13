@@ -1,19 +1,19 @@
 <?php
 /**
 * Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
-* 
+*
 * This file is part of Statusengine.
-* 
+*
 * Statusengine is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 2 of the License, or
 * (at your option) any later version.
-* 
+*
 * Statusengine is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -36,7 +36,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<div class="col-xs-12 col-sm-7 col-md-8">
 			<h3>
 				<?php echo $this->Status->serviceStateIcon((isset($servicestatus['Servicestatus']['current_state'])?$servicestatus['Servicestatus']['current_state']:null));?>
-			<?php echo h($object['Objects']['name2']); ?> 
+			<?php echo h($object['Objects']['name2']); ?>
 			(<a href="<?php echo Router::url([
 				'controller' => 'Hosts',
 				'action' => 'details',
@@ -120,26 +120,27 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				</div>
 			</div>
 		<?php endif;?>
-		<div class="row">
-			<?php if($servicestatus['Servicestatus']['problem_has_been_acknowledged'] > 0):?>
-				<div class="col-xs-12">
-					<div class="alert alert-info" role="alert">
-						<i class="fa fa-comments"></i>
-						&nbsp;
-						<?php echo __('Notice: The state of this service is already acknowledged.');?>
-						<?php if(!empty($acknowledgement)):?>
-							<p>
-								<?php echo h($acknowledgement['Acknowledgement']['author_name'])?>:&nbsp;
-								<?php echo h($acknowledgement['Acknowledgement']['comment_data']);?>
-							</p>
-							<p>
-								<?php echo __('Date')?>:&nbsp;
-								<?php echo $this->Time->format($acknowledgement['Acknowledgement']['entry_time'], '%H:%M %d.%m.%Y');?>
-							</p>
-						<?php endif;?>
-					</div>
+	</div>
+	<div class="row">
+		<?php if($servicestatus['Servicestatus']['problem_has_been_acknowledged'] > 0):?>
+			<div class="col-xs-12">
+				<div class="alert alert-info" role="alert">
+					<i class="fa fa-comments"></i>
+					&nbsp;
+					<?php echo __('Notice: The state of this service is already acknowledged.');?>
+					<?php if(!empty($acknowledgement)):?>
+						<p>
+							<?php echo h($acknowledgement['Acknowledgement']['author_name'])?>:&nbsp;
+							<?php echo h($acknowledgement['Acknowledgement']['comment_data']);?>
+						</p>
+						<p>
+							<?php echo __('Date')?>:&nbsp;
+							<?php echo $this->Time->format($acknowledgement['Acknowledgement']['entry_time'], '%H:%M %d.%m.%Y');?>
+						</p>
+					<?php endif;?>
 				</div>
-			<?php endif;?>
+			</div>
+		<?php endif;?>
 		<?php if($servicestatus['Servicestatus']['is_flapping'] == 1):?>
 			<div class="col-xs-12">
 				<div class="alert alert-info" role="alert">
@@ -151,7 +152,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<?php endif;?>
 	</div>
 </div>
-	
+
 <div class="container">
 	<div class="row">
 		<div class="col-xs-12 col-md-7">
@@ -167,39 +168,39 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					else:
 						echo __('Soft');
 					endif;
-					
+
 					echo ' ('.h($servicestatus['Servicestatus']['current_check_attempt']).'/';
 					echo h($servicestatus['Servicestatus']['max_check_attempts']).')';
 					?>
 				</div>
-				
+
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Last state change');?></div>
 				<div class="col-xs-12 col-md-9"><?php echo $this->Time->format($servicestatus['Servicestatus']['last_state_change'], '%H:%M %d.%m.%Y');?></div>
-				
+
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Output');?></div>
 				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['output']);?></div>
-				
+
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Performance data');?></div>
 				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['perfdata']);?></div>
-				
+
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Last check');?></div>
 				<div class="col-xs-12 col-md-9">
 					<?php echo $this->Time->format($servicestatus['Servicestatus']['last_check'], '%H:%M %d.%m.%Y');?>
 				</div>
-				
+
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Next check');?></div>
 				<div class="col-xs-12 col-md-9">
 					<?php echo $this->Time->format($servicestatus['Servicestatus']['next_check'], '%H:%M %d.%m.%Y');?>
 				</div>
-				
+
 				<?php if($servicestatus['Servicestatus']['normal_check_interval'] > 0):?>
 					<div class="col-xs-12 col-md-3 bold"><?php echo __('Check interval');?></div>
 					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['normal_check_interval']);?></div>
 				<?php endif;?>
-				
+
 				<div class="col-xs-12 col-md-3 bold"><?php echo __('Check command');?></div>
 				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['check_command']);?></div>
-				
+
 			</div>
 		</div>
 		<div class="col-xs-12 col-md-5">
@@ -209,22 +210,22 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				<div class="col-xs-12 col-md-6">
 					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['notifications_enabled']);?>
 				</div>
-				
+
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Active checks');?></div>
 				<div class="col-xs-12 col-md-6">
 					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['active_checks_enabled']);?>
 				</div>
-				
+
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Passive checks');?></div>
 				<div class="col-xs-12 col-md-6">
 					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['passive_checks_enabled']);?>
 				</div>
-				
+
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Flap detection');?></div>
 				<div class="col-xs-12 col-md-6">
 					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['flap_detection_enabled']);?>
 				</div>
-				
+
 				<div class="col-xs-12 col-md-6 bold"><?php echo __('Event handler');?></div>
 				<div class="col-xs-12 col-md-6">
 					<?php echo $this->Status->booleanValue($servicestatus['Servicestatus']['event_handler_enabled']);?>
@@ -239,7 +240,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				</div>
 			</div>
 		<?php endif;?>
-		
+
 		<?php if(!empty($datasources)):?>
 			<div class="col-xs-12 text-right">
 				<?php echo __('Graph timespan')?>

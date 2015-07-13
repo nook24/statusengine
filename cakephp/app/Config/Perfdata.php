@@ -3,11 +3,6 @@
  * This is a PHP file, please check for syntax errors!
  * Example command to check for any syntax erros:
  *   php --syntax-check /opt/statusengine/cakephp/app/Config/Perfdata.php
- *
- * To enable your config changes you need to restart Mod_PErfdata or Statusengine
- * depends on the way you like to process perfdata
- *   service statusengine restart
- *   service mod_perfdata restart
  */
 $config = [
 	'perfdata' => [

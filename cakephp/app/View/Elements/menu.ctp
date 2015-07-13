@@ -77,7 +77,7 @@
 								<?php echo __('Users');?>
 							</a>
 						</li>
-						
+
 					</ul>
 				</li>
 			</ul>
@@ -88,6 +88,12 @@
 						'action' => 'logout']); ?>">
 							<i class="fa fa-sign-out"></i>
 							<?php echo __('Logout');?>
+					</a>
+				</li>
+				<li>
+					<a href="javascript:void(0);" title="<?php echo date_default_timezone_get(); ?>">
+							<i class="fa fa-clock-o"></i>
+							<?php echo date('H:i'); ?> (<?php echo date_default_timezone_get(); ?>)
 					</a>
 				</li>
 			</ul>
