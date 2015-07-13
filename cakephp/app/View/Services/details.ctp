@@ -272,7 +272,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 						'controller' => 'pnp',
 						'action' => 'index',
 						$object['Objects']['object_id']
-					]); ?>" class="btn btn-default" title="<?php echo __('Open PNP4Nagios'); ?>" >
+					]); ?>" class="btn btn-default hidden-xs" title="<?php echo __('Open PNP4Nagios'); ?>" >
 						<i class="fa fa-area-chart"></i>
 					</a>
 				</div>
