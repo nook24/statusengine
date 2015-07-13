@@ -92,13 +92,13 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 						</a>
 					</div>
 					<?php if($hideOitc === false): ?>
-						<div class="col-xs-12 col-md-4 text-center">
+						<div class="col-xs-12 col-md-4 text-center hidden-xs hidden-sm">
 							<a href="javascript:void(0);" class="text-muted" data-toggle="modal" data-target="#oITCModal">
 								<?php echo __('Want more? Check out openITCOCKPIT');?>
 							</a>
 						</div>
 					<?php endif;?>
-					<div class="<?php echo $class; ?>">
+					<div class="<?php echo $class; ?> hidden-xs hidden-sm">
 						<div class="pull-right">
 							<a href="http://cakephp.org" target="_blank">
 								<?php echo $this->Html->image('cake-logo-smaller2.png', ['border' => '0']); ?>
@@ -114,7 +114,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 							</a>
 						</div>
 					</div>
-					<div class="col-xs-6">
+					<div class="col-xs-12">
 						<div class="pull-right">
 							<?php Configure::load('Statusengine'); ?>
 							Statusengine - <?php echo h(Configure::read('version'));?>

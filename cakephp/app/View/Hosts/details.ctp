@@ -161,48 +161,67 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<div class="col-xs-12 col-md-7">
 			<strong><?php echo __('Status information');?></strong>
 			<div class="row">
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Current state');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Status->hoststatus($hoststatus['Hoststatus']['current_state']);?></div>
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('State type');?></div>
-				<div class="col-xs-12 col-md-9">
-					<?php
-					if($hoststatus['Hoststatus']['current_check_attempt'] == 1):
-						echo __('Hard');
-					else:
-						echo __('Soft');
-					endif;
-
-					echo ' ('.h($hoststatus['Hoststatus']['current_check_attempt']).'/';
-					echo h($hoststatus['Hoststatus']['max_check_attempts']).')';
-					?>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Current state');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Status->hoststatus($hoststatus['Hoststatus']['current_state']);?></div>
 				</div>
 
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Last state change');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Time->format($hoststatus['Hoststatus']['last_state_change'], '%H:%M %d.%m.%Y');?></div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('State type');?></div>
+					<div class="col-xs-12 col-md-9">
+						<?php
+						if($hoststatus['Hoststatus']['current_check_attempt'] == 1):
+							echo __('Hard');
+						else:
+							echo __('Soft');
+						endif;
 
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Output');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['output']);?></div>
-
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Performance data');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['perfdata']);?></div>
-
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Last check');?></div>
-				<div class="col-xs-12 col-md-9">
-					<?php echo $this->Time->format($hoststatus['Hoststatus']['last_check'], '%H:%M %d.%m.%Y');?>
+						echo ' ('.h($hoststatus['Hoststatus']['current_check_attempt']).'/';
+						echo h($hoststatus['Hoststatus']['max_check_attempts']).')';
+						?>
+					</div>
 				</div>
 
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Next check');?></div>
-				<div class="col-xs-12 col-md-9">
-					<?php echo $this->Time->format($hoststatus['Hoststatus']['next_check'], '%H:%M %d.%m.%Y');?>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Last state change');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Time->format($hoststatus['Hoststatus']['last_state_change'], '%H:%M %d.%m.%Y');?></div>
+				</div>
+
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Output');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['output']);?></div>
+				</div>
+
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Performance data');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['perfdata']);?></div>
+				</div>
+
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Last check');?></div>
+					<div class="col-xs-12 col-md-9">
+						<?php echo $this->Time->format($hoststatus['Hoststatus']['last_check'], '%H:%M %d.%m.%Y');?>
+					</div>
+				</div>
+
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Next check');?></div>
+					<div class="col-xs-12 col-md-9">
+						<?php echo $this->Time->format($hoststatus['Hoststatus']['next_check'], '%H:%M %d.%m.%Y');?>
+					</div>
 				</div>
 
 				<?php if($hoststatus['Hoststatus']['normal_check_interval'] > 0):?>
-					<div class="col-xs-12 col-md-3 bold"><?php echo __('Check interval');?></div>
-					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['normal_check_interval']);?></div>
+					<div class="col-xs-12 no-padding">
+						<div class="col-xs-12 col-md-3 bold"><?php echo __('Check interval');?></div>
+						<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['normal_check_interval']);?></div>
+					</div>
 				<?php endif;?>
 
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Check command');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['check_command']);?></div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Check command');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($hoststatus['Hoststatus']['check_command']);?></div>
+				</div>
 
 			</div>
 		</div>

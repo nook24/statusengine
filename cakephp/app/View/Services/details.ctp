@@ -158,48 +158,66 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		<div class="col-xs-12 col-md-7">
 			<strong><?php echo __('Status information');?></strong>
 			<div class="row">
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Current state');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Status->Servicestatus($servicestatus['Servicestatus']['current_state']);?></div>
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('State type');?></div>
-				<div class="col-xs-12 col-md-9">
-					<?php
-					if($servicestatus['Servicestatus']['state_type'] == 1):
-						echo __('Hard');
-					else:
-						echo __('Soft');
-					endif;
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Current state');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Status->Servicestatus($servicestatus['Servicestatus']['current_state']);?></div>
+				</div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('State type');?></div>
+					<div class="col-xs-12 col-md-9">
+						<?php
+						if($servicestatus['Servicestatus']['state_type'] == 1):
+							echo __('Hard');
+						else:
+							echo __('Soft');
+						endif;
 
-					echo ' ('.h($servicestatus['Servicestatus']['current_check_attempt']).'/';
-					echo h($servicestatus['Servicestatus']['max_check_attempts']).')';
-					?>
+						echo ' ('.h($servicestatus['Servicestatus']['current_check_attempt']).'/';
+						echo h($servicestatus['Servicestatus']['max_check_attempts']).')';
+						?>
+					</div>
 				</div>
 
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Last state change');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Time->format($servicestatus['Servicestatus']['last_state_change'], '%H:%M %d.%m.%Y');?></div>
-
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Output');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['output']);?></div>
-
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Performance data');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['perfdata']);?></div>
-
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Last check');?></div>
-				<div class="col-xs-12 col-md-9">
-					<?php echo $this->Time->format($servicestatus['Servicestatus']['last_check'], '%H:%M %d.%m.%Y');?>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Last state change');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Time->format($servicestatus['Servicestatus']['last_state_change'], '%H:%M %d.%m.%Y');?></div>
 				</div>
 
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Next check');?></div>
-				<div class="col-xs-12 col-md-9">
-					<?php echo $this->Time->format($servicestatus['Servicestatus']['next_check'], '%H:%M %d.%m.%Y');?>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Output');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['output']);?></div>
+				</div>
+
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Performance data');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['perfdata']);?></div>
+				</div>
+
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Last check');?></div>
+					<div class="col-xs-12 col-md-9">
+						<?php echo $this->Time->format($servicestatus['Servicestatus']['last_check'], '%H:%M %d.%m.%Y');?>
+					</div>
+				</div>
+
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Next check');?></div>
+					<div class="col-xs-12 col-md-9">
+						<?php echo $this->Time->format($servicestatus['Servicestatus']['next_check'], '%H:%M %d.%m.%Y');?>
+					</div>
 				</div>
 
 				<?php if($servicestatus['Servicestatus']['normal_check_interval'] > 0):?>
-					<div class="col-xs-12 col-md-3 bold"><?php echo __('Check interval');?></div>
-					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['normal_check_interval']);?></div>
+					<div class="col-xs-12 no-padding">
+						<div class="col-xs-12 col-md-3 bold"><?php echo __('Check interval');?></div>
+						<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['normal_check_interval']);?></div>
+					</div>
 				<?php endif;?>
 
-				<div class="col-xs-12 col-md-3 bold"><?php echo __('Check command');?></div>
-				<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['check_command']);?></div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-12 col-md-3 bold"><?php echo __('Check command');?></div>
+					<div class="col-xs-12 col-md-9"><?php echo $this->Status->h($servicestatus['Servicestatus']['check_command']);?></div>
+				</div>
 
 			</div>
 		</div>
@@ -270,6 +288,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 						]); ?>
 					<img src="<?php echo $url; ?>" org-src="<?php echo $url; ?>" class="img-responsive serviceGraphImg" width="740" height="250" style="padding-top: 15px;">
 					<?php endforeach; ?>
+					<br />
 				</center>
 			</div>
 		<?php endif; ?>
