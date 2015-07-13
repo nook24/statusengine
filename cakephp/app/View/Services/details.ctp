@@ -146,7 +146,7 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				<div class="alert alert-info" role="alert">
 					<i class="fa fa-adjust"></i>
 					&nbsp;
-					<?php echo __('Notice: The state of the host is flapping.');?>
+					<?php echo __('Notice: The state of the service is flapping.');?>
 				</div>
 			</div>
 		<?php endif;?>
