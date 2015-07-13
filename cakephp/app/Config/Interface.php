@@ -8,7 +8,7 @@ $config = [
 	'Interface' => [
 		// Path to naemonstats binary
 		'naemonstats' => '/opt/naemon/bin/naemonstats',
-		
+
 		// common web server user groups
 		'webserver_usergroups' => [
 			'www-data',
@@ -17,13 +17,13 @@ $config = [
 			'apache',
 			'nginx'
 		],
-		
+
 		//Path to PNP$Nagios index.php
 		'pnp4nagios' => '/usr/share/pnp4nagios/html/index.php',
-		
+
 		//If true the interface will show all SQL queries, if false not
 		'sql_dump' => false,
-		
+
 		//Hide the openITCOCKPIT notice in footer
 		'hide_oitc' => false,
 	]

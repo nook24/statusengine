@@ -53,7 +53,7 @@ class AppController extends Controller {
 			]
 		]
 	];
-	
+
 	public $helpers = [
 		'Paginator',
 		'Frontend.Frontend',
@@ -62,7 +62,7 @@ class AppController extends Controller {
 		'Paginator' => ['className' => 'BoostCake.BoostCakePaginator'],
 		'Filter'
 	];
-	
+
 	function beforeFilter(){
 		parent::beforeFilter();
 		//Set global default limit for pagination
@@ -70,17 +70,18 @@ class AppController extends Controller {
 		$isLoggedIn = $this->Auth->loggedIn();
 		$this->set('isLoggedIn', $isLoggedIn);
 	}
-	
+
 	public function setFlash($message, $success = true, $key = 'flash'){
 		$this->Session->setFlash($message, 'default', array(
 			'class' => 'alert alert-' . ($success ? 'success' : 'danger')
 		), $key);
 	}
-	
+
 	public function fixPaginatorOrder($defaultOrder = []){
 		if(isset($this->request->params['named']['sort'])){
 			return [$this->request->params['named']['sort']];
 		}
+
 		return $defaultOrder;
 	}
 }

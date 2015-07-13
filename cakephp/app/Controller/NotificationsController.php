@@ -1,24 +1,24 @@
 <?php
 /**
 * Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
-* 
+*
 * This file is part of Statusengine.
-* 
+*
 * Statusengine is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 2 of the License, or
 * (at your option) any later version.
-* 
+*
 * Statusengine is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
 class NotificationsController extends AppController{
-	
+
 	public $uses = [
 		'Legacy.Notification',
 		'Legacy.Contactnotification',
@@ -61,18 +61,21 @@ class NotificationsController extends AppController{
 			]
 		]
 	];
-	
+
 	public function service($serviceObjectId = null){
 		if(!$this->Objects->exists($serviceObjectId)){
 			throw new NotFoundException(__('Service not found'));
 		}
-		
+
 		$object = $this->Objects->findByObjectId($serviceObjectId);
-		
+
 		$query = [
 			'conditions' => [
 				'Notification.notification_type' => 1, //Service notifications
 				'Notification.object_id' => $serviceObjectId,
+			],
+			'order' => [
+				'Notification.start_time' => 'desc'
 			]
 		];
 		$query = Hash::merge($query, $this->__baseQuery());
@@ -87,18 +90,21 @@ class NotificationsController extends AppController{
 			'object'
 		]);
 	}
-	
+
 	public function host($hosteObjectId = null){
 		if(!$this->Objects->exists($hosteObjectId)){
 			throw new NotFoundException(__('Host not found'));
 		}
-		
+
 		$object = $this->Objects->findByObjectId($hosteObjectId);
-		
+
 		$query = [
 			'conditions' => [
 				'Notification.notification_type' => 0, //Host notifications
 				'Notification.object_id' => $hosteObjectId,
+			],
+			'order' => [
+				'Notification.start_time' => 'desc'
 			]
 		];
 		$query = Hash::merge($query, $this->__baseQuery());
@@ -113,7 +119,7 @@ class NotificationsController extends AppController{
 			'object'
 		]);
 	}
-	
+
 	protected function __baseQuery(){
 		return [
 			'joins' => [
@@ -143,7 +149,7 @@ class NotificationsController extends AppController{
 				],
 			],
 			'conditions' => [
-				'Notification.contacts_notified >' => 0, 
+				'Notification.contacts_notified >' => 0,
 			],
 			'fields' => [
 				'Notification.notification_id',
@@ -151,16 +157,14 @@ class NotificationsController extends AppController{
 				'Notification.start_time',
 				'Notification.state',
 				'Notification.output',
-				
-				
-				
+
 				'Contactnotification.contact_object_id',
-				
+
 				'Contactnotificationmethod.command_object_id',
-				
+
 				'ContactObject.object_id',
 				'ContactObject.name1',
-				
+
 				'CommandObject.object_id',
 				'CommandObject.name1'
 			]
