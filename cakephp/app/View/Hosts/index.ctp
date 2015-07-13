@@ -41,6 +41,12 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				<?php $borderClass = $this->Status->hostBorder($host['Hoststatus']['current_state']);?>
 				<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?> <?php echo $borderClass; ?>_first">
 					<a href="<?php echo Router::url(['action' => 'details', $host['Host']['host_object_id']]); ?>"><?php echo h($host['Objects']['name1']);?></a>
+					<?php if($host['Hoststatus']['problem_has_been_acknowledged'] == 1): ?>
+						<span><i class="fa fa-comments" title="<?php echo __('Acknowledged'); ?>"></i></span>
+					<?php endif; ?>
+					<?php if($host['Hoststatus']['scheduled_downtime_depth'] > 0): ?>
+						<span><i class="fa fa-pause" title="<?php echo __('Scheduled downtime'); ?>"></i></span>
+					<?php endif; ?>
 				</div>
 				<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?>">
 					<?php echo h($host['Host']['address']);?>

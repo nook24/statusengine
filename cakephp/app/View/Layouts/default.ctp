@@ -14,17 +14,17 @@
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
 
-$cakeDescription = __d('cake_dev', 'CakePHP: the rapid development php framework');
+//$cakeDescription = __d('cake_dev', 'CakePHP: the rapid development php framework');
 $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 ?>
 <!DOCTYPE html>
 <html>
 <head>
 	<?php echo $this->Html->charset(); ?>
-	
+
 	<!--
-		 ____  _        _                              _            
-		/ ___|| |_ __ _| |_ _   _ ___  ___ _ __   __ _(_)_ __   ___ 
+		 ____  _        _                              _
+		/ ___|| |_ __ _| |_ _   _ ___  ___ _ __   __ _(_)_ __   ___
 		\___ \| __/ _` | __| | | / __|/ _ \ '_ \ / _` | | '_ \ / _ \
 		 ___) | || (_| | |_| |_| \__ \  __/ | | | (_| | | | | |  __/
 		|____/ \__\__,_|\__|\__,_|___/\___|_| |_|\__, |_|_| |_|\___|
@@ -35,7 +35,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	-->
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>
-		<?php echo $cakeDescription ?>:
+		<?php echo __('Statusengine'); ?>:
 		<?php echo $title_for_layout; ?>
 	</title>
 	<?php
@@ -57,7 +57,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 		echo $this->element('menuLoggedOut');
 	endif;
 	?>
-	
+
 	<div class="container">
 		<?php echo $this->Session->flash(); ?>
 		<div id="content">
@@ -87,7 +87,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 				<?php if($isLoggedIn === true):?>
 					<div class="<?php echo $class; ?>">
 						<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
-							<i class="fa fa-github"></i> 
+							<i class="fa fa-github"></i>
 							<?php echo __('Contribute to Statusengine');?>
 						</a>
 					</div>
@@ -109,7 +109,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 					<div class="col-xs-6">
 						<div class="pull-left">
 							<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
-								<i class="fa fa-github"></i> 
+								<i class="fa fa-github"></i>
 								<?php echo __('Contribute to Statusengine');?>
 							</a>
 						</div>

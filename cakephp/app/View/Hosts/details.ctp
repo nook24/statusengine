@@ -273,6 +273,12 @@ $this->Paginator->options(['url' => $this->params['named']]);
 					<?php $borderClass = $this->Status->serviceBorder($service['Servicestatus']['current_state']); ?>
 					<div class="col-xs-12 col-sm-3 <?php echo $borderClass; ?> <?php echo $borderClass;?>_first">
 						<a href="<?php echo Router::url(['controller' => 'Services', 'action' => 'details', $service['Service']['service_object_id']]); ?>"><?php echo $this->Status->h($service['Objects']['name2']);?></a>
+						<?php if($service['Servicestatus']['problem_has_been_acknowledged'] == 1): ?>
+							<span><i class="fa fa-comments" title="<?php echo __('Acknowledged'); ?>"></i></span>
+						<?php endif; ?>
+						<?php if($service['Servicestatus']['scheduled_downtime_depth'] > 0): ?>
+							<span><i class="fa fa-pause" title="<?php echo __('Scheduled downtime'); ?>"></i></span>
+						<?php endif; ?>
 					</div>
 					<div class="col-xs-12 col-sm-2 <?php echo $borderClass; ?>">
 						<?php echo $this->Time->format($service['Servicestatus']['last_check'], '%H:%M %d.%m.%Y');?>
