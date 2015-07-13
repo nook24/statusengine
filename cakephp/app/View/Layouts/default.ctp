@@ -114,7 +114,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 							</a>
 						</div>
 					</div>
-					<div class="col-xs-12">
+					<div class="col-xs-6">
 						<div class="pull-right">
 							<?php Configure::load('Statusengine'); ?>
 							Statusengine - <?php echo h(Configure::read('version'));?>

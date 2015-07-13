@@ -16,7 +16,7 @@
 			<br />
 			1. <?php echo __('You have set the wrong path in Statusengine\'s Interface.php config');?>
 			<div class="well">
-				//Path to PNP$Nagios index.php<br />
+				//Path to PNP4Nagios index.php<br />
 				'pnp4nagios' => '<?php echo h($path);?>'
 			</div>
 			<hr />
@@ -57,4 +57,3 @@ Alias /pnp4nagios "/usr/share/pnp4nagios/html"
 		</div>
 	</div>
 </div>
-

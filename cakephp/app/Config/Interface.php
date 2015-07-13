@@ -18,7 +18,7 @@ $config = [
 			'nginx'
 		],
 
-		//Path to PNP$Nagios index.php
+		//Path to PNP4Nagios index.php
 		'pnp4nagios' => '/usr/share/pnp4nagios/html/index.php',
 
 		//If true the interface will show all SQL queries, if false not
