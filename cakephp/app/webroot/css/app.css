@@ -21,6 +21,10 @@
 	clear:both;
 }
 
+body{
+	font-family: Sans-Serif;
+}
+
 body > .container {
 	padding: 0px 15px 0;
 }
