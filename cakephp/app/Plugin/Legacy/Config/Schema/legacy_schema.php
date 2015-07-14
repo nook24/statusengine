@@ -12,6 +12,13 @@ class LegacySchema extends CakeSchema {
 	 * Generate new snapshot
 	 * 	/opt/statusengine/cakephp/app/Console/cake schema generate --plugin Legacy --file legacy_schema_X.php --connection legacy
 	 *
+	 * Based on NDO database schema
+         * Copyright 1999-2009:
+         *   Ethan Galstad <egalstad@nagios.org>
+         * Copyright 2009 until further notice:
+         *   Nagios Core Development Team and Nagios Community Contributors
+         * GNU GENERAL PUBLIC LICENSE Version 2, June 1991
+	 *
 	 */
 
 	public $connection = 'legacy';
