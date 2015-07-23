@@ -18,12 +18,12 @@
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
 * as published by the Free Software Foundation in version 2
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -41,12 +41,12 @@
 
 class StatusengineLegacyShell extends AppShell{
 	public $tasks = ['Logfile', 'Memcached', 'Perfdata'];
-	
+
 	//Load models out of Plugin/Legacy/Model
 	public $uses = [
 		//Never ever drop/truncate this table!
 		'Legacy.Objects',
-		
+
 		//Live data
 		'Legacy.Command',
 		'Legacy.Timeperiod',
@@ -80,7 +80,7 @@ class StatusengineLegacyShell extends AppShell{
 		'Legacy.Serviceescalationcontactgroup',
 		'Legacy.Hostdependency',
 		'Legacy.Servicedependency',
-		
+
 		//Archive data
 		'Legacy.Hoststatus',
 		'Legacy.Servicestatus',
@@ -98,7 +98,7 @@ class StatusengineLegacyShell extends AppShell{
 		'Legacy.Contactnotification',
 		'Legacy.Contactnotificationmethod',
 		'Legacy.Eventhandler',
-		
+
 		//Other tables
 		'Legacy.Systemcommand',
 		'Legacy.Instance',
@@ -107,7 +107,7 @@ class StatusengineLegacyShell extends AppShell{
 		'Legacy.Configfile',
 		'Legacy.Configvariable'
 	];
-	
+
 	/**
 	 * StatusengineLegacyShell's construct
 	 *
@@ -123,23 +123,20 @@ class StatusengineLegacyShell extends AppShell{
 		$this->childPids = [];
 		$this->_constants();
 		$this->clearQ = false;
-		
+
 		//the Gearman worker
 		$this->worker = null;
 		$this->createParentHosts = [];
 		$this->createParentServices = [];
-		
+
 		//We only start dumping objects to the db if this is true.
 		//If you kill the script while it dumps data, you may be have problems on restart statusengine.
 		//If you killed it on dump, restart statusengine and restart nagios
 		$this->dumpObjects = true;
-		
+
 		$this->fakeLastInsertId = 1;
-		
-		$this->lastQuery = time();
-		
 	}
-	
+
 	/**
 	 * CakePHP's option parser
 	 *
@@ -158,7 +155,7 @@ class StatusengineLegacyShell extends AppShell{
 		]);
 		return $parser;
 	}
-	
+
 	/**
 	 * Gets called if a user run the shell over Console/cake statusengine_legacy
 	 *
@@ -169,12 +166,10 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function main(){
 		Configure::load('Statusengine');
-		
+
 		$this->instance_id = Configure::read('instance_id');
 		$this->config_type = Configure::read('config_type');
-		
-		$this->SQLTimeout = (int)Configure::read('sql_timeout');
-		
+
 		$this->Logfile->init(Configure::read('logfile'));
 		$this->Logfile->welcome();
 		$this->parser = $this->getOptionParser();
@@ -182,21 +177,21 @@ class StatusengineLegacyShell extends AppShell{
 		$this->out('THIS IS LEGACY MODE!');
 		$this->Logfile->stlog('THIS IS LEGACY MODE!');
 		$this->servicestatus_freshness = Configure::read('servicestatus_freshness');
-		
+
 		$this->processPerfdata = Configure::read('process_perfdata');
-		
+
 		$this->processPerfdataCache = [];
 		if($this->processPerfdata === true){
 			Configure::load('Perfdata');
 			$this->PerfdataConfig = Configure::read('perfdata');
 			$this->Perfdata->init($this->PerfdataConfig, $this->Logfile);
 		}
-		
-		
+
+
 		$this->useMemcached = false;
-		
+
 		$this->maxJobIdleCounter = 500;
-		
+
 		$this->MemcachedProcessingType = 0;
 		if(Configure::read('memcached.use_memcached') === true){
 			if($this->Memcached->init()){
@@ -206,11 +201,11 @@ class StatusengineLegacyShell extends AppShell{
 					$this->Memcached->deleteAll();
 				}
 			}
-			
+
 		}
-		
+
 		if(array_key_exists('worker', $this->params)){
-			
+
 			$this->workerMode = true;
 			$this->forkWorker();
 		}else{
@@ -221,20 +216,19 @@ class StatusengineLegacyShell extends AppShell{
 			$this->buildHoststatusCache();
 			$this->buildServicestatusCache();
 			$this->Scheduleddowntime->cleanup();
-			$this->checkSqlTimeout();
 			$this->Dbversion->save([
 				'Dbversion' => [
 					'name' => 'Statusengine',
 					'version' => Configure::read('version')
 				]
 			]);
-		
+
 			$this->gearmanConnect();
 			$this->Logfile->stlog('Lets rock!');
 		}
-		
+
 	}
-	
+
 	/**
 	 * This disable (set is_atvice to 0) in objects table
 	 *
@@ -247,7 +241,7 @@ class StatusengineLegacyShell extends AppShell{
 		//Disable every object in objects, because nagios was restared
 		$this->Objects->updateAll(['Objects.is_active' => 0]);
 	}
-	
+
 	/**
 	 * Dump all objects to the DB
 	 *
@@ -263,16 +257,15 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		
+
 		$payload = json_decode($job->workload());
 		$this->Objects->create();
 		switch($payload->object_type){
 			case START_OBJECT_DUMP:
-				$this->checkSqlTimeout();
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR2);
 				}
-				
+
 				$this->dumpObjects = true;
 				$this->fakeLastInsertId = 1;
 				$this->Logfile->stlog('Start dumping objects');
@@ -310,9 +303,9 @@ class StatusengineLegacyShell extends AppShell{
 					'Serviceescalationcontactgroup',
 					'Hostdependency',
 					'Servicedependency',
-					
-					
-					
+
+
+
 					'Systemcommand',
 					'Configfile',
 					'Configvariable'
@@ -320,13 +313,13 @@ class StatusengineLegacyShell extends AppShell{
 				foreach($truncate as $Model){
 					$this->{$Model}->deleteAll(true);
 				}
-		
+
 				$this->clearObjectsCache();
 				$this->buildObjectsCache();
 				$this->createParentHosts = [];
 				$this->createParentServices = [];
 				break;
-				
+
 			case FINISH_OBJECT_DUMP:
 				$this->Logfile->stlog('Finished dumping objects');
 				$this->buildHoststatusCache();
@@ -334,22 +327,22 @@ class StatusengineLegacyShell extends AppShell{
 				$this->saveParentHosts();
 				$this->saveParentServices();
 				//We are done with object dumping and can write parent hosts and services to DB
-				
+
 				$this->Logfile->stlog('Start dumping core config '.Configure::read('coreconfig').' to database');
 				$this->dumpCoreConfig();
 				$this->Logfile->stlog('Core config dump finished');
-				
+
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR1);
 				}
-				
+
 				if($this->workerMode === false && $this->processPerfdata === true){
 					$this->buildProcessPerfdataCache();
 				}
-				
+
 				$this->dumpObjects = false;
 				break;
-			
+
 			//Command object
 			case OBJECT_COMMAND:
 				if($this->dumpObjects === false){
@@ -367,9 +360,9 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				];
-				
+
 				$result = $this->Objects->save($data);
-				
+
 				$data = [
 					'Command' => [
 						'instance_id' => $this->instance_id,
@@ -378,14 +371,14 @@ class StatusengineLegacyShell extends AppShell{
 						'command_line' => $payload->command_line
 					]
 				];
-				
+
 				$this->Command->rawInsert([$data], false);
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->command_name);
-				
+
 				unset($result, $data);
 			break;
-			
+
 			//Timeperiod object
 			case OBJECT_TIMEPERIOD:
 				if($this->dumpObjects === false){
@@ -393,7 +386,7 @@ class StatusengineLegacyShell extends AppShell{
 				}
 				$this->Timeperiod->create();
 				$timeperiodObjectId = $this->objectIdFromCache($payload->object_type, $payload->name);
-	
+
 				$data = [
 					'Objects' => [
 						'objecttype_id' => $payload->object_type,
@@ -406,7 +399,7 @@ class StatusengineLegacyShell extends AppShell{
 					],
 				];
 				$result = $this->Objects->save($data);
-				
+
 				$data = [
 					'Timeperiod' => [
 						'instance_id' => $this->instance_id,
@@ -415,9 +408,9 @@ class StatusengineLegacyShell extends AppShell{
 						'alias' => $payload->alias,
 					]
 				];
-				
+
 				$result = $this->Timeperiod->save($data);
-				
+
 				foreach($payload->timeranges as $day => $timerangesPerDay){
 					foreach($timerangesPerDay as $timerange){
 						$this->Timerange->create();
@@ -446,12 +439,12 @@ class StatusengineLegacyShell extends AppShell{
 						}
 					}
 				}
-				
+
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->name);
-				
+
 				unset($result, $data);
 				break;
-			
+
 			//Contact object
 			case OBJECT_CONTACT:
 				if($this->dumpObjects === false){
@@ -497,9 +490,9 @@ class StatusengineLegacyShell extends AppShell{
 						'minimum_importance' => $payload->minimum_value,
 					]
 				];
-				
+
 				$result = $this->Contact->save($data);
-				
+
 				$i = 0;
 				foreach($payload->address as $address){
 					if($address === null){
@@ -516,12 +509,12 @@ class StatusengineLegacyShell extends AppShell{
 					]);
 					$i++;
 				}
-				
+
 				unset($i);
-				
+
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->name);
-				
+
 				//Add Contactnotificationcommand record
 				foreach($payload->host_commands as $command){
 					$this->Contactnotificationcommand->create();
@@ -537,7 +530,7 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Contactnotificationcommand->save($data);
 				}
-				
+
 				foreach($payload->service_commands as $command){
 					$this->Contactnotificationcommand->create();
 					$notifyCommand = $this->parseCheckCommand($command->command_name);
@@ -553,10 +546,10 @@ class StatusengineLegacyShell extends AppShell{
 					$this->Contactnotificationcommand->save($data);
 				}
 
-				
+
 				unset($result, $data);
 			break;
-			
+
 			//Contactgroup object
 			case OBJECT_CONTACTGROUP:
 				if($this->dumpObjects === false){
@@ -574,9 +567,9 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					],
 				];
-				
+
 				$result = $this->Objects->save($data);
-				
+
 				$data = [
 					'Contactgroup' => [
 						'instance_id' => $this->instance_id,
@@ -585,11 +578,11 @@ class StatusengineLegacyShell extends AppShell{
 						'alias' => $payload->alias,
 					]
 				];
-				
+
 				$result = $this->Contactgroup->save($data);
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->group_name);
-				
+
 				//associate contactgroups with contacts
 				foreach($payload->contact_members as $ContactName){
 					$this->Contactgroupmember->create();
@@ -602,7 +595,7 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Contactgroupmember->rawInsert([$data], false);
 				}
-				
+
 				unset($result, $data);
 				break;
 
@@ -623,7 +616,7 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				];
-				
+
 				$result = $this->Objects->save($data);
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->name);
@@ -693,13 +686,13 @@ class StatusengineLegacyShell extends AppShell{
 						'importance' => $payload->hourly_value
 					]
 				];
-				
+
 				$result = $this->Host->save($data);
 				//$lastInsertId = $this->Host->rawSave([$data]);
 				foreach($payload->parent_hosts as $parentHost){
 					$this->createParentHosts[$result['Host']['host_id']][] = $parentHost;
 				}
-				
+
 				foreach($payload->contactgroups as $contactgroupName){
 					$this->Hostcontactgroup->create();
 					$data = [
@@ -711,7 +704,7 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Hostcontactgroup->save($data);
 				}
-				
+
 				foreach($payload->contacts as $contactName){
 					$this->Hostcontact->create();
 					$data = [
@@ -723,7 +716,7 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Hostcontact->rawInsert([$data], false);
 				}
-				
+
 				foreach($payload->custom_variables as $varName => $varValue){
 					$this->Customvariable->create();
 					$data = [
@@ -747,7 +740,7 @@ class StatusengineLegacyShell extends AppShell{
 					break;
 				}
 				$this->Hostgroup->create();
-				
+
 				$data = [
 					'Objects' => [
 						'objecttype_id' => $payload->object_type,
@@ -759,9 +752,9 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				];
-				
+
 				$result = $this->Objects->save($data);
-				
+
 				$data = [
 					'Hostgroup' => [
 						'instance_id' => $this->instance_id,
@@ -770,9 +763,9 @@ class StatusengineLegacyShell extends AppShell{
 						'alias' => $payload->alias
 					]
 				];
-				
+
 				$result = $this->Hostgroup->save($data);
-				
+
 				foreach($payload->members as $hostName){
 					$this->Hostgroupmember->create();
 					$data = [
@@ -784,21 +777,21 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Hostgroupmember->rawInsert([$data], false);
 				}
-				
+
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->group_name);
-				
+
 				break;
-			
+
 			//Service object
 			case OBJECT_SERVICE:
 				if($this->dumpObjects === false){
 					break;
 				}
 				//$this->Service->create();
-				
+
 				$objectId = $this->objectIdFromCache(OBJECT_SERVICE, $payload->host_name, $payload->description);
-				
+
 				/*
 				 * NOTICE
 				 * !!! THIS IS TESTING CODE AND WILL BE REMOVED SOON OR BE REPLEACED !!!
@@ -862,20 +855,20 @@ class StatusengineLegacyShell extends AppShell{
 					//Update + on duplicate key update
 					$this->Objects->rawSave([$data], false);
 				}
-				
+
 				//$objectId = $result['Objects']['object_id'];
-		
+
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $objectId, $payload->host_name, $payload->description);
-				
+
 				$checkCommand = $this->parseCheckCommand($payload->check_command);
 				if($this->objectIdFromCache(OBJECT_COMMAND, $checkCommand[0]) == null){
 					debug($checkCommand);
 				}
-				
+
 				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
-				
-				
+
+
 				$data = [
 					'Service' => [
 						'service_id' => $this->fakeLastInsertId,
@@ -938,9 +931,9 @@ class StatusengineLegacyShell extends AppShell{
 				//if(isset($result['Service']['service_id'])){
 				//	$lastInsertId = $result['Service']['service_id'];
 				//}
-				
+
 				$lastInsertId = $this->fakeLastInsertId;
-				
+
 				if($lastInsertId == null){
 					$this->fakeLastInsertId++;
 					continue;
@@ -948,16 +941,16 @@ class StatusengineLegacyShell extends AppShell{
 
 				//$lastInsertId = $this->Service->rawInsert([$data]);
 				unset($data);
-				
+
 				//Must run if all services are in the database, or we get in trouble!
 				foreach($payload->parent_services as $parentService){
 					$this->createParentServices[$lastInsertId][] = [
 						'host_name' => $payload->host_name,
 						'description' => $payload->description
-							
+
 					];
 				}
-				
+
 				if(!empty($payload->contactgroups)){
 					foreach($payload->contactgroups as $contactgroupName){
 						$this->Servicecontactgroup->create();
@@ -971,7 +964,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->Servicecontactgroup->save($data);
 					}
 				}
-				
+
 				foreach($payload->contacts as $contactName){
 					$this->Servicecontact->create();
 					$data = [
@@ -983,7 +976,7 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Servicecontact->rawInsert([$data], false);
 				}
-				
+
 				foreach($payload->custom_variables as $varName => $varValue){
 					$this->Customvariable->create();
 					$data = [
@@ -998,11 +991,11 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Customvariable->save($data);
 				}
-				
+
 				unset($data, $result, $objectId);
 				$this->fakeLastInsertId++;
 				break;
-	
+
 			case OBJECT_SERVICEGROUP:
 				if($this->dumpObjects === false){
 					break;
@@ -1019,9 +1012,9 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				];
-				
+
 				$result = $this->Objects->save($data);
-				
+
 				$data = [
 					'Servicegroup' => [
 						'instance_id' => $this->instance_id,
@@ -1030,9 +1023,9 @@ class StatusengineLegacyShell extends AppShell{
 						'alias' => $payload->alias
 					]
 				];
-				
+
 				$result = $this->Servicegroup->save($data);
-				
+
 				foreach($payload->members as $ServiceArray){
 					$this->Servicegroupmember->create();
 					$data = [
@@ -1044,12 +1037,12 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Servicegroupmember->rawInsert([$data], false);
 				}
-				
+
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->group_name);
 				unset($data, $result);
 				break;
-				
+
 			case OBJECT_HOSTESCALATION:
 				if($this->dumpObjects === false){
 					break;
@@ -1069,7 +1062,7 @@ class StatusengineLegacyShell extends AppShell{
 				$this->Objects->save($data);
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->host_name);
-				
+
 				$this->Hostescalation->create();
 				$data = [
 					'Hostescalation' => [
@@ -1086,7 +1079,7 @@ class StatusengineLegacyShell extends AppShell{
 					]
 				];
 				$result = $this->Hostescalation->save($data);
-				
+
 				foreach($payload->contacts as $contactName){
 					$this->Hostescalationcontacts->create();
 					$data = [
@@ -1098,7 +1091,7 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Hostescalationcontacts->save($data);
 				}
-				
+
 				foreach($payload->contactgroups as $groupName){
 					$this->Hostescalationcontactgroup->create();
 					$data = [
@@ -1131,7 +1124,7 @@ class StatusengineLegacyShell extends AppShell{
 				$this->Objects->save($data);
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->host_name);
-				
+
 				$this->Serviceescalation->create();
 				$data = [
 					'Serviceescalation' => [
@@ -1148,9 +1141,9 @@ class StatusengineLegacyShell extends AppShell{
 						'escalate_on_critical' => $payload->escalate_on_critical,
 					]
 				];
-				
+
 				$result = $this->Serviceescalation->save($data);
-				
+
 				foreach($payload->contacts as $contactName){
 					$this->Serviceescalationcontact->create();
 					$data = [
@@ -1162,7 +1155,7 @@ class StatusengineLegacyShell extends AppShell{
 					];
 					$this->Serviceescalationcontact->save($data);
 				}
-				
+
 				foreach($payload->contactgroups as $groupName){
 					$this->Serviceescalationcontactgroup->create();
 					$data = [
@@ -1176,7 +1169,7 @@ class StatusengineLegacyShell extends AppShell{
 				}
 				unset($data, $result);
 				break;
-				
+
 			case OBJECT_HOSTDEPENDENCY:
 				if($this->dumpObjects === false){
 					break;
@@ -1192,7 +1185,7 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				];
-				
+
 				$result = $this->Objects->save($data);
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->host_name);
 				$this->Hostdependency->create();
@@ -1210,12 +1203,12 @@ class StatusengineLegacyShell extends AppShell{
 						'fail_on_unreachable' => $payload->fail_on_unreachable,
 					]
 				];
-				
+
 				$this->Hostdependency->save($data);
-				
+
 				unset($data, $result);
 				break;
-				
+
 			case OBJECT_SERVICEDEPENDENCY:
 				if($this->dumpObjects === false){
 					break;
@@ -1231,10 +1224,10 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				];
-			
+
 				$result = $this->Objects->save($data);
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->host_name, $payload->service_description);
-				
+
 				$this->Servicedependency->create();
 				$data = [
 					'Servicedependency' => [
@@ -1256,7 +1249,7 @@ class StatusengineLegacyShell extends AppShell{
 				break;
 		}
 	}
-	
+
 	/**
 	 * This function handle every entry out of gearmans hoststatus Q
 	 *
@@ -1271,20 +1264,20 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 		$payload = json_decode($job->workload());
-		
+
 		if($this->useMemcached === true){
 			$this->Memcached->setHoststatus($payload);
 			if($this->MemcachedProcessingType === 1){
 				return;
 			}
 		}
-		
+
 		//$this->Hoststatus->create();
-		
+
 		if($this->objectIdFromCache(OBJECT_HOST, $payload->hoststatus->name) === null){
 			return;
 		}
-		
+
 		$hoststatusId = $this->hoststatusIdFromCache($this->objectIdFromCache(OBJECT_HOST, $payload->hoststatus->name));
 		$hostObjectId = $this->objectIdFromCache(OBJECT_HOST, $payload->hoststatus->name);
 		//debug('Hoststatus Id: '.$hoststatusId);
@@ -1292,7 +1285,7 @@ class StatusengineLegacyShell extends AppShell{
 			//Object has gone
 			return;
 		}
-		
+
 		$data = [
 			'Hoststatus' => [
 				'hoststatus_id' => $hoststatusId,
@@ -1344,19 +1337,18 @@ class StatusengineLegacyShell extends AppShell{
 				'check_timeperiod_object_id' => $this->objectIdFromCache(OBJECT_TIMEPERIOD, $payload->hoststatus->check_period)
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		if($hoststatusId == null){
 			$result = $this->Hoststatus->save($data);
 		}else{
 			$result = $this->Hoststatus->rawSave([$data]);
 		}
-		
+
 		if($hoststatusId == null){
 			$this->addToHoststatusCache($hostObjectId, $result['Hoststatus']['hoststatus_id']);
 		}
 	}
-	
+
 	/**
 	 * This function handle every entry out of gearmans servicestatus Q
 	 *
@@ -1376,23 +1368,23 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 		//$this->Servicestatus->create();
-		
+
 		if($this->useMemcached === true){
 			$this->Memcached->setServicestatus($payload);
 			if($this->MemcachedProcessingType === 1){
 				return;
 			}
 		}
-		
+
 		$service_object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->servicestatus->host_name, $payload->servicestatus->description);
-		
+
 		if($service_object_id === null){
 			//Object has gone
 			return;
 		}
-		
+
 		//$servicestatus_id = $this->servicestatusIdFromCache($service_object_id);
-		
+
 		//debug('Servicestatus Id: '.$servicestatus_id);
 		//debug($payload);
 		$data = [
@@ -1447,21 +1439,20 @@ class StatusengineLegacyShell extends AppShell{
 				'check_timeperiod_object_id' => $this->objectIdFromCache(OBJECT_TIMEPERIOD, $payload->servicestatus->check_period),
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$result = $this->Servicestatus->rawSaveServicestatus([$data]);
-		
+
 		/*if($servicestatus_id == null){
 			$result = $this->Servicestatus->save($data);
 		}else{
 			$result = $this->Servicestatus->rawSave([$data]);
 		}
-		
+
 		if($servicestatus_id == null){
 			$this->addToServicestatusCache($service_object_id, $result['Servicestatus']['servicestatus_id']);
 		}*/
 	}
-	
+
 	/**
 	 * This function handle every entry out of gearmans servicechecks Q
 	 *
@@ -1481,11 +1472,11 @@ class StatusengineLegacyShell extends AppShell{
 			//$this->Logfile->clog(var_export($this->objectCache ,true));
 			return;
 		}
-		
+
 		$checkCommand = $this->parseCheckCommand($payload->servicecheck->command_name);
-		
+
 		//$this->Servicecheck->create();
-		
+
 		$data = [
 			'Servicecheck' => [
 				'instance_id' => $this->instance_id,
@@ -1512,10 +1503,9 @@ class StatusengineLegacyShell extends AppShell{
 				'perfdata' => $payload->servicecheck->perf_data,
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Servicecheck->rawInsert([$data], false);
-		
+
 		if($this->processPerfdata === true && $payload->servicecheck->perf_data !== null){
 			//process_performance_data == 1 ?
 			if(isset($this->processPerfdataCache[$service_object_id])){
@@ -1527,9 +1517,9 @@ class StatusengineLegacyShell extends AppShell{
 					'SERVICEPERFDATA' => $payload->servicecheck->perf_data,
 					'SERVICECHECKCOMMAND' => $payload->servicecheck->command_name,
 					'SERVICESTATE' => $payload->servicecheck->state,
-					'SERVICESTATETYPE' => $payload->servicecheck->state_type 
+					'SERVICESTATETYPE' => $payload->servicecheck->state_type
 				];
-			
+
 				$parsedPerfdata = $this->Perfdata->parsePerfdataString($payload->servicecheck->perf_data);
 				$rrdReturn = $this->Perfdata->writeToRrd($parsedPerfdataString, $parsedPerfdata);
 				if($this->PerfdataConfig['XML']['write_xml_files'] === true){
@@ -1538,27 +1528,27 @@ class StatusengineLegacyShell extends AppShell{
 			}
 		}
 	}
-	
+
 	public function processHostchecks($job){
 		if($this->clearQ){
 			return;
 		}
 		$payload = json_decode($job->workload());
 		$host_object_id = $this->objectIdFromCache(OBJECT_HOST, $payload->hostcheck->host_name);
-		
+
 		if($host_object_id === null){
 			return;
 		}
-		
+
 		$checkCommand = $this->parseCheckCommand($payload->hostcheck->command_name);
-		
+
 		//$this->Hostcheck->create();
-		
+
 		$is_raw_check = 0;
 		if($payload->type == 802 || $payload->type == 803){
 			$is_raw_check = 1;
 		}
-		
+
 		$data = [
 			'Hostcheck' => [
 				'instance_id' => $this->instance_id,
@@ -1586,11 +1576,10 @@ class StatusengineLegacyShell extends AppShell{
 				'perfdata' => $payload->hostcheck->perf_data,
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Hostcheck->rawInsert([$data], false);
 	}
-	
+
 	public function processStatechanges($job){
 		if($this->clearQ){
 			return;
@@ -1627,11 +1616,10 @@ class StatusengineLegacyShell extends AppShell{
 				'long_output' => $payload->statechange->long_output,
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Statehistory->rawInsert([$data], false);
 	}
-	
+
 	public function processLogentries($job){
 		if($this->clearQ){
 			return;
@@ -1650,11 +1638,10 @@ class StatusengineLegacyShell extends AppShell{
 				'inferred_data_extracted' => 1 //this is hardcoded in ndo?
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Logentry->rawInsert([$data], false);
 	}
-	
+
 	public function processSystemcommands($job){
 		if($this->clearQ){
 			return;
@@ -1677,24 +1664,23 @@ class StatusengineLegacyShell extends AppShell{
 				'long_output' => $payload->systemcommand->long_output,
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Systemcommand->rawInsert([$data], false);
 	}
-	
+
 	public function processComments($job){
 		if($this->clearQ){
 			return;
 		}
 		$payload = json_decode($job->workload());
-		
+
 		$object_id = $this->getObjectIdForPayload($payload, 'comment');
-		
+
 		if($object_id === null){
 			//Object has gone
 			return;
 		}
-		
+
 		//$this->Comment->create();
 		$data = [
 			'Comment' => [
@@ -1714,11 +1700,10 @@ class StatusengineLegacyShell extends AppShell{
 				'expiration_time' => $payload->comment->expire_time
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Comment->rawInsert([$data], false);
 	}
-	
+
 	public function processExternalcommands($job){
 		if($this->clearQ){
 			return;
@@ -1734,29 +1719,28 @@ class StatusengineLegacyShell extends AppShell{
 				'command_args' => $payload->externalcommand->command_args
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Externalcommand->rawInsert([$data], false);
 	}
-	
+
 	public function processAcknowledgements($job){
 		if($this->clearQ){
 			return;
 		}
 		$payload = json_decode($job->workload());
-		
+
 		$object_id = $this->getObjectIdForPayload($payload, 'acknowledgement');
-		
+
 		if($object_id === null){
 			//Object has gone
 			return;
 		}
-		
+
 		if($this->useMemcached=== true){
 			//Add a record in memcached
 			$this->Memcached->setAcknowledgement($payload);
 		}
-		
+
 		//$this->Acknowledgement->create();
 		$data = [
 			'Acknowledgement' => [
@@ -1773,23 +1757,22 @@ class StatusengineLegacyShell extends AppShell{
 				'notify_contacts' => $payload->acknowledgement->notify_contacts,
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Acknowledgement->rawInsert([$data], false);
 	}
-	
+
 	public function processFlappings($job){
 		if($this->clearQ){
 			return;
 		}
 		$payload = json_decode($job->workload());
 		$object_id = $this->getObjectIdForPayload($payload, 'flapping');
-		
+
 		if($object_id === null){
 			//Object has gone
 			return;
 		}
-		
+
 		//$this->Flapping->create();
 		$data = [
 			'Flapping' => [
@@ -1807,29 +1790,26 @@ class StatusengineLegacyShell extends AppShell{
 				'internal_comment_id' => $payload->flapping->comment_id
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Flapping->rawInsert([$data], false);
 	}
-	
+
 	public function processDowntimes($job){
 		if($this->clearQ){
 			return;
 		}
 		$payload = json_decode($job->workload());
 		$object_id = $this->getObjectIdForPayload($payload, 'downtime');
-		
+
 		if($this->useMemcached === true){
 			$this->Memcached->setDowntime($payload);
 		}
-		
+
 		if($object_id === null){
 			//Object has gone
 			return;
 		}
-		
-		$this->checkSqlTimeout();
-		
+
 		if($payload->type == 1100 || $payload->type == 1102){
 			//Add a new downtime
 			$downtime = $this->Downtimehistory->find('first', [
@@ -1875,8 +1855,8 @@ class StatusengineLegacyShell extends AppShell{
 				]
 			];
 			$result = $this->Downtimehistory->save($data);
-			
-			
+
+
 			//Scheduleddowntime table data
 			$downtime = $this->Scheduleddowntime->find('first', [
 				'conditions' => [
@@ -1889,15 +1869,15 @@ class StatusengineLegacyShell extends AppShell{
 					'internal_downtime_id' => $payload->downtime->downtime_id,
 				]
 			]);
-			
-			
+
+
 			if(isset($downtime['Scheduleddowntime']['scheduleddowntime_id']) && $downtime['Scheduleddowntime']['scheduleddowntime_id'] !== null){
 				$scheduleddowntime_id = $downtime['Scheduleddowntime']['scheduleddowntime_id'];
 			}else{
 				$scheduleddowntime_id = null;
 				$this->Scheduleddowntime->create();
 			}
-			
+
 			$data = [
 				'Scheduleddowntime' => [
 					'scheduleddowntime_id' => $scheduleddowntime_id,
@@ -1920,7 +1900,7 @@ class StatusengineLegacyShell extends AppShell{
 			];
 			$this->Scheduleddowntime->save($data);
 		}
-		
+
 		if($payload->type == 1103){
 			//The downtime exists, and was started now
 			$downtime = $this->Downtimehistory->find('first', [
@@ -1946,7 +1926,7 @@ class StatusengineLegacyShell extends AppShell{
 				];
 				$result = $this->Downtimehistory->save($data);
 			}
-			
+
 			//Update scheduledowntime table
 			$downtime = $this->Scheduleddowntime->find('first', [
 				'conditions' => [
@@ -1959,7 +1939,7 @@ class StatusengineLegacyShell extends AppShell{
 					'internal_downtime_id' => $payload->downtime->downtime_id,
 				]
 			]);
-			
+
 			if(isset($downtime['Scheduleddowntime']['scheduleddowntime_id']) && $downtime['Scheduleddowntime']['scheduleddowntime_id'] !== null){
 				$data = [
 					'Scheduleddowntime' => [
@@ -1972,7 +1952,7 @@ class StatusengineLegacyShell extends AppShell{
 				$this->Scheduleddowntime->save($data);
 			}
 		}
-		
+
 		if($payload->type == 1104){
 			//The downtime exists, but ends now
 			$downtime = $this->Downtimehistory->find('first', [
@@ -1986,7 +1966,7 @@ class StatusengineLegacyShell extends AppShell{
 					'internal_downtime_id' => $payload->downtime->downtime_id,
 				]
 			]);
-				
+
 			if(isset($downtime['Downtimehistory']['downtimehistory_id']) && $downtime['Downtimehistory']['downtimehistory_id'] !== null){
 				//The downtime was found in DB so we can update the record
 				$data = [
@@ -1999,7 +1979,7 @@ class StatusengineLegacyShell extends AppShell{
 				];
 				$result = $this->Downtimehistory->save($data);
 			}
-			
+
 			//Update scheduledowntime table
 			$downtime = $this->Scheduleddowntime->find('first', [
 				'conditions' => [
@@ -2012,13 +1992,13 @@ class StatusengineLegacyShell extends AppShell{
 					'internal_downtime_id' => $payload->downtime->downtime_id,
 				]
 			]);
-			
+
 			if(isset($downtime['Scheduleddowntime']['scheduleddowntime_id']) && $downtime['Scheduleddowntime']['scheduleddowntime_id'] !== null){
 				$this->Scheduleddowntime->delete($downtime['Scheduleddowntime']['scheduleddowntime_id']);
 			}
 		}
 	}
-	
+
 	public function processProcessdata($job){
 		if($this->clearQ){
 			return;
@@ -2037,29 +2017,27 @@ class StatusengineLegacyShell extends AppShell{
 				'program_date' => $payload->processdata->modification_data,
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Processdata->rawInsert([$data], false);
 	}
-	
+
 	public function processNotifications($job){
 		if($this->clearQ){
 			return;
 		}
 		$payload = json_decode($job->workload());
-		
+
 		if($payload->type != 601){
 			//I guess everything else is trash, contacts_notified = 0 start_time = 0 and stuff like this :/
 			return;
 		}
-		
+
 		$object_id = $this->getObjectIdForPayload($payload, 'notification_data');
-		
+
 		if($object_id === null){
 			//Object has gone
 			return;
 		}
-		$this->checkSqlTimeout();
 		$this->Notification->create();
 		$data = [
 			'Notification' => [
@@ -2080,7 +2058,7 @@ class StatusengineLegacyShell extends AppShell{
 		];
 		$result = $this->Notification->save($data);
 	}
-	
+
 	public function processProgrammstatus($job){
 		if($this->clearQ){
 			return;
@@ -2117,11 +2095,10 @@ class StatusengineLegacyShell extends AppShell{
 				'global_service_event_handler' =>$payload->programmstatus->global_service_event_handler,
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Programmstatus->rawSave([$data], false);
 	}
-	
+
 	public function processContactstatus($job){
 		if($this->clearQ){
 			return;
@@ -2137,12 +2114,12 @@ class StatusengineLegacyShell extends AppShell{
 			$this->Contactstatus->create();
 			$contactstatus_id = null;
 		}
-		
+
 		if($contactObjectId === null){
 			//Object has gone
 			return;
 		}
-		
+
 		$data = [
 			'Contactstatus' => [
 				'contactstatus_id' => $contactstatus_id,
@@ -2158,24 +2135,23 @@ class StatusengineLegacyShell extends AppShell{
 				'modified_service_attributes' => $payload->contactstatus->modified_service_attributes
 			]
 		];
-		
-		$this->checkSqlTimeout();
+
 		$this->Contactstatus->save($data);
 	}
-	
+
 	public function processContactnotificationdata($job){
 		if($this->clearQ){
 			return;
 		}
 
 		$payload = json_decode($job->workload());
-		
+
 		if($payload->type != 603){
 			//I guess everyting else is trash ?
 			return;
 		}
 		$objectId = $this->getObjectIdForPayload($payload, 'contactnotificationdata');
-		
+
 		//Find notification_id
 		$notification = $this->Notification->find('first', [
 			'conditions' => [
@@ -2184,7 +2160,7 @@ class StatusengineLegacyShell extends AppShell{
 				'Notification.object_id' => $objectId
 			]
 		]);
-		
+
 		if(isset($notification['Notification']['notification_id']) && $notification['Notification']['notification_id'] != null){
 			$this->Contactnotification->create();
 			$data = [
@@ -2198,31 +2174,28 @@ class StatusengineLegacyShell extends AppShell{
 					'end_time_usec' => $payload->contactnotificationdata->end_time
 				]
 			];
-			
-			$this->checkSqlTimeout();
+
 			$this->Contactnotification->rawInsert([$data], false);
 		}
 	}
-	
+
 	public function processContactnotificationmethod($job){
 		if($this->clearQ){
 			return;
 		}
 		$payload = json_decode($job->workload());
-		
+
 		if($payload->type !== 605){
 			return;
 		}
-		
+
 		$contactObjectId = $this->objectIdFromCache(OBJECT_CONTACT, $payload->contactnotificationmethod->contact_name);
-		
+
 		if($contactObjectId === null){
 			//Object has gone
 			return;
 		}
-		
-		$this->checkSqlTimeout();
-		
+
 		//Find last contactnotification
 		$cn = $this->Contactnotification->find('first', [
 			'conditions' => [
@@ -2231,7 +2204,7 @@ class StatusengineLegacyShell extends AppShell{
 				'contact_object_id' => $contactObjectId
 			]
 		]);
-		
+
 		if(isset($cn['Contactnotification']['contactnotification_id']) && $cn['Contactnotification']['contactnotification_id'] != null){
 			$this->Contactnotificationmethod->create();
 			$data = [
@@ -2249,14 +2222,14 @@ class StatusengineLegacyShell extends AppShell{
 			$rs = $this->Contactnotificationmethod->save($data);
 		}
 	}
-	
+
 	//May be a little bit buggy?
 	public function processEventhandler($job){
 		if($this->clearQ){
 			return;
 		}
 		$payload = json_decode($job->workload());
-		
+
 		if($payload->eventhandler->service_description != NULL){
 			$object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->eventhandler->host_name, $payload->eventhandler->service_description);
 			$eventhanderType = 1;
@@ -2264,10 +2237,9 @@ class StatusengineLegacyShell extends AppShell{
 			$object_id = $this->objectIdFromCache(OBJECT_HOST, $payload->eventhandler->host_name);
 			$eventhanderType = 0;
 		}
-		
-		$this->checkSqlTimeout();
+
 		$this->Eventhandler->create();
-		
+
 		$data = [
 			'Eventhandler' => [
 				'instance_id' => $this->instance_id,
@@ -2290,10 +2262,10 @@ class StatusengineLegacyShell extends AppShell{
 				'long_output' => $payload->eventhandler->long_output
 			]
 		];
-		
+
 		$this->Eventhandler->save($data);
 	}
-	
+
 	/**
 	 * Parent process connect to the gearman servicer
 	 * If you start the programm this function get called from $this->forkWorker() OR $this->main(),
@@ -2307,14 +2279,14 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function gearmanConnect(){
 		$this->worker = new GearmanWorker();
-		
+
 		/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
 		 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 		 */
 		$this->worker->addOptions(GEARMAN_WORKER_NON_BLOCKING);
-		
+
 		$this->worker->addServer(Configure::read('server'), Configure::read('port'));
-		
+
 		if($this->workerMode === true){
 			$this->worker->addFunction('statusngin_objects',        [$this, 'dumpObjects']);
 			$this->worker->addFunction('statusngin_programmstatus', [$this, 'processProgrammstatus']);
@@ -2341,11 +2313,11 @@ class StatusengineLegacyShell extends AppShell{
 			$this->worker->addFunction('statusngin_contactnotificationdata',	[$this, 'processContactnotificationdata']);
 			$this->worker->addFunction('statusngin_contactnotificationmethod',	[$this, 'processContactnotificationmethod']);
 			$this->worker->addFunction('statusngin_eventhandler',				[$this, 'processEventhandler']);
-			
+
 			while($this->worker->work());
 		}
 	}
-	
+
 	/**
 	 * Create the instance in instances table
 	 * Not sure if some one realy needs this, but most
@@ -2358,7 +2330,6 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function createInstance(){
-		$this->checkSqlTimeout();
 		$this->Instance->create();
 		$data = [
 			'Instance' => [
@@ -2369,7 +2340,7 @@ class StatusengineLegacyShell extends AppShell{
 		];
 		$this->Instance->save($data);
 	}
-	
+
 	/**
 	 * Every time we recive an object we need the object_id to run CRUD (create, read, update, delete)
 	 * So we dont want to lookup the object id every time again, so we store them in an cache array
@@ -2395,7 +2366,7 @@ class StatusengineLegacyShell extends AppShell{
 			1 =>  []
 		];
 	}
-	
+
 	/**
 	 * This function fills up the cache array with data out of the DB
 	 *
@@ -2405,7 +2376,6 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function buildObjectsCache(){
-		$this->checkSqlTimeout();
 		$objects = $this->Objects->find('all', [
 			'recursive' => -1 //drops associated data, so we dont get an memory limit error, while processing big data ;)
 		]);
@@ -2420,7 +2390,7 @@ class StatusengineLegacyShell extends AppShell{
 			];
 		}
 	}
-	
+
 	/**
 	 * If an object is inside of the cache, we return the object_id
 	 * The object is sorted by the objecttype_id, i didn't check php's source code
@@ -2439,10 +2409,10 @@ class StatusengineLegacyShell extends AppShell{
 		if(isset($this->objectCache[$objecttype_id][$name1.$name2]['object_id'])){
 			return $this->objectCache[$objecttype_id][$name1.$name2]['object_id'];
 		}
-		
+
 		return $default;
 	}
-	
+
 	public function objectIdFromCacheDebug($objecttype_id, $name1, $name2 = null, $default = null){
 		$this->Logfile->clog('name1: '.$name1);
 		$this->Logfile->clog('name1: '.$name2);
@@ -2450,10 +2420,10 @@ class StatusengineLegacyShell extends AppShell{
 		if(isset($this->objectCache[$objecttype_id][$name1.$name2]['object_id'])){
 			return $this->objectCache[$objecttype_id][$name1.$name2]['object_id'];
 		}
-		
+
 		return $default;
 	}
-	
+
 	/**
 	 * This function adds an new created object to the object cache, or replace it
 	 *
@@ -2476,7 +2446,7 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Every time we recive an hoststatus we need to update the last record in DB
 	 * Cause of we don't want to lookup the id on every update again, we create us an cache of it
@@ -2487,25 +2457,24 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function buildHoststatusCache(){
-		$this->checkSqlTimeout();
 		$this->hoststatusCache = [];
 		foreach($this->Hoststatus->find('all', ['fields' => ['hoststatus_id', 'host_object_id']]) as $hs){
 			$this->hoststatusCache[$hs['Hoststatus']['host_object_id']] = $hs['Hoststatus']['hoststatus_id'];
 		}
 	}
-	
+
 	public function addToHoststatusCache($hostObjectId, $hoststatus){
 		$this->hoststatusCache[$hostObjectId] = $hoststatus;
 	}
-	
+
 	public function hoststatusIdFromCache($hostObjectId){
 		if(isset($this->hoststatusCache[$hostObjectId])){
 			return $this->hoststatusCache[$hostObjectId];
 		}
-		
+
 		return null;
 	}
-	
+
 	/**
 	 * Every time we recive an servucestatus we need to update the last record in DB
 	 * Cause of we don't want to lookup the id on every update again, we create us an cache of it
@@ -2516,27 +2485,25 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function buildServicestatusCache(){
-		$this->checkSqlTimeout();
 		$this->servicestatusCache = [];
 		foreach($this->Servicestatus->find('all', ['fields' => ['servicestatus_id', 'service_object_id']]) as $ss){
 			$this->servicestatusCache[$ss['Servicestatus']['service_object_id']] = $ss['Servicestatus']['servicestatus_id'];
 		}
 	}
-	
+
 	public function addToServicestatusCache($serviceObjectId, $servicestatus_id){
 		$this->servicestatusCache[$serviceObjectId] = $servicestatus_id;
 	}
-	
+
 	public function servicestatusIdFromCache($serviceObjectId){
 		if(isset($this->servicestatusCache[$serviceObjectId])){
 			return $this->servicestatusCache[$serviceObjectId];
 		}
-		
+
 		return null;
 	}
-	
+
 	public function buildProcessPerfdataCache(){
-		$this->checkSqlTimeout();
 		$this->processPerfdataCache = [];
 		$result = $this->Service->find('all', [
 			'conditions' => [
@@ -2550,7 +2517,7 @@ class StatusengineLegacyShell extends AppShell{
 			$this->processPerfdataCache[$service['Service']['service_object_id']] = true;
 		}
 	}
-	
+
 	/**
 	 * For each CRUD operation we need the object_id
 	 * this function will return us the object id for the given $payload
@@ -2571,7 +2538,7 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		return $object_id;
 	}
-	
+
 	public function saveParentHosts(){
 		foreach($this->createParentHosts as $host_id => $hostNamesAsArray){
 			foreach($hostNamesAsArray as $hostName){
@@ -2587,7 +2554,7 @@ class StatusengineLegacyShell extends AppShell{
 			}
 		}
 	}
-	
+
 	public function saveParentServices(){
 		$this->Logfile->clog(var_export($this->createParentServices, true));
 		foreach($this->createParentServices as $service_id => $servicesArray){
@@ -2604,7 +2571,7 @@ class StatusengineLegacyShell extends AppShell{
 			}
 		}
 	}
-	
+
 	/**
 	 * Define the constants for the objecttype_ids.
 	 *
@@ -2627,7 +2594,7 @@ class StatusengineLegacyShell extends AppShell{
 			'OBJECT_SERVICEESCALATION' =>  6,
 			'OBJECT_HOSTDEPENDENCY'    =>  7,
 			'OBJECT_SERVICEDEPENDENCY' =>  8,
-			
+
 			'START_OBJECT_DUMP'     =>  100,
 			'FINISH_OBJECT_DUMP'    =>  101,
 		];
@@ -2635,15 +2602,15 @@ class StatusengineLegacyShell extends AppShell{
 			define($key, $value);
 		}
 	}
-	
+
 	public function notNull($field, $default = 0){
 		if($field === null){
 			return $default;
 		}
-		
+
 		return $field;
 	}
-	
+
 	/**
 	 * Parse the check_command string into command_name and command_arg
 	 *
@@ -2668,7 +2635,7 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		return $return;
 	}
-	
+
 	/**
 	 * This function will fork the child processes (worker) if you run with -w
 	 *
@@ -2694,14 +2661,14 @@ class StatusengineLegacyShell extends AppShell{
 			}else{
 				//we are the parrent
 				$this->childPids[] = $pid;
-				
+
 			}
 		}
 		pcntl_signal(SIGTERM, [$this, 'signalHandler']);
 		pcntl_signal(SIGINT,  [$this, 'signalHandler']);
-		
+
 		//Every worker is created now, so lets rock!
-		
+
 		$this->createInstance();
 		$this->clearObjectsCache();
 		$this->buildObjectsCache();
@@ -2714,18 +2681,18 @@ class StatusengineLegacyShell extends AppShell{
 				'version' => Configure::read('version')
 			]
 		]);
-		
+
 		$this->gearmanConnect();
 		$this->Logfile->stlog('Lets rock!');
 		$this->sendSignal(SIGUSR1);
 		$this->worker->setTimeout(500);
-		
+
 		$jobIdleCounter = 0;
-		
+
 		while(true){
 			pcntl_signal_dispatch();
 			//$this->worker->work();
-			
+
 			if($this->worker->work() === false){
 				if($jobIdleCounter < $this->maxJobIdleCounter){
 					$jobIdleCounter++;
@@ -2733,7 +2700,7 @@ class StatusengineLegacyShell extends AppShell{
 			}else{
 				$jobIdleCounter = 0;
 			}
-			
+
 			//if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
 			if($jobIdleCounter === $this->maxJobIdleCounter){
 				//The worker will sleep because therer are no jobs to do
@@ -2742,7 +2709,7 @@ class StatusengineLegacyShell extends AppShell{
 			}
 		}
 	}
-	
+
 	/**
 	 * This is the child process, and it waits for instuctions from the parent
 	 * The communication is done by unix signals
@@ -2756,12 +2723,12 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Logfile->clog('Ok, i will wait for instructions');
 		if($this->bindQueues === true){
 			$this->worker = new GearmanWorker();
-			
+
 			/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
 			 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 			 */
 			$this->worker->addOptions(GEARMAN_WORKER_NON_BLOCKING);
-			
+
 			$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 			foreach($this->queues as $queueName => $functionName){
 				$this->Logfile->clog('Queue "'.$queueName.'" will be handled by function "'.$functionName.'"');
@@ -2773,39 +2740,39 @@ class StatusengineLegacyShell extends AppShell{
 			if($this->work === true){
 				$this->Logfile->clog('Clear my objects cache');
 				$this->clearObjectsCache();
-				
+
 				$this->Logfile->clog('Build up new objects cache');
 				$this->buildObjectsCache();
 				//$this->Logfile->clog(var_export($this->objectCache, true));
-				
+
 				$this->Logfile->clog('Build up new hoststatus cache');
 				$this->buildHoststatusCache();
-				
+
 				$this->Logfile->clog('Build up new servicestatus cache');
 				$this->buildServicestatusCache();
-				
+
 				if($this->processPerfdata === true){
 					if(isset($this->queues['statusngin_servicechecks'])){
 						$this->Logfile->clog('Build up new process perfdata cache');
 						$this->buildProcessPerfdataCache();
 					}
 				}
-				
+
 				$this->Logfile->clog('I will continue my work');
 				$this->childWork();
-				
+
 			}
 			pcntl_signal_dispatch();
 			usleep(250000);
 		}
 	}
-	
+
 	public function bindChildSignalHandler(){
 		pcntl_signal(SIGTERM, [$this, 'childSignalHandler']);
 		pcntl_signal(SIGUSR1, [$this, 'childSignalHandler']);
 		pcntl_signal(SIGUSR2, [$this, 'childSignalHandler']);
 	}
-	
+
 	public function childWork(){
 		$jobIdleCounter = 0;
 		while($this->work === true){
@@ -2817,7 +2784,7 @@ class StatusengineLegacyShell extends AppShell{
 			}else{
 				$jobIdleCounter = 0;
 			}
-			
+
 			//if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
 			if($jobIdleCounter === $this->maxJobIdleCounter){
 				//The worker will sleep because therer are no jobs to do
@@ -2826,7 +2793,7 @@ class StatusengineLegacyShell extends AppShell{
 			}
 		}
 	}
-	
+
 	public function childSignalHandler($signo){
 		$this->Logfile->clog('Recived signal: '.$signo);
 		switch($signo){
@@ -2835,12 +2802,12 @@ class StatusengineLegacyShell extends AppShell{
 				$this->Logfile->clog('Unregister all my queues');
 				exit(0);
 				break;
-				
+
 			case SIGUSR1:
 				//Tell the worker to start its work
 				$this->work = true;
 				break;
-				
+
 			case SIGUSR2:
 				//Tell the worker to stop its work
 				$this->work = false;
@@ -2848,7 +2815,7 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		$this->bindChildSignalHandler();
 	}
-	
+
 	/**
 	 * This is the parent signal handel, so that we can catch SIGTERM and SIGINT
 	 *
@@ -2867,9 +2834,9 @@ class StatusengineLegacyShell extends AppShell{
 				exit(0);
 				break;
 		}
-		
+
 	}
-	
+
 	/**
 	 * This function sends a singal to every child process
 	 *
@@ -2899,7 +2866,7 @@ class StatusengineLegacyShell extends AppShell{
 			}
 		}
 	}
-	
+
 	/**
 	 * Throw the given job away
 	 *
@@ -2911,10 +2878,10 @@ class StatusengineLegacyShell extends AppShell{
 	public function devNull($job){
 		return true;
 	}
-	
+
 	public function dumpCoreConfig(){
 		$configFile = Configure::read('coreconfig');
-		
+
 		if(file_exists($configFile)){
 			$this->Configfile->create();
 			$data = [
@@ -2924,12 +2891,12 @@ class StatusengineLegacyShell extends AppShell{
 					'configfile_path' => Configure::read('coreconfig')
 				]
 			];
-		
+
 			$result = $this->Configfile->save($data);
-		
-		
+
+
 			$coreconfig = fopen($configFile, "r");
-		
+
 			while(!feof($coreconfig)){
 				$line = trim(fgets($coreconfig));
 				$strpos = strpos($line, '#');
@@ -2953,14 +2920,5 @@ class StatusengineLegacyShell extends AppShell{
 		}else{
 			$this->Logfile->stlog('ERROR: Core config '.$configFile.' not found!!!');
 		}
-	}
-	
-	public function checkSqlTimeout(){
-		//Avoud MySQL server has gone away
-		$time = time();
-		if(($this->lastQuery - $time) > $this->SQLTimeout){
-			$this->Objects->getDatasource()->reconnect();
-		}
-		$this->lastQuery = $time;
 	}
 }

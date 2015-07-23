@@ -32,21 +32,21 @@ class LegacyAppModel extends AppModel{
 		if(empty($data)) {
 			return true;
 		}
-		
+
 		$data = Set::extract('{n}.' . $this->alias, $data);
 		$duplicate_data = [];
-		
+
 		$schema = $this->schema();
 		unset($schema['id']);
 		$keyData = '`' . implode('`, `', array_keys($schema)) . '`';
 
 		$db = $this->getDataSource();
-		
+
 		foreach($data as $k => $row) {
 			foreach ($row as $field => $value) {
 				$row[$field] = $db->value($value, $field);
 			}
-			
+
 			//Insert on duplicate key update syntax
 			foreach($row as $column => $_value){
 				if($column != $this->primaryKey){
@@ -57,14 +57,14 @@ class LegacyAppModel extends AppModel{
 			$data[$k] = "(" . implode(", ", $row) . ")";
 		}
 		$data = sprintf($this->saveTemplate, $this->tablePrefix.$this->table, $keyData, implode(', ', $data), implode(',',$duplicate_data));
-		$this->query($data);
+		$this->sqlQuery($data);
 		if($returnLastInserId){
 			return $db->lastInsertId();
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	*
 	* rawSaveServicestatus
@@ -81,22 +81,22 @@ class LegacyAppModel extends AppModel{
 		if(empty($data)) {
 			return true;
 		}
-		
+
 		$data = Set::extract('{n}.' . $this->alias, $data);
 		$duplicate_data = [];
-		
+
 		$schema = $this->schema();
 		unset($schema['id']);
 		unset($schema['servicestatus_id']);
 		$keyData = '`' . implode('`, `', array_keys($schema)) . '`';
 
 		$db = $this->getDataSource();
-		
+
 		foreach($data as $k => $row) {
 			foreach ($row as $field => $value) {
 				$row[$field] = $db->value($value, $field);
 			}
-			
+
 			//Insert on duplicate key update syntax
 			foreach($row as $column => $_value){
 				if($column != $this->primaryKey){
@@ -107,14 +107,14 @@ class LegacyAppModel extends AppModel{
 			$data[$k] = "(" . implode(", ", $row) . ")";
 		}
 		$data = sprintf($this->saveTemplate, $this->tablePrefix.$this->table, $keyData, implode(', ', $data), implode(',',$duplicate_data));
-		$this->query($data);
+		$this->sqlQuery($data);
 		if($returnLastInserId){
 			return $db->lastInsertId();
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	*
 	* rawInsert
@@ -131,7 +131,7 @@ class LegacyAppModel extends AppModel{
 		if(empty($data)) {
 			return true;
 		}
-		
+
 		$data = Set::extract('{n}.' . $this->alias, $data);
 		$duplicate_data = [];
 		$schema = $this->schema();
@@ -147,11 +147,60 @@ class LegacyAppModel extends AppModel{
 			$data[$k] = "(" . implode(", ", $row) . ")";
 		}
 		$data = sprintf($this->saveTemplate, $this->tablePrefix.$this->table, $keyData, implode(', ', $data));
-		$this->query($data);
+		$this->sqlQuery($data);
 		if($returnLastInserId){
 			return $db->lastInsertId();
 		}
 		return true;
 	}
-	
+
+	/**
+	*
+	* sqlSave
+	*
+	* Licensed under The MIT License
+	* Redistributions of files must retain the above copyright notice.
+	*
+	* @copyright 2014 - present Daniel Ziegler
+	* @author Ceeram
+	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
+	*/
+	public function sqlSave($data, $recursive = false){
+		try{
+			$this->save($data);
+		}catch(Exception $e){
+			$error = $e->getMessage();
+			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
+				if($recursive === false){
+					$this->getDatasource()->reconnect();
+					$this->sqlSave($data, true);
+				}
+			}
+		}
+	}
+
+	/**
+	*
+	* sqlQuery
+	*
+	* Licensed under The MIT License
+	* Redistributions of files must retain the above copyright notice.
+	*
+	* @copyright 2014 - present Daniel Ziegler
+	* @author Ceeram
+	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
+	*/
+	public function sqlQuery($data, $recursive = false){
+		try{
+			$this->query($data);
+		}catch(Exception $e){
+			$error = $e->getMessage();
+			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
+				if($recursive === false){
+					$this->getDatasource()->reconnect();
+					$this->sqlQuery($data, true);
+				}
+			}
+		}
+	}
 }
