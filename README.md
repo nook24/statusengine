@@ -54,6 +54,17 @@ or:
 /opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w
 ```
 
+6. Load the broker module in naemon.cfg:
+```
+broker_module=/opt/statusengine/statusengine.o
+```
+
+If you want to specify a different path to the JSON config, add the path behind the module path, like so:
+```
+broker_module=/opt/statusengine/statusengine.o /some/other/config.json
+```
+
+
 Migrate to Statusengine
 --------------
 
