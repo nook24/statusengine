@@ -62,6 +62,8 @@ if grep -q DISTRIB_CODENAME=trusty /etc/lsb-release; then
 	cp -r cakephp /opt/statusengine/
 	cp etc/init.d/statusengine /etc/init.d/statusengine
 	cp etc/init.d/mod_perfdata /etc/init.d/mod_perfdata
+	#Install statusengine broker configuration file
+	cp etc/statusengine.json /opt/statusengine/statusengine.json
 	chmod +x /etc/init.d/statusengine
 	chmod +x /etc/init.d/mod_perfdata
 	chmod +x /opt/statusengine/cakephp/app/Console/cake
