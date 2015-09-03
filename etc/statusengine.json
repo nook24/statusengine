@@ -1,0 +1,21 @@
+{
+	"process_host_status_data" = true,
+	"process_service_status_data" = true,
+	"process_process_data" = true,
+	"process_service_check_data" = true,
+	"process_host_check_data" = true,
+	"process_state_change_data" = true,
+	"process_log_data" = true,
+	"process_system_command_data" = true,
+	"process_comment_data" = true,
+	"process_external_command_data" = true,
+	"process_acknowledgement_data" = true,
+	"process_flapping_data" = true,
+	"process_downtime_data" = true,
+	"process_notification_data" = true,
+	"process_program_status_data" = true,
+	"process_contact_status_data" = true,
+	"process_contact_notification_data" = true,
+	"process_contact_notification_method_data" = true,
+	"process_event_handler_data" = true
+}
