@@ -70,6 +70,7 @@
 #error Please define either NAEMON or NAGIOS using -DNAEMON or -DNAGIOS command line options.
 #endif
 
+
 #ifdef NAEMON
 //Load default event broker stuff
 #include "naemon/naemon.h"
@@ -151,20 +152,6 @@ void logswitch(int level, char *message){
 }
 
 
-int get_setting(json_object *conf, const char *key){
-	json_object *setting;
-	if( conf == NULL ){
-		// Default when unconfigured: yes
-		return 1;
-	}
-	if( !json_object_object_get_ex(conf, key, &setting) ){
-		// Default when configured but this setting is missing: no
-		return 0;
-	}
-	return json_object_get_boolean(setting);
-}
-
-
 //Broker initialize function
 int nebmodule_init(int flags, char *args, nebmodule *handle){
 
@@ -187,82 +174,28 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Contribute to Statusenigne at: https://github.com/nook24/statusengine");
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Thanks for using Statusengine :-)");
 
-	//Try to read the config
-	json_object *conf = NULL;
-	char *conffile = "/etc/statusengine.json";
-	if( args != NULL && strlen(args) > 0 ){
-		conffile = args;
-	}
-	if( access(conffile, R_OK) != -1 ){
-		conf = json_object_from_file(conffile);
-	}
-	else{
-		char *buffer;
-		if( asprintf(&buffer, "Statusengine - cannot read config from '%s'", conffile) != -1 ){
-			logswitch(NSLOG_CONFIG_WARNING, buffer);
-			free(buffer);
-		}
-	}
-
 	//Register callbacks
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Register callbacks");
-	if( get_setting(conf, "process_host_status_data") ){
-		neb_register_callback(NEBCALLBACK_HOST_STATUS_DATA,                 statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_service_status_data") ){
-		neb_register_callback(NEBCALLBACK_SERVICE_STATUS_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_process_data") ){
-		neb_register_callback(NEBCALLBACK_PROCESS_DATA,                     statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_service_check_data") ){
-		neb_register_callback(NEBCALLBACK_SERVICE_CHECK_DATA,               statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_host_check_data") ){
-		neb_register_callback(NEBCALLBACK_HOST_CHECK_DATA,                  statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_state_change_data") ){
-		neb_register_callback(NEBCALLBACK_STATE_CHANGE_DATA,                statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_log_data") ){
-		neb_register_callback(NEBCALLBACK_LOG_DATA,                         statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_system_command_data") ){
-		neb_register_callback(NEBCALLBACK_SYSTEM_COMMAND_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_comment_data") ){
-		neb_register_callback(NEBCALLBACK_COMMENT_DATA,                     statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_external_command_data") ){
-		neb_register_callback(NEBCALLBACK_EXTERNAL_COMMAND_DATA,            statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_acknowledgement_data") ){
-		neb_register_callback(NEBCALLBACK_ACKNOWLEDGEMENT_DATA,             statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_flapping_data") ){
-		neb_register_callback(NEBCALLBACK_FLAPPING_DATA,                    statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_downtime_data") ){
-		neb_register_callback(NEBCALLBACK_DOWNTIME_DATA,                    statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_notification_data") ){
-		neb_register_callback(NEBCALLBACK_NOTIFICATION_DATA,                statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_program_status_data") ){
-		neb_register_callback(NEBCALLBACK_PROGRAM_STATUS_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_contact_status_data") ){
-		neb_register_callback(NEBCALLBACK_CONTACT_STATUS_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_contact_notification_data") ){
-		neb_register_callback(NEBCALLBACK_CONTACT_NOTIFICATION_DATA,        statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_contact_notification_method_data") ){
-		neb_register_callback(NEBCALLBACK_CONTACT_NOTIFICATION_METHOD_DATA, statusengine_module_handle, 0, statusengine_handle_data);
-	}
-	if( get_setting(conf, "process_event_handler_data") ){
-		neb_register_callback(NEBCALLBACK_EVENT_HANDLER_DATA,               statusengine_module_handle, 0, statusengine_handle_data);
-	}
+	neb_register_callback(NEBCALLBACK_HOST_STATUS_DATA,                 statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_SERVICE_STATUS_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_PROCESS_DATA,                     statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_SERVICE_CHECK_DATA,               statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_HOST_CHECK_DATA,                  statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_STATE_CHANGE_DATA,                statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_LOG_DATA,                         statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_SYSTEM_COMMAND_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_COMMENT_DATA,                     statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_EXTERNAL_COMMAND_DATA,            statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_ACKNOWLEDGEMENT_DATA,             statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_FLAPPING_DATA,                    statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_DOWNTIME_DATA,                    statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_NOTIFICATION_DATA,                statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_PROGRAM_STATUS_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_CONTACT_STATUS_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_CONTACT_NOTIFICATION_DATA,        statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_CONTACT_NOTIFICATION_METHOD_DATA, statusengine_module_handle, 0, statusengine_handle_data);
+	neb_register_callback(NEBCALLBACK_EVENT_HANDLER_DATA,               statusengine_module_handle, 0, statusengine_handle_data);
+	
 
 	//Create gearman client
 	if (gearman_client_create(&gman_client) == NULL){
