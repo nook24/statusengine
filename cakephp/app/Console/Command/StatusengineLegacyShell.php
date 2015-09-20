@@ -190,8 +190,6 @@ class StatusengineLegacyShell extends AppShell{
 
 		$this->useMemcached = false;
 
-		$this->maxJobIdleCounter = 500;
-
 		$this->MemcachedProcessingType = 0;
 		if(Configure::read('memcached.use_memcached') === true){
 			if($this->Memcached->init()){
@@ -205,7 +203,6 @@ class StatusengineLegacyShell extends AppShell{
 		}
 
 		if(array_key_exists('worker', $this->params)){
-
 			$this->workerMode = true;
 			$this->forkWorker();
 		}else{
@@ -2293,26 +2290,26 @@ class StatusengineLegacyShell extends AppShell{
 			$this->worker->addFunction('statusngin_processdata',    [$this, 'processProcessdata']);
 		}else{
 			// These quese are (more or less) orderd by priority!
-			$this->worker->addFunction('statusngin_objects',					[$this, 'dumpObjects']);
-			$this->worker->addFunction('statusngin_servicestatus',				[$this, 'processServicestatus']);
-			$this->worker->addFunction('statusngin_hoststatus',				[$this, 'processHoststatus']);
-			$this->worker->addFunction('statusngin_servicechecks',				[$this, 'processServicechecks']);
-			$this->worker->addFunction('statusngin_hostchecks',				[$this, 'processHostchecks']);
-			$this->worker->AddFunction('statusngin_statechanges',				[$this, 'processStatechanges']);
-			$this->worker->addFunction('statusngin_logentries',				[$this, 'processLogentries']);
-			$this->worker->addFunction('statusngin_systemcommands',			[$this, 'processSystemcommands']);
-			$this->worker->addFunction('statusngin_comments',					[$this, 'processComments']);
-			$this->worker->addFunction('statusngin_externalcommands',			[$this, 'processExternalcommands']);
-			$this->worker->addFunction('statusngin_acknowledgements',			[$this, 'processAcknowledgements']);
-			$this->worker->addFunction('statusngin_flappings',					[$this, 'processFlappings']);
-			$this->worker->addFunction('statusngin_downtimes',					[$this, 'processDowntimes']);
-			$this->worker->addFunction('statusngin_processdata',				[$this, 'processProcessdata']);
-			$this->worker->addFunction('statusngin_notifications',				[$this, 'processNotifications']);
-			$this->worker->addFunction('statusngin_programmstatus',			[$this, 'processProgrammstatus']);
-			$this->worker->addFunction('statusngin_contactstatus',				[$this, 'processContactstatus']);
-			$this->worker->addFunction('statusngin_contactnotificationdata',	[$this, 'processContactnotificationdata']);
-			$this->worker->addFunction('statusngin_contactnotificationmethod',	[$this, 'processContactnotificationmethod']);
-			$this->worker->addFunction('statusngin_eventhandler',				[$this, 'processEventhandler']);
+			$this->worker->addFunction('statusngin_objects',                    [$this, 'dumpObjects']);
+			$this->worker->addFunction('statusngin_servicestatus',              [$this, 'processServicestatus']);
+			$this->worker->addFunction('statusngin_hoststatus',                 [$this, 'processHoststatus']);
+			$this->worker->addFunction('statusngin_servicechecks',              [$this, 'processServicechecks']);
+			$this->worker->addFunction('statusngin_hostchecks',                 [$this, 'processHostchecks']);
+			$this->worker->AddFunction('statusngin_statechanges',               [$this, 'processStatechanges']);
+			$this->worker->addFunction('statusngin_logentries',                 [$this, 'processLogentries']);
+			$this->worker->addFunction('statusngin_systemcommands',             [$this, 'processSystemcommands']);
+			$this->worker->addFunction('statusngin_comments',                   [$this, 'processComments']);
+			$this->worker->addFunction('statusngin_externalcommands',           [$this, 'processExternalcommands']);
+			$this->worker->addFunction('statusngin_acknowledgements',           [$this, 'processAcknowledgements']);
+			$this->worker->addFunction('statusngin_flappings',                  [$this, 'processFlappings']);
+			$this->worker->addFunction('statusngin_downtimes',                  [$this, 'processDowntimes']);
+			$this->worker->addFunction('statusngin_processdata',                [$this, 'processProcessdata']);
+			$this->worker->addFunction('statusngin_notifications',              [$this, 'processNotifications']);
+			$this->worker->addFunction('statusngin_programmstatus',             [$this, 'processProgrammstatus']);
+			$this->worker->addFunction('statusngin_contactstatus',              [$this, 'processContactstatus']);
+			$this->worker->addFunction('statusngin_contactnotificationdata',    [$this, 'processContactnotificationdata']);
+			$this->worker->addFunction('statusngin_contactnotificationmethod',  [$this, 'processContactnotificationmethod']);
+			$this->worker->addFunction('statusngin_eventhandler',               [$this, 'processEventhandler']);
 
 			while($this->worker->work());
 		}
@@ -2583,7 +2580,7 @@ class StatusengineLegacyShell extends AppShell{
 	private function _constants(){
 		$constants = [
 			'OBJECT_COMMAND'           => 12,
-			'OBJECT_TIMEPERIOD'        => 9,
+			'OBJECT_TIMEPERIOD'        =>  9,
 			'OBJECT_CONTACT'           => 10,
 			'OBJECT_CONTACTGROUP'      => 11,
 			'OBJECT_HOST'              =>  1,
@@ -2685,27 +2682,22 @@ class StatusengineLegacyShell extends AppShell{
 		$this->gearmanConnect();
 		$this->Logfile->stlog('Lets rock!');
 		$this->sendSignal(SIGUSR1);
-		$this->worker->setTimeout(500);
+		$this->worker->setTimeout(1000);
 
-		$jobIdleCounter = 0;
 
 		while(true){
 			pcntl_signal_dispatch();
-			//$this->worker->work();
-
-			if($this->worker->work() === false){
-				if($jobIdleCounter < $this->maxJobIdleCounter){
-					$jobIdleCounter++;
-				}
-			}else{
-				$jobIdleCounter = 0;
+			$this->worker->work();
+			if($this->worker->returnCode() == GEARMAN_SUCCESS){
+				continue;
 			}
 
-			//if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
-			if($jobIdleCounter === $this->maxJobIdleCounter){
-				//The worker will sleep because therer are no jobs to do
-				//This will save CPU time!
-				usleep(250000);
+
+			if(!@$this->worker->wait()){
+				if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
+					//Lost connection - lets wait a bit
+					sleep(1);
+				}
 			}
 		}
 	}
@@ -2728,6 +2720,7 @@ class StatusengineLegacyShell extends AppShell{
 			 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 			 */
 			$this->worker->addOptions(GEARMAN_WORKER_NON_BLOCKING);
+			$this->worker->setTimeout(1000);
 
 			$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 			foreach($this->queues as $queueName => $functionName){
@@ -2774,22 +2767,17 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	public function childWork(){
-		$jobIdleCounter = 0;
 		while($this->work === true){
 			pcntl_signal_dispatch();
-			if($this->worker->work() === false){
-				if($jobIdleCounter < $this->maxJobIdleCounter){
-					$jobIdleCounter++;
-				}
-			}else{
-				$jobIdleCounter = 0;
+			$this->worker->work();
+			if($this->worker->returnCode() == GEARMAN_SUCCESS){
+				continue;
 			}
 
-			//if($this->worker->returnCode() == GEARMAN_NO_JOBS|| $this->worker->returnCode() == GEARMAN_IO_WAIT){
-			if($jobIdleCounter === $this->maxJobIdleCounter){
-				//The worker will sleep because therer are no jobs to do
-				//This will save CPU time!
-				usleep(250000);
+			if(!@$this->worker->wait()){
+				if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
+					sleep(1);
+				}
 			}
 		}
 	}
