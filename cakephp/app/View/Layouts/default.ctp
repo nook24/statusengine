@@ -50,79 +50,81 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	?>
 </head>
 <body>
-	<?php
-	if($isLoggedIn === true):
-		echo $this->element('menu');
-	else:
-		echo $this->element('menuLoggedOut');
-	endif;
-	?>
-
-	<div class="container">
-		<?php echo $this->Session->flash(); ?>
-		<div id="content">
-			<?php echo $this->fetch('content'); ?>
-		</div>
-	</div>
-	<?php
-		Configure::load('Interface');
-		if(Configure::read('Interface.sql_dump') === true && $isLoggedIn === true):
-			 echo $this->element('sql_dump');
-		endif;
-
-		$hideOitc = false;
-		$class ="col-xs-12 col-md-4";
-		if(Configure::read('Interface.hide_oitc') === true):
-			$class ="col-xs-12 col-md-6";
-			$hideOitc = true;
+	<div id="xpull-trigger">
+		<?php
+		if($isLoggedIn === true):
+			echo $this->element('menu');
 		else:
-			echo $this->element('oitc_modal');
+			echo $this->element('menuLoggedOut');
 		endif;
 		?>
-	<br />
-	<br />
-	<footer class="footer">
+
 		<div class="container">
-			<div class="row text-muted">
-				<?php if($isLoggedIn === true):?>
-					<div class="<?php echo $class; ?>">
-						<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
-							<i class="fa fa-github"></i>
-							<?php echo __('Contribute to Statusengine');?>
-						</a>
-					</div>
-					<?php if($hideOitc === false): ?>
-						<div class="col-xs-12 col-md-4 text-center hidden-xs hidden-sm">
-							<a href="javascript:void(0);" class="text-muted" data-toggle="modal" data-target="#oITCModal">
-								<?php echo __('Want more? Check out openITCOCKPIT');?>
-							</a>
-						</div>
-					<?php endif;?>
-					<div class="<?php echo $class; ?> hidden-xs hidden-sm">
-						<div class="pull-right">
-							<a href="http://cakephp.org" target="_blank">
-								<?php echo $this->Html->image('cake-logo-smaller2.png', ['border' => '0']); ?>
-							</a>
-						</div>
-					</div>
-				<?php else:?>
-					<div class="col-xs-6">
-						<div class="pull-left">
+			<?php echo $this->Session->flash(); ?>
+			<div id="content">
+				<?php echo $this->fetch('content'); ?>
+			</div>
+		</div>
+		<?php
+			Configure::load('Interface');
+			if(Configure::read('Interface.sql_dump') === true && $isLoggedIn === true):
+				 echo $this->element('sql_dump');
+			endif;
+
+			$hideOitc = false;
+			$class ="col-xs-12 col-md-4";
+			if(Configure::read('Interface.hide_oitc') === true):
+				$class ="col-xs-12 col-md-6";
+				$hideOitc = true;
+			else:
+				echo $this->element('oitc_modal');
+			endif;
+			?>
+		<br />
+		<br />
+		<footer class="footer">
+			<div class="container">
+				<div class="row text-muted">
+					<?php if($isLoggedIn === true):?>
+						<div class="<?php echo $class; ?>">
 							<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
 								<i class="fa fa-github"></i>
 								<?php echo __('Contribute to Statusengine');?>
 							</a>
 						</div>
-					</div>
-					<div class="col-xs-6">
-						<div class="pull-right">
-							<?php Configure::load('Statusengine'); ?>
-							Statusengine - <?php echo h(Configure::read('version'));?>
+						<?php if($hideOitc === false): ?>
+							<div class="col-xs-12 col-md-4 text-center hidden-xs hidden-sm">
+								<a href="javascript:void(0);" class="text-muted" data-toggle="modal" data-target="#oITCModal">
+									<?php echo __('Want more? Check out openITCOCKPIT');?>
+								</a>
+							</div>
+						<?php endif;?>
+						<div class="<?php echo $class; ?> hidden-xs hidden-sm">
+							<div class="pull-right">
+								<a href="http://cakephp.org" target="_blank">
+									<?php echo $this->Html->image('cake-logo-smaller2.png', ['border' => '0']); ?>
+								</a>
+							</div>
 						</div>
-					</div>
-				<?php endif;?>
+					<?php else:?>
+						<div class="col-xs-6">
+							<div class="pull-left">
+								<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
+									<i class="fa fa-github"></i>
+									<?php echo __('Contribute to Statusengine');?>
+								</a>
+							</div>
+						</div>
+						<div class="col-xs-6">
+							<div class="pull-right">
+								<?php Configure::load('Statusengine'); ?>
+								Statusengine - <?php echo h(Configure::read('version'));?>
+							</div>
+						</div>
+					<?php endif;?>
+				</div>
 			</div>
-		</div>
-	</footer>
+		</footer>
+	</div>
 </body>
 </html>

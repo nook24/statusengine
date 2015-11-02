@@ -29,6 +29,7 @@ Frontend.AppController = Frontend.Controller.extend({
 		this.$ = this._dom.find.bind(this._dom);
 		this._initComponents();
 		this._initialize(); // Intented to be overwritten.
+		this.initXpull();
 	},
 
 	/**
@@ -84,5 +85,15 @@ Frontend.AppController = Frontend.Controller.extend({
 	 */
 	isMobile: function(){
 		return this.getVar('isMobile');
+	},
+
+	initXpull: function(){
+		$('#xpull-trigger').xpull({
+			callback:function(){
+				location.reload();
+			},
+			pullThreshold: 100,
+			spinnerTimeout: 0
+		});
 	}
 });
