@@ -3,34 +3,7 @@
  by Slobodan Jovanovic
  Initially made for Spreya app spreya.com
 
- Usage:
-
- $('selector').xpull(options);
-
- Example
-
- $('#container').xpull({
-    'callback':function(){
-        console.log('Released...');
-    }
- });
-
- Options:
-
- {
-    'pullThreshold':50, // Pull threshold - amount in pixels after which the callback is activated
-    'callback':function(){}, // triggers after user pulls the content over pull threshold
-    'spinnerTimeout':2000 // timeout in miliseconds after which the loading indicator stops spinning. If set to 0 - the loading will be indefinite
- }
-
- To get the instance of Xpull:
-
- var xpull = $('selector').data("plugin_xpull");
-
-  Methods:
-
-  reset() - cancels he spinning and resets the plugin to initial state. Example: $('#container').data('plugin_xpull').reset();
-
+ !!! Patched verison to work with FireFox and fix bootstrap style issues !!!
 */
 ;
 (function($, window, document, undefined) {
@@ -65,10 +38,10 @@
             inst.arrow = elm.parent().find('.arrow-body:eq(0),.triangle-down:eq(0)');
             inst.indicatorHeight = inst.indicator.outerHeight();
             $(elm).css({
-                '-webkit-transform': "translate3d(0px, -" + inst.indicatorHeight + "px, 0px)"
+                'transform': "translate3d(0px, -" + inst.indicatorHeight + "px, 0px)"
             });
             elm.parent().css({
-                '-webkit-overflow-scrolling': 'touch'
+                'overflow-scrolling': 'touch'
             });
             var ofstop = elm.parent().offset().top;
             var fingerOffset = 0;
@@ -110,7 +83,7 @@
                     if (top <= (parseInt(inst.options.pullThreshold) + inst.options.maxPullThreshold)) {
 
                         $(elm).css({
-                            '-webkit-transform': "translate3d(0px, " + (top - inst.indicatorHeight) + "px, 0px)"
+                            'transform': "translate3d(0px, " + (top - inst.indicatorHeight) + "px, 0px)"
                         });
 
                         inst.indicator.css({
@@ -142,12 +115,12 @@
                         inst.arrow.hide();
                         inst.spinner.show();
                         elm.css({
-                            '-webkit-transform': 'translate3d(0px, 0px, 0px)',
-                            '-webkit-transition': '-webkit-transform 300ms ease'
+                            'transform': 'translate3d(0px, 0px, 0px)',
+                            'transition': '-webkit-transform 300ms ease'
                         });
                         inst.indicator.css({
                             'top': "0px",
-                            '-webkit-transition': 'top 300ms ease'
+                            'transition': 'top 300ms ease'
                         });
                         if (inst.options.spinnerTimeout) {
                             setTimeout(function() {
@@ -158,11 +131,11 @@
                     } else {
                         inst.indicator.css({
                             'top': "-" + inst.indicatorHeight + "px",
-                            '-webkit-transition': 'top 300ms ease'
+                            'transition': 'top 300ms ease'
                         });
                         elm.css({
-                            '-webkit-transform': 'translate3d(0px, -' + inst.indicatorHeight + 'px, 0px)',
-                            '-webkit-transition': '-webkit-transform 300ms ease'
+                            'transform': 'translate3d(0px, -' + inst.indicatorHeight + 'px, 0px)',
+                            'transition': '-webkit-transform 300ms ease'
                         });
                     }
                     top = 0;
@@ -174,10 +147,10 @@
                 setTimeout(function() {
                     //inst.indicator.removeClass('arrow-rotate-180');
                     elm.css({
-                        '-webkit-transition': ''
+                        'transition': ''
                     });
                     inst.indicator.css({
-                        '-webkit-transition': ''
+                        'transition': ''
                     });
                     $(document.body).unbind('touchmove.' + pluginName);
                     inst.elast = true;
@@ -189,21 +162,21 @@
             var elm = inst.elm;
             inst.indicator.css({
                 'top': "-" + inst.indicatorHeight + "px",
-                '-webkit-transition': 'top 300ms ease'
+                'transition': 'top 300ms ease'
             });
             elm.css({
-                '-webkit-transform': 'translate3d(0px, -' + inst.indicatorHeight + 'px, 0px)',
-                '-webkit-transition': '-webkit-transform 300ms ease'
+                'transform': 'translate3d(0px, -' + inst.indicatorHeight + 'px, 0px)',
+                'transition': '-webkit-transform 300ms ease'
             });
             setTimeout(function() {
                 inst.arrow.show();
                 inst.spinner.hide();
                 inst.indicator.removeClass('arrow-rotate-180');
                 elm.css({
-                    '-webkit-transition': ''
+                    '31transition': ''
                 });
                 inst.indicator.css({
-                    '-webkit-transition': ''
+                    '31transition': ''
                 });
                 $(document.body).unbind('touchmove.' + pluginName);
                 inst.elast = true;
