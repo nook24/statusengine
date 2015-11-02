@@ -1,15 +1,15 @@
 #Statusengine  - the missing event broker
 
-Statusengine is a drop in replacement for NDOutils and is is able to use the same
+Statusengine is a drop in replacement for NDOutils and it is able to use the same
 database schema. Statusengine uses [gearmand](https://github.com/gearman) as Queueing engine,
 so your MySQL database will not slow down the Nagios/Naemon core.
 
 Additionally Statusengine is worker based. If your system grows and you need to process
-more data, you can simple increase the number of worker processes.
+more data, you can simply increase the number of worker processes.
 
 To make your data visible Statusengine comes with a responsive web interface which
 allows you to submit commands and provides a nice way to process the data with external
-scripts by quering the HTTP API and append the url with **.json** and **.xml** extension.
+scripts by quering the HTTP API and append the url with **.json** or **.xml** extension.
 
 Statusengine is modular, so you can use just the parts you need!
 
@@ -80,10 +80,10 @@ or
 ```bash
 service statusengine start
 ```
-Check the documentation for an [migration guide](http://statusengine.org/getting_started.php#migration)
+Check the documentation for the [migration guide](http://statusengine.org/getting_started.php#migration)
 
 ##Tested with
-- Naemon 0.8.0 - master
+- Naemon 0.8.0 up to master
 - Nagios 4.0.8
 - mod_gearman
 - NagVis
@@ -92,32 +92,32 @@ Check the documentation for an [migration guide](http://statusengine.org/getting
 
 ##Changelog
 
-### 1.0.1
+**1.0.1**
 - First stable version of Statusengine
 
-### 1.2.0
+**1.2.0**
 - Add in memory engine
 
-### 1.3.0
+**1.3.0**
 - Multithreading for Servicestatus
 
-### 1.4.0
+**1.4.0**
 - Add native performance data processor
 - Add mod_perfdata (performance data processor for mod_german)
 
-### 1.4.1
+**1.4.1**
 - Add support for Naemon configuration process_performance_data for each service
 
-### 1.5.0
+**1.5.0**
 - Add responsive web interface
 
-### 1.5.1
+**1.5.1**
 - Fixed "MySQL has gone away" crashes of StatusengineLegacyShell
 
-### 1.5.2
+**1.5.2**
 - Improved performance of StatusengineLegacyShell (GEARMAN_WORKER_NON_BLOCKING)
 
-### 1.5.3
+**1.5.3**
 - Add Pull-To-Refresh to the web interface for mobile devices
 
 ##Licence
