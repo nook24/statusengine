@@ -176,7 +176,7 @@ class LegacySchema extends CakeSchema {
 		'command_args' => array('type' => 'string', 'null' => true, 'length' => 1000, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
 			'PRIMARY' => array('column' => array('contactnotificationmethod_id', 'start_time'), 'unique' => 1),
-			'instance_id' => array('column' => array('instance_id', 'contactnotification_id', 'start_time', 'start_time_usec'), 'unique' => 1),
+			//'instance_id' => array('column' => array('instance_id', 'contactnotification_id', 'start_time', 'start_time_usec'), 'unique' => 1),
 			'start_time' => array('column' => 'start_time', 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
@@ -204,7 +204,7 @@ class LegacySchema extends CakeSchema {
 		'config_type' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'contact_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'alias' => array('type' => 'string', 'null' => false, 'length' => 64, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
-		'email_address' => array('type' => 'string', 'null' => false, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'email_address' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'pager_address' => array('type' => 'string', 'null' => true, 'length' => 64, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'host_timeperiod_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'service_timeperiod_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
@@ -245,7 +245,7 @@ class LegacySchema extends CakeSchema {
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'contactstatus_id', 'unique' => 1),
 			'contact_object_id' => array('column' => 'contact_object_id', 'unique' => 1),
-			'instance_id' => array('column' => 'contactstatus_id', 'unique' => 0)
+			//'instance_id' => array('column' => 'contactstatus_id', 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
 	);
@@ -297,7 +297,7 @@ class LegacySchema extends CakeSchema {
 		'was_cancelled' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'downtimehistory_id', 'unique' => 1),
-			'instance_id' => array('column' => array('instance_id', 'object_id', 'entry_time', 'internal_downtime_id'), 'unique' => 1),
+			//'instance_id' => array('column' => array('instance_id', 'object_id', 'entry_time', 'internal_downtime_id'), 'unique' => 1),
 			'scheduled_start_time' => array('column' => 'scheduled_start_time', 'unique' => 0),
 			'scheduled_end_time' => array('column' => 'scheduled_end_time', 'unique' => 0),
 			'object_id' => array('column' => 'object_id', 'unique' => 0)
@@ -782,7 +782,7 @@ class LegacySchema extends CakeSchema {
 		'actual_start_time_usec' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'scheduleddowntime_id', 'unique' => 1),
-			'instance_id' => array('column' => array('instance_id', 'object_id', 'entry_time', 'internal_downtime_id'), 'unique' => 1)
+			//'instance_id' => array('column' => array('instance_id', 'object_id', 'entry_time', 'internal_downtime_id'), 'unique' => 1)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
 	);
