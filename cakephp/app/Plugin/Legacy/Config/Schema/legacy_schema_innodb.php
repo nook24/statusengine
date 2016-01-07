@@ -686,13 +686,12 @@ class LegacySchema extends CakeSchema {
 		'end_time' => array('type' => 'datetime', 'null' => false, 'default' => '0000-00-00 00:00:00'),
 		'end_time_usec' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'state' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
-		'output' => array('type' => 'string', 'null' => false, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
-		'long_output' => array('type' => 'text', 'null' => false, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'output' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'long_output' => array('type' => 'text', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'escalated' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'contacts_notified' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => array('notification_id', 'start_time'), 'unique' => 1),
-			'top10' => array('column' => array('object_id', 'start_time', 'contacts_notified'), 'unique' => 0),
 			'start_time' => array('column' => 'start_time', 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
@@ -1076,8 +1075,8 @@ class LegacySchema extends CakeSchema {
 		'max_check_attempts' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'last_state' => array('type' => 'integer', 'null' => false, 'default' => '-1', 'length' => 6, 'unsigned' => false),
 		'last_hard_state' => array('type' => 'integer', 'null' => false, 'default' => '-1', 'length' => 6, 'unsigned' => false),
-		'output' => array('type' => 'string', 'null' => false, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
-		'long_output' => array('type' => 'text', 'null' => false, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'output' => array('type' => 'string', 'null' => true, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
+		'long_output' => array('type' => 'text', 'null' => true, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
 			'PRIMARY' => array('column' => array('statehistory_id', 'state_time'), 'unique' => 1),
 			'state_time' => array('column' => array('state_time', 'state_time_usec'), 'unique' => 0)
