@@ -171,6 +171,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->config_type = Configure::read('config_type');
 
 		$this->Logfile->init(Configure::read('logfile'));
+		$this->parentPid = getmypid();
 		$this->Logfile->welcome();
 		$this->parser = $this->getOptionParser();
 		$this->out('Starting Statusengine version: '.Configure::read('version').'...');
@@ -2756,6 +2757,11 @@ class StatusengineLegacyShell extends AppShell{
 
 			}
 			pcntl_signal_dispatch();
+                        //Check if the parent process still exists
+                        if($this->parentPid != posix_getppid()){
+                                $this->Logfile->clog('My parent process is gone I guess I am orphaned and will exit now!');
+                                exit(3);
+                        }
 			usleep(250000);
 		}
 	}
@@ -2777,6 +2783,12 @@ class StatusengineLegacyShell extends AppShell{
 			if(!@$this->worker->wait()){
 				if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
 					sleep(1);
+				}
+				
+				//Check if the parent process still exists
+				if($this->parentPid != posix_getppid()){
+					$this->Logfile->clog('My parent process is gone I guess I am orphaned and will exit now!');
+					exit(3);
 				}
 			}
 		}
