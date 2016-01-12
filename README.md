@@ -120,6 +120,9 @@ Check the documentation for the [migration guide](http://statusengine.org/gettin
 **1.5.3**
 - Add Pull-To-Refresh to the web interface for mobile devices
 
+**1.5.4**
+- Resolve issue with orphaned child processes [Issue 14](https://github.com/nook24/statusengine/issues/14)
+
 ##Licence
 
 Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>

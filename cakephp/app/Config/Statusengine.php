@@ -7,7 +7,7 @@
 
 $config = [
 	//Version of Statusengine
-	'version' => '1.5.3',
+	'version' => '1.5.4',
 
 	//Logfile, where statusengine will log some information
 	'logfile' => '/var/log/statusengine.log',
