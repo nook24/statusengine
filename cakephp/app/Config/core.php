@@ -384,3 +384,18 @@ Cache::config('_cake_model_', array(
 	'serialize' => ($engine === 'File'),
 	'duration' => $duration
 ));
+
+//Configure::write('Error.consoleHandler', 'AppError::handleError');
+
+Configure::write('Error', array(
+	'consoleHandler' => 'AppError::handleError',
+	'level' => E_ALL & ~E_DEPRECATED,
+	'trace' => true
+));
+
+Configure::write('Exception', array(
+	'consoleHandler' => 'AppError::handleException',
+	'renderer' => 'ExceptionRenderer',
+	'log' => true
+));
+
