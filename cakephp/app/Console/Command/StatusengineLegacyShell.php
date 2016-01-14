@@ -120,6 +120,7 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function __construct(){
 		parent::__construct();
+		Configure::load('Statusengine');
 		$this->childPids = [];
 		$this->_constants();
 		$this->clearQ = false;
@@ -157,6 +158,21 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	/**
+	 * Print the welcome massage of Statusengine
+	 * Overwrite: parent::_welcome()
+	 *
+	 * @return void
+	 */
+	public function _welcome(){
+		$this->out();
+		$this->out('<info>Welcome Statusengine v'.Configure::read('version').'</info>');
+		$this->hr();
+		$this->out('Statusengine runs in legacy mode right now...');
+		$this->out('Visit https://statusengine.org/documentation.php#What-is-legacy-mode for more information');
+		$this->hr();
+	}
+
+	/**
 	 * Gets called if a user run the shell over Console/cake statusengine_legacy
 	 *
 	 * @since 1.0.0
@@ -165,8 +181,6 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function main(){
-		Configure::load('Statusengine');
-
 		$this->instance_id = Configure::read('instance_id');
 		$this->config_type = Configure::read('config_type');
 
@@ -174,8 +188,6 @@ class StatusengineLegacyShell extends AppShell{
 		$this->parentPid = getmypid();
 		$this->Logfile->welcome();
 		$this->parser = $this->getOptionParser();
-		$this->out('Starting Statusengine version: '.Configure::read('version').'...');
-		$this->out('THIS IS LEGACY MODE!');
 		$this->Logfile->stlog('THIS IS LEGACY MODE!');
 		$this->servicestatus_freshness = Configure::read('servicestatus_freshness');
 

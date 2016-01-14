@@ -387,6 +387,12 @@ Cache::config('_cake_model_', array(
 
 //Configure::write('Error.consoleHandler', 'AppError::handleError');
 
+App::uses('CakeLog', 'Log');
+CakeLog::config('default', array(
+	'engine' => 'Syslog',
+	'prefix' => 'statusengine'
+));
+
 Configure::write('Error', array(
 	'consoleHandler' => 'AppError::handleError',
 	'level' => E_ALL & ~E_DEPRECATED,
