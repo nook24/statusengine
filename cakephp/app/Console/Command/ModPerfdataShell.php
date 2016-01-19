@@ -52,7 +52,7 @@
 
 class ModPerfdataShell extends AppShell{
 	
-	public $tasks = ['Logfile', 'Perfdata'];
+	public $tasks = ['Perfdata'];
 	
 	//Some class variables
 	protected $worker = null;
@@ -73,9 +73,6 @@ class ModPerfdataShell extends AppShell{
 		Configure::load('Perfdata');
 		$this->Config = Configure::read('perfdata');
 		
-		$this->Logfile->init($this->Config['logfile']);
-		$this->Logfile->welcome();
-		
 		//Load CakePHP's File class
 		App::uses('File', 'Utility');
 		
@@ -91,7 +88,7 @@ class ModPerfdataShell extends AppShell{
 		//debug($this->Perfdata->parsePerfdataString('active=650;jobs=650;worker=3436;queues=29'));die();
 		//debug($this->Perfdata->parseCheckCommand('84084403-5c21-4273-835b-d8ac770b4a9f!7.0,6.0,5.0!10.0,7.0,6.0'));die();
 		
-		$this->Perfdata->init($this->Config, $this->Logfile);
+		$this->Perfdata->init($this->Config);
 		
 		$this->forkWorkers();
 		
@@ -103,10 +100,10 @@ class ModPerfdataShell extends AppShell{
 		declare(ticks = 1);
 		if($this->Config['worker'] > 1){
 			for($i = 1; $i < $this->Config['worker']; $i++){
-				$this->Logfile->stlog('Forking a new worker child');
+				CakeLog::info('Forking a new worker child');
 				$pid = pcntl_fork();
 				if(!$pid){
-					$this->Logfile->clog('Hey, I\'m a new child');
+					CakeLog::info('Hey, I\'m a new child');
 					pcntl_signal(SIGTERM, [$this, 'childSignalHandler']);
 					//Run while(true) to prevent a forkcalypse
 					$this->createWorker();
@@ -134,9 +131,9 @@ class ModPerfdataShell extends AppShell{
 		switch($signo){
 			case SIGINT:
 			case SIGTERM:
-				$this->Logfile->stlog('Will kill my childs :-(');
+				CakeLog::info('Will kill my childs :-(');
 				$this->sendSignal(SIGTERM);
-				$this->Logfile->stlog('Bye');
+				CakeLog::info('Bye');
 				exit(0);
 				break;
 		}
@@ -153,29 +150,29 @@ class ModPerfdataShell extends AppShell{
 	public function sendSignal($signal){
 		if($signal !== SIGTERM){
 			foreach($this->childPids as $cpid){
-				$this->Logfile->stlog('Send signal to child pid: '.$cpid);
+				CakeLog::info('Send signal to child pid: '.$cpid);
 				posix_kill($cpid, $signal);
 			}
 		}
 
 		if($signal == SIGTERM){
 			foreach($this->childPids as $cpid){
-				$this->Logfile->stlog('Will kill pid: '.$cpid);
+				CakeLog::info('Will kill pid: '.$cpid);
 				posix_kill($cpid, SIGTERM);
 			}
 			foreach($this->childPids as $cpid){
 				pcntl_waitpid($cpid, $status);
-				$this->Logfile->stlog('Child ['.$cpid.'] killed successfully');
+				CakeLog::info('Child ['.$cpid.'] killed successfully');
 			}
 		}
 	}
 	
 	public function childSignalHandler($signo){
-		$this->Logfile->clog('Recived signal: '.$signo);
+		CakeLog::info('Recived signal: '.$signo);
 		switch($signo){
 			case SIGTERM:
-				$this->Logfile->clog('Will kill myself :-(');
-				$this->Logfile->clog('Unregister all my queues');
+				CakeLog::info('Will kill myself :-(');
+				CakeLog::info('Unregister all my queues');
 				exit(0);
 				break;
 		}

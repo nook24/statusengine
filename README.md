@@ -122,6 +122,7 @@ Check the documentation for the [migration guide](http://statusengine.org/gettin
 
 **1.5.4**
 - Resolve issue with orphaned child processes [Issue 14](https://github.com/nook24/statusengine/issues/14)
+- Remove /var/log/statusengine.log [LogfileTask.php] and use syslog instead [Issue 15](https://github.com/nook24/statusengine/issues/15)
 
 ##Licence
 

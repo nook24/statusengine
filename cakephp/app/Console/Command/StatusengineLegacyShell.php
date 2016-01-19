@@ -40,7 +40,7 @@
 **********************************************************************************/
 
 class StatusengineLegacyShell extends AppShell{
-	public $tasks = ['Logfile', 'Memcached', 'Perfdata'];
+	public $tasks = ['Memcached', 'Perfdata'];
 
 	//Load models out of Plugin/Legacy/Model
 	public $uses = [
@@ -184,11 +184,9 @@ class StatusengineLegacyShell extends AppShell{
 		$this->instance_id = Configure::read('instance_id');
 		$this->config_type = Configure::read('config_type');
 
-		$this->Logfile->init(Configure::read('logfile'));
 		$this->parentPid = getmypid();
-		$this->Logfile->welcome();
 		$this->parser = $this->getOptionParser();
-		$this->Logfile->stlog('THIS IS LEGACY MODE!');
+		CakeLog::info('Starting Statusengine in legacy mode.');
 		$this->servicestatus_freshness = Configure::read('servicestatus_freshness');
 
 		$this->processPerfdata = Configure::read('process_perfdata');
@@ -197,7 +195,7 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->processPerfdata === true){
 			Configure::load('Perfdata');
 			$this->PerfdataConfig = Configure::read('perfdata');
-			$this->Perfdata->init($this->PerfdataConfig, $this->Logfile);
+			$this->Perfdata->init($this->PerfdataConfig);
 		}
 
 
@@ -234,7 +232,7 @@ class StatusengineLegacyShell extends AppShell{
 			]);
 
 			$this->gearmanConnect();
-			$this->Logfile->stlog('Lets rock!');
+			CakeLog::info('Lets rock!');
 		}
 
 	}
@@ -278,7 +276,7 @@ class StatusengineLegacyShell extends AppShell{
 
 				$this->dumpObjects = true;
 				$this->fakeLastInsertId = 1;
-				$this->Logfile->stlog('Start dumping objects');
+				CakeLog::info('Start dumping objects');
 				$this->disableAll();
 				//Legacy behavior :(
 				$truncate = [
@@ -331,16 +329,16 @@ class StatusengineLegacyShell extends AppShell{
 				break;
 
 			case FINISH_OBJECT_DUMP:
-				$this->Logfile->stlog('Finished dumping objects');
+				CakeLog::info('Finished dumping objects');
 				$this->buildHoststatusCache();
 				$this->buildServicestatusCache();
 				$this->saveParentHosts();
 				$this->saveParentServices();
 				//We are done with object dumping and can write parent hosts and services to DB
 
-				$this->Logfile->stlog('Start dumping core config '.Configure::read('coreconfig').' to database');
+				CakeLog::info('Start dumping core config '.Configure::read('coreconfig').' to database');
 				$this->dumpCoreConfig();
-				$this->Logfile->stlog('Core config dump finished');
+				CakeLog::info('Core config dump finished');
 
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR1);
@@ -1479,7 +1477,7 @@ class StatusengineLegacyShell extends AppShell{
 		$payload = json_decode($job->workload());
 		$service_object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->servicecheck->host_name, $payload->servicecheck->service_description);
 		if($service_object_id === null){
-			//$this->Logfile->clog(var_export($this->objectCache ,true));
+			//CakeLog::debug(var_export($this->objectCache ,true));
 			return;
 		}
 
@@ -2424,9 +2422,9 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	public function objectIdFromCacheDebug($objecttype_id, $name1, $name2 = null, $default = null){
-		$this->Logfile->clog('name1: '.$name1);
-		$this->Logfile->clog('name1: '.$name2);
-		$this->Logfile->clog('isset: '.(int)isset($this->objectCache[$objecttype_id][$name1.$name2]['object_id']));
+		CakeLog::debug('name1: '.$name1);
+		CakeLog::debug('name1: '.$name2);
+		CakeLog::debug('isset: '.(int)isset($this->objectCache[$objecttype_id][$name1.$name2]['object_id']));
 		if(isset($this->objectCache[$objecttype_id][$name1.$name2]['object_id'])){
 			return $this->objectCache[$objecttype_id][$name1.$name2]['object_id'];
 		}
@@ -2566,7 +2564,7 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	public function saveParentServices(){
-		$this->Logfile->clog(var_export($this->createParentServices, true));
+		//CakeLog::debug(var_export($this->createParentServices, true));
 		foreach($this->createParentServices as $service_id => $servicesArray){
 			foreach($servicesArray as $serviceArray){
 				$this->Parentservice->create();
@@ -2658,11 +2656,11 @@ class StatusengineLegacyShell extends AppShell{
 		$workers = Configure::read('workers');
 		foreach($workers as $worker){
 			declare(ticks = 1);
-			$this->Logfile->stlog('Forking a new worker child');
+			CakeLog::info('Forking a new worker child');
 			$pid = pcntl_fork();
 			if(!$pid){
 				//We are the child
-				$this->Logfile->clog('Hey, my queues are: '.implode(',', array_keys($worker['queues'])));
+				CakeLog::info('Hey, my queues are: '.implode(',', array_keys($worker['queues'])));
 				$this->bindQueues = true;
 				$this->queues = $worker['queues'];
 				$this->work = false;
@@ -2693,7 +2691,7 @@ class StatusengineLegacyShell extends AppShell{
 		]);
 
 		$this->gearmanConnect();
-		$this->Logfile->stlog('Lets rock!');
+		CakeLog::info('Lets rock!');
 		$this->sendSignal(SIGUSR1);
 		$this->worker->setTimeout(1000);
 
@@ -2725,7 +2723,7 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function waitForInstructions(){
-		$this->Logfile->clog('Ok, i will wait for instructions');
+		CakeLog::info('Ok, i will wait for instructions');
 		if($this->bindQueues === true){
 			$this->worker = new GearmanWorker();
 
@@ -2737,41 +2735,41 @@ class StatusengineLegacyShell extends AppShell{
 
 			$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 			foreach($this->queues as $queueName => $functionName){
-				$this->Logfile->clog('Queue "'.$queueName.'" will be handled by function "'.$functionName.'"');
+				CakeLog::info('Queue "'.$queueName.'" will be handled by function "'.$functionName.'"');
 				$this->worker->addFunction($queueName, [$this, $functionName]);
 			}
 			$this->bindQueues = false;
 		}
 		while(true){
 			if($this->work === true){
-				$this->Logfile->clog('Clear my objects cache');
+				CakeLog::info('Clear my objects cache');
 				$this->clearObjectsCache();
 
-				$this->Logfile->clog('Build up new objects cache');
+				CakeLog::info('Build up new objects cache');
 				$this->buildObjectsCache();
-				//$this->Logfile->clog(var_export($this->objectCache, true));
+				//CakeLog::debug(var_export($this->objectCache, true));
 
-				$this->Logfile->clog('Build up new hoststatus cache');
+				CakeLog::info('Build up new hoststatus cache');
 				$this->buildHoststatusCache();
 
-				$this->Logfile->clog('Build up new servicestatus cache');
+				CakeLog::info('Build up new servicestatus cache');
 				$this->buildServicestatusCache();
 
 				if($this->processPerfdata === true){
 					if(isset($this->queues['statusngin_servicechecks'])){
-						$this->Logfile->clog('Build up new process perfdata cache');
+						CakeLog::info('Build up new process perfdata cache');
 						$this->buildProcessPerfdataCache();
 					}
 				}
 
-				$this->Logfile->clog('I will continue my work');
+				CakeLog::info('I will continue my work');
 				$this->childWork();
 
 			}
 			pcntl_signal_dispatch();
                         //Check if the parent process still exists
                         if($this->parentPid != posix_getppid()){
-                                $this->Logfile->clog('My parent process is gone I guess I am orphaned and will exit now!');
+                                CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
                                 exit(3);
                         }
 			usleep(250000);
@@ -2799,7 +2797,7 @@ class StatusengineLegacyShell extends AppShell{
 				
 				//Check if the parent process still exists
 				if($this->parentPid != posix_getppid()){
-					$this->Logfile->clog('My parent process is gone I guess I am orphaned and will exit now!');
+					CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
 					exit(3);
 				}
 			}
@@ -2807,11 +2805,11 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	public function childSignalHandler($signo){
-		$this->Logfile->clog('Recived signal: '.$signo);
+		CakeLog::info('Recived signal: '.$signo);
 		switch($signo){
 			case SIGTERM:
-				$this->Logfile->clog('Will kill myself :-(');
-				$this->Logfile->clog('Unregister all my queues');
+				CakeLog::info('Will kill myself :-(');
+				CakeLog::info('Unregister all my queues');
 				exit(0);
 				break;
 
@@ -2840,9 +2838,9 @@ class StatusengineLegacyShell extends AppShell{
 		switch($signo){
 			case SIGINT:
 			case SIGTERM:
-				$this->Logfile->stlog('Will kill my childs :-(');
+				CakeLog::info('Will kill my childs :-(');
 				$this->sendSignal(SIGTERM);
-				$this->Logfile->stlog('Bye');
+				CakeLog::info('Bye');
 				exit(0);
 				break;
 		}
@@ -2862,19 +2860,19 @@ class StatusengineLegacyShell extends AppShell{
 		$gmanClient->addServer(Configure::read('server'), Configure::read('port'));
 		if($signal !== SIGTERM){
 			foreach($this->childPids as $cpid){
-				$this->Logfile->stlog('Send signal to child pid: '.$cpid);
+				CakeLog::info('Send signal to child pid: '.$cpid);
 				posix_kill($cpid, $signal);
 			}
 		}
 
 		if($signal == SIGTERM){
 			foreach($this->childPids as $cpid){
-				$this->Logfile->stlog('Will kill pid: '.$cpid);
+				CakeLog::info('Will kill pid: '.$cpid);
 				posix_kill($cpid, SIGTERM);
 			}
 			foreach($this->childPids as $cpid){
 				pcntl_waitpid($cpid, $status);
-				$this->Logfile->stlog('Child ['.$cpid.'] killed successfully');
+				CakeLog::info('Child ['.$cpid.'] killed successfully');
 			}
 		}
 	}
@@ -2930,7 +2928,7 @@ class StatusengineLegacyShell extends AppShell{
 				}
 			}
 		}else{
-			$this->Logfile->stlog('ERROR: Core config '.$configFile.' not found!!!');
+			CakeLog::info('ERROR: Core config '.$configFile.' not found!!!');
 		}
 	}
 }

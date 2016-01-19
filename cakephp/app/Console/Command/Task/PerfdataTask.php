@@ -40,7 +40,6 @@
 class PerfdataTask extends AppShell{
 	
 	public $Config = [];
-	public $Logfile = null;
 	
 	public $servicestate = [
 		0 => 'OK',
@@ -49,9 +48,8 @@ class PerfdataTask extends AppShell{
 		3 => 'UNKNOWN'
 	];
 	
-	public function init($Config, $Logfile){
+	public function init($Config){
 		App::uses('File', 'Utility');
-		$this->Logfile = $Logfile;
 		$this->Config = $Config;
 	}
 	
@@ -148,7 +146,7 @@ class PerfdataTask extends AppShell{
 					$this->out('Error on updating RRD');
 					$return = false;
 					$error = rrd_error();
-					$this->Logfile->stlog($error);
+					CakeLog::error($error);
 					//debug($error);
 				}
 			}else{
@@ -156,7 +154,7 @@ class PerfdataTask extends AppShell{
 					$this->out('Error on updating RRD');
 					$return = false;
 					$error = rrd_error();
-					$this->Logfile->stlog($error);
+					CakeLog::error($error);
 					//debug($error);
 				}
 			}
@@ -185,7 +183,7 @@ class PerfdataTask extends AppShell{
 				$this->out('Error on createing RRD');
 				$return = false;
 				$error = rrd_error();
-				$this->Logfile->stlog($error);
+				CakeLog::error($error);
 				//debug($error);
 			}
 		}
