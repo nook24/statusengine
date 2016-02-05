@@ -40,7 +40,11 @@
 **********************************************************************************/
 
 class StatusengineLegacyShell extends AppShell{
-	public $tasks = ['Memcached', 'Perfdata'];
+	public $tasks = [
+		'Memcached',
+		'Perfdata',
+		'RrdtoolBackend',
+	];
 
 	//Load models out of Plugin/Legacy/Model
 	public $uses = [
@@ -195,7 +199,7 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->processPerfdata === true){
 			Configure::load('Perfdata');
 			$this->PerfdataConfig = Configure::read('perfdata');
-			$this->Perfdata->init($this->PerfdataConfig);
+			$this->RrdtoolBackend->init($this->PerfdataConfig);
 		}
 
 
@@ -1529,9 +1533,9 @@ class StatusengineLegacyShell extends AppShell{
 				];
 
 				$parsedPerfdata = $this->Perfdata->parsePerfdataString($payload->servicecheck->perf_data);
-				$rrdReturn = $this->Perfdata->writeToRrd($parsedPerfdataString, $parsedPerfdata);
+				$rrdReturn = $this->RrdtoolBackend->writeToRrd($parsedPerfdataString, $parsedPerfdata);
 				if($this->PerfdataConfig['XML']['write_xml_files'] === true){
-					$this->Perfdata->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
+					$this->RrdtoolBackend->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
 				}
 			}
 		}
@@ -2794,7 +2798,7 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
 					sleep(1);
 				}
-				
+
 				//Check if the parent process still exists
 				if($this->parentPid != posix_getppid()){
 					CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
