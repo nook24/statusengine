@@ -113,36 +113,6 @@ class StatusengineLegacyShell extends AppShell{
 	];
 
 	/**
-	 * StatusengineLegacyShell's construct
-	 *
-	 * Will set some needed class variables and constants.
-	 *
-	 * @since 1.0.0
-	 * @author Daniel Ziegler <daniel@statusengine.org>
-	 *
-	 * @return void
-	 */
-	public function __construct(){
-		parent::__construct();
-		Configure::load('Statusengine');
-		$this->childPids = [];
-		$this->_constants();
-		$this->clearQ = false;
-
-		//the Gearman worker
-		$this->worker = null;
-		$this->createParentHosts = [];
-		$this->createParentServices = [];
-
-		//We only start dumping objects to the db if this is true.
-		//If you kill the script while it dumps data, you may be have problems on restart statusengine.
-		//If you killed it on dump, restart statusengine and restart nagios
-		$this->dumpObjects = true;
-
-		$this->fakeLastInsertId = 1;
-	}
-
-	/**
 	 * CakePHP's option parser
 	 *
 	 * Parse the parameters, if the user enter some (example: -w or --help)
@@ -185,6 +155,23 @@ class StatusengineLegacyShell extends AppShell{
 	 * @return void
 	 */
 	public function main(){
+		Configure::load('Statusengine');
+		$this->childPids = [];
+		$this->_constants();
+		$this->clearQ = false;
+
+		//the Gearman worker
+		$this->worker = null;
+		$this->createParentHosts = [];
+		$this->createParentServices = [];
+
+		//We only start dumping objects to the db if this is true.
+		//If you kill the script while it dumps data, you may be have problems on restart statusengine.
+		//If you killed it on dump, restart statusengine and restart nagios
+		$this->dumpObjects = true;
+
+		$this->fakeLastInsertId = 1;
+
 		$this->instance_id = Configure::read('instance_id');
 		$this->config_type = Configure::read('config_type');
 

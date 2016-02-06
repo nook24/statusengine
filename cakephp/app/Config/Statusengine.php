@@ -7,7 +7,7 @@
 
 $config = [
 	//Version of Statusengine
-	'version' => '1.5.4',
+	'version' => '1.6.0',
 
 	//Logfile moved to SysLog!
 

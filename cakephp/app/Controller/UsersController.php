@@ -24,7 +24,23 @@ class UsersController extends AppController{
 		$this->set('_serialize', ['users']);
 	}
 
+	public function beforeFilter(){
+		parent::beforeFilter();
+		$this->demoMode = false;
+		Configure::load('Interface');
+		if(Configure::read('Interface.demo_mode')){
+			$this->demoMode = true;
+		}
+		$this->set('demoMode', $this->demoMode);
+	}
+
 	public function add(){
+		if($this->demoMode){
+			$this->setFlash('Sorry - disabled in demo mode', false);
+			$this->redirect(['action' => 'index']);
+			return;
+		}
+
 		if($this->request->is('post') || $this->request->is('put')){
 			$this->User->create();
 			if($this->User->save($this->request->data)){
@@ -36,6 +52,12 @@ class UsersController extends AppController{
 	}
 
 	public function edit($id = null){
+		if($this->demoMode){
+			$this->setFlash('Sorry - disabled in demo mode', false);
+			$this->redirect(['action' => 'index']);
+			return;
+		}
+
 		if(!$this->User->exists($id)){
 			throw new NotFoundException(__('User not found'));
 		}
@@ -44,6 +66,12 @@ class UsersController extends AppController{
 	}
 
 	public function delete($id){
+		if($this->demoMode){
+			$this->setFlash('Sorry - disabled in demo mode', false);
+			$this->redirect(['action' => 'index']);
+			return;
+		}
+
 		if(!$this->request->is('post')){
 			throw new MethodNotAllowedException();
 		}
@@ -68,6 +96,7 @@ class UsersController extends AppController{
 		if($this->Auth->loggedIn()){
 			$this->redirect(['controller' => 'Home', 'action' => 'index']);
 		}
+
 		if($this->request->is('post')){
 			if($this->Auth->login()){
 				return $this->redirect($this->Auth->redirectUrl());

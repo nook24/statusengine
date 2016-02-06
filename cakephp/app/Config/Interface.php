@@ -25,6 +25,9 @@ $config = [
 		'sql_dump' => false,
 
 		//Hide the openITCOCKPIT notice in footer
-		'hide_oitc' => false,
+		'hide_oitc' => true,
+
+		//Load interface in demo mode
+		'demo_mode' => false,
 	]
 ];

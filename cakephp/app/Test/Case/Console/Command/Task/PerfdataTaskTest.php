@@ -2,6 +2,7 @@
 class PerfdataTaskTest extends CakeTestCase {
 
 	// run test in bash
+	// cd /opt/statusengine/cakephp/app/Console/
 	// while true; do clear;./cake test app Console/Command/Task/PerfdataTask; sleep 5; done
 
 	public function setUp(){
