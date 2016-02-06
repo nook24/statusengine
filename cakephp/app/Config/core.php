@@ -359,7 +359,10 @@ if (Configure::read('debug') > 0) {
 }
 
 // Prefix each application on the same server with a different string, to avoid Memcache and APC conflicts.
-$prefix = 'myapp_';
+$prefix = 'statusengine_web_';
+if(php_sapi_name() == 'cli'){
+	$prefix = 'statusengine_cli_';
+}
 
 /**
  * Configure the cache used for general framework caching. Path information,
@@ -383,4 +386,24 @@ Cache::config('_cake_model_', array(
 	'path' => CACHE . 'models' . DS,
 	'serialize' => ($engine === 'File'),
 	'duration' => $duration
+));
+
+//Configure::write('Error.consoleHandler', 'AppError::handleError');
+
+App::uses('CakeLog', 'Log');
+CakeLog::config('default', array(
+	'engine' => 'Syslog',
+	'prefix' => 'statusengine'
+));
+
+Configure::write('Error', array(
+	'consoleHandler' => 'AppError::handleError',
+	'level' => E_ALL & ~E_DEPRECATED,
+	'trace' => true
+));
+
+Configure::write('Exception', array(
+	'consoleHandler' => 'AppError::handleException',
+	'renderer' => 'ExceptionRenderer',
+	'log' => true
 ));

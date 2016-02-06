@@ -8,8 +8,16 @@
 		<?php echo $this->Session->flash('auth'); ?>
 	</div>
 	<hr />
-	
+
 	<div class="row">
+		<?php if($demoMode === true): ?>
+			<div class="col col-xs-12 text-center">
+				<h4 class="text-info"><i class="fa fa-info"></i> Just click Sign in without touching the credentials</h4>
+				<hr />
+			</div>
+		<?php endif; ?>
+
+
 		<?php
 		echo $this->Form->create('User', [
 			'inputDefaults' => [
@@ -22,9 +30,20 @@
 			],
 			'class' => 'form-horizontal'
 		]);
-		
-		echo $this->Form->input('username');
-		echo $this->Form->input('password');
+
+		if($demoMode === true):
+			echo $this->Form->input('username', [
+				'value' => 'statusengine',
+				'readonly' => true
+			]);
+			echo $this->Form->input('password', [
+				'value' => 'statusengine',
+				'readonly' => true
+			]);
+		else:
+			echo $this->Form->input('username');
+			echo $this->Form->input('password');
+		endif;
 		echo $this->Form->submit(__('Sign in'), [
 			'div' => 'form-group col-md-8',
 			'class' => 'btn btn-success',

@@ -120,6 +120,14 @@ Check the documentation for the [migration guide](http://statusengine.org/gettin
 **1.5.3**
 - Add Pull-To-Refresh to the web interface for mobile devices
 
+**1.6.0**
+- Resolve issue with orphaned child processes [Issue 14](https://github.com/nook24/statusengine/issues/14)
+- Remove /var/log/statusengine.log [LogfileTask.php] and use syslog instead [Issue 15](https://github.com/nook24/statusengine/issues/15)
+- Refactored performance data parser
+- Add test for performance data parser
+- Set own cache prefix for the CLI app to avoid permission issues
+- Add demo mode for Statusengine Web Interface
+
 ##Licence
 
 Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>

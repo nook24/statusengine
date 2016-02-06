@@ -1,19 +1,19 @@
 <?php
 /**
 * Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
-* 
+*
 * This file is part of Statusengine.
-* 
+*
 * Statusengine is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 2 of the License, or
 * (at your option) any later version.
-* 
+*
 * Statusengine is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -27,7 +27,7 @@ class HomeController extends AppController{
 		'Legacy.Configvariable'
 	];
 	public $helpers = ['Status'];
-	
+
 	public function index(){
 		if(!$this->Configvariable->isRightNaemonUsergroup()){
 			$this->setFlash(
@@ -59,7 +59,7 @@ class HomeController extends AppController{
 		foreach($hoststatus as $state){
 			$hostStatusCount[$state['Hoststatus']['current_state']] = $state[0]['count'];
 		}
-		
+
 		$serviceStatusCount = [
 			0 => 0,
 			1 => 0,
@@ -86,7 +86,7 @@ class HomeController extends AppController{
 		foreach($servicestatus as $state){
 			$serviceStatusCount[$state['Servicestatus']['current_state']] = $state[0]['count'];
 		}
-		
+
 		$problems = $this->Servicestatus->find('count', [
 			'conditions' => [
 				'Servicestatus.current_state > ' => 0,
@@ -94,7 +94,7 @@ class HomeController extends AppController{
 				'Servicestatus.scheduled_downtime_depth' => 0
 			]
 		]);
-		
+
 		$this->set(compact([
 			'hostStatusCount',
 			'serviceStatusCount',

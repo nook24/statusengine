@@ -111,6 +111,8 @@ CakeLog::config('error', array(
 	'file' => 'error',
 ));
 
+App::uses('AppError', 'Lib');
+
 CakePlugin::load('Legacy', array('bootstrap' => false, 'routes' => false));
 CakePlugin::loadAll();
 CakePlugin::load('BoostCake');

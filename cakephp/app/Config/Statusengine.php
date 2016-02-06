@@ -7,10 +7,9 @@
 
 $config = [
 	//Version of Statusengine
-	'version' => '1.5.3',
+	'version' => '1.6.0',
 
-	//Logfile, where statusengine will log some information
-	'logfile' => '/var/log/statusengine.log',
+	//Logfile moved to SysLog!
 
 	//max age of service status records in gearman queue
 	'servicestatus_freshness' => 300,
