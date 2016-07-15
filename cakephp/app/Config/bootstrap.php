@@ -117,3 +117,6 @@ CakePlugin::load('Legacy', array('bootstrap' => false, 'routes' => false));
 CakePlugin::loadAll();
 CakePlugin::load('BoostCake');
 
+//Define versions
+define('STATUSENIGNE_VERSION', '2.0.0');
+define('PERFDATA_VERSION', '1.2.0');

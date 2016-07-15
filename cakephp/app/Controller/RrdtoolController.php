@@ -86,16 +86,16 @@ class RrdtoolController extends AppController{
 		$error = rrd_error();
 
 		if($res && $error === false){
-			header('Content-Type: image/png');
-		}else{
-			//Debuging stuff
-			debug($error);
-			debug($res);
+			$this->response->file($fileName);
+			// Return response object to prevent controller from trying to render a view
+			return $this->response;
 		}
 
-		$image = imagecreatefrompng($fileName);
-		imagepng($image);
-		imagedestroy($image);
-		unlink($fileName);
+		//We got an error from Rrdtool
+		//Output error as image
+		$errorImage = $this->Rrdtool->createErrorImage($error);
+		$this->response->type('png');
+		$this->response->body(imagepng($errorImage));
+		return $this->response;
 	}
 }

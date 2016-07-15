@@ -43,7 +43,9 @@ class StatusengineLegacyShell extends AppShell{
 	public $tasks = [
 		'Memcached',
 		'Perfdata',
+		'PerfdataBackend',
 		'RrdtoolBackend',
+		'GraphiteBackend'
 	];
 
 	//Load models out of Plugin/Legacy/Model
@@ -139,7 +141,7 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function _welcome(){
 		$this->out();
-		$this->out('<info>Welcome Statusengine v'.Configure::read('version').'</info>');
+		$this->out('<info>Welcome Statusengine v'.STATUSENIGNE_VERSION.'</info>');
 		$this->hr();
 		$this->out('Statusengine runs in legacy mode right now...');
 		$this->out('Visit https://statusengine.org/documentation.php#What-is-legacy-mode for more information');
@@ -184,9 +186,20 @@ class StatusengineLegacyShell extends AppShell{
 
 		$this->processPerfdataCache = [];
 		if($this->processPerfdata === true){
-			Configure::load('Perfdata');
-			$this->PerfdataConfig = Configure::read('perfdata');
-			$this->RrdtoolBackend->init($this->PerfdataConfig);
+			$this->PerfdataBackend->init(Configure::read());
+
+			if($this->PerfdataBackend->saveToRrd()){
+				Configure::load('Perfdata');
+				$this->PerfdataConfig = Configure::read('perfdata');
+				$this->RrdtoolBackend->init($this->PerfdataConfig);
+			}
+
+			if($this->PerfdataBackend->saveToGraphite()){
+				Configure::load('Graphite');
+				$graphiteConfig = Configure::read('graphite');
+				$this->GraphiteBackend->init($graphiteConfig);
+			}
+
 		}
 
 
@@ -218,7 +231,7 @@ class StatusengineLegacyShell extends AppShell{
 			$this->Dbversion->save([
 				'Dbversion' => [
 					'name' => 'Statusengine',
-					'version' => Configure::read('version')
+					'version' => STATUSENIGNE_VERSION
 				]
 			]);
 
@@ -267,6 +280,9 @@ class StatusengineLegacyShell extends AppShell{
 
 				$this->dumpObjects = true;
 				$this->fakeLastInsertId = 1;
+
+				$this->GraphiteBackend->clearCache();
+
 				CakeLog::info('Start dumping objects');
 				$this->disableAll();
 				//Legacy behavior :(
@@ -731,6 +747,14 @@ class StatusengineLegacyShell extends AppShell{
 					$this->Customvariable->save($data);
 				}
 
+				if($this->processPerfdata === true){
+					if($this->PerfdataBackend->isGraphiteEnabled()){
+						if($this->GraphiteBackend->requireNameCaching()){
+							$this->GraphiteBackend->addHostdisplayNameToCache($payload->name, $payload->display_name);
+						}
+					}
+				}
+
 				unset($data, $result);
 				break;
 
@@ -989,6 +1013,14 @@ class StatusengineLegacyShell extends AppShell{
 						]
 					];
 					$this->Customvariable->save($data);
+				}
+
+				if($this->processPerfdata === true){
+					if($this->PerfdataBackend->isGraphiteEnabled()){
+						if($this->GraphiteBackend->requireNameCaching()){
+							$this->GraphiteBackend->addServicedisplayNameToCache($payload->description, $payload->display_name);
+						}
+					}
 				}
 
 				unset($data, $result, $objectId);
@@ -1508,21 +1540,45 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->processPerfdata === true && $payload->servicecheck->perf_data !== null){
 			//process_performance_data == 1 ?
 			if(isset($this->processPerfdataCache[$service_object_id])){
-				$parsedPerfdataString = [
-					'DATATYPE' => 'SERVICEPERFDATA',
-					'TIMET' => $payload->servicecheck->start_time,
-					'HOSTNAME' => $payload->servicecheck->host_name,
-					'SERVICEDESC' => $payload->servicecheck->service_description,
-					'SERVICEPERFDATA' => $payload->servicecheck->perf_data,
-					'SERVICECHECKCOMMAND' => $payload->servicecheck->command_name,
-					'SERVICESTATE' => $payload->servicecheck->state,
-					'SERVICESTATETYPE' => $payload->servicecheck->state_type
-				];
 
 				$parsedPerfdata = $this->Perfdata->parsePerfdataString($payload->servicecheck->perf_data);
-				$rrdReturn = $this->RrdtoolBackend->writeToRrd($parsedPerfdataString, $parsedPerfdata);
-				if($this->PerfdataConfig['XML']['write_xml_files'] === true){
-					$this->RrdtoolBackend->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
+
+				if($this->PerfdataBackend->saveToRrd()){
+					$parsedPerfdataString = [
+						'DATATYPE' => 'SERVICEPERFDATA',
+						'TIMET' => $payload->servicecheck->start_time,
+						'HOSTNAME' => $payload->servicecheck->host_name,
+						'SERVICEDESC' => $payload->servicecheck->service_description,
+						'SERVICEPERFDATA' => $payload->servicecheck->perf_data,
+						'SERVICECHECKCOMMAND' => $payload->servicecheck->command_name,
+						'SERVICESTATE' => $payload->servicecheck->state,
+						'SERVICESTATETYPE' => $payload->servicecheck->state_type
+					];
+
+					$rrdReturn = $this->RrdtoolBackend->writeToRrd($parsedPerfdataString, $parsedPerfdata);
+					if($this->PerfdataConfig['XML']['write_xml_files'] === true){
+						$this->RrdtoolBackend->updateXml($parsedPerfdataString, $parsedPerfdata, $rrdReturn);
+					}
+				}
+
+				if($this->PerfdataBackend->saveToGraphite()){
+					$_hostname = $payload->servicecheck->host_name;
+					$_servicedesc = $payload->servicecheck->service_description;
+					if($this->GraphiteBackend->requireHostNameCaching()){
+						$_hostname = $this->GraphiteBackend->getHostdisplayNameFromCache($_hostname);
+					}
+
+					if($this->GraphiteBackend->requireServiceNameCaching()){
+						$_servicedesc = $this->GraphiteBackend->getServicedisplayNameFromCache($_servicedesc);
+					}
+
+					$this->GraphiteBackend->save(
+						$parsedPerfdata,
+						$_hostname,
+						$_servicedesc,
+						$payload->servicecheck->start_time
+					);
+					unset($_hostname, $_servicedesc);
 				}
 			}
 		}
@@ -2677,7 +2733,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->Dbversion->save([
 			'Dbversion' => [
 				'name' => 'Statusengine',
-				'version' => Configure::read('version')
+				'version' => STATUSENIGNE_VERSION
 			]
 		]);
 

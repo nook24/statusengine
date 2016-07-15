@@ -21,9 +21,13 @@ $this->Paginator->options(['url' => $this->params['named']]);
 ?>
 
 <div class="container">
-	<div class="alert alert-success externalcommand" role="alert">
+	<div class="alert alert-success externalcommand" role="alert" id="nonFixed">
 		<p><?php echo __('External command send successfully.')?></p>
-		<p><?php echo __('Automatically reload in'); ?> <span>5</span> <?php echo __('seconds');?></p>
+		<p><?php echo __('Automatically reload in'); ?> <span class="externalcommand-counter">5</span> <?php echo __('seconds');?></p>
+	</div>
+	<div class="alert alert-success externalcommand-fixed" role="alert" id="fixed">
+		<p><?php echo __('External command send successfully.')?></p>
+		<p><?php echo __('Automatically reload in'); ?> <span class="externalcommand-counter">5</span> <?php echo __('seconds');?></p>
 	</div>
 	<div class="row">
 		<?php if($commandFileError !== false): ?>
@@ -292,6 +296,18 @@ $this->Paginator->options(['url' => $this->params['named']]);
 				</center>
 			</div>
 		<?php endif; ?>
+
+		<?php if($xmlError !== true): ?>
+			<div class="row">
+				<div class="col-xs-12">
+					<div class="alert alert-danger" role="alert">
+						<p><?php echo __('Error:')?></p>
+						<p><?php echo h($xmlError); ?></p>
+					</div>
+				</div>
+			</div>
+		<?php endif; ?>
+
 	</div>
 </div>
 
@@ -314,7 +330,8 @@ $this->Paginator->options(['url' => $this->params['named']]);
 						'wrapInput' => 'col col-md-5',
 						'class' => 'form-control'
 					],
-					'class' => 'form-horizontal'
+					'class' => 'form-horizontal',
+					'url' => ['controller' => 'Services', 'action' => 'details', $object['Objects']['object_id']],
 				]);
 				echo $this->Form->input('state', [
 					'options' => [
@@ -358,7 +375,8 @@ $this->Paginator->options(['url' => $this->params['named']]);
 						'wrapInput' => 'col col-md-5',
 						'class' => 'form-control'
 					],
-					'class' => 'form-horizontal'
+					'class' => 'form-horizontal',
+					'url' => ['controller' => 'Services', 'action' => 'details', $object['Objects']['object_id']],
 				]);
 					echo $this->Form->input('comment', [
 						'type' => 'text',
@@ -403,7 +421,8 @@ $this->Paginator->options(['url' => $this->params['named']]);
 						'wrapInput' => 'col col-md-5',
 						'class' => 'form-control'
 					],
-					'class' => 'form-horizontal'
+					'class' => 'form-horizontal',
+					'url' => ['controller' => 'Services', 'action' => 'details', $object['Objects']['object_id']],
 				]);
 					echo $this->Form->input('comment', [
 						'type' => 'text',

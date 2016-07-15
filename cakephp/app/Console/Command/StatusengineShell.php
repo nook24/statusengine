@@ -18,12 +18,12 @@
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
 * as published by the Free Software Foundation in version 2
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -38,31 +38,31 @@
 **********************************************************************************/
 
 class StatusengineShell extends AppShell{
-	
+
 	public $uses = ['Objects', 'Command', 'Contact', 'Contactgroup', 'Timeperiod', 'Timerange', 'Host', 'Service'];
-	
+
 	public function main(){
 		Configure::load('Statusengine');
-		$this->out('Starting Statusengine version: '.Configure::read('version').'...');
+		$this->out('Starting Statusengine version: '.STATUSENIGNE_VERSION.'...');
 		$this->_constants();
-		
+
 		$this->disableAll();
-		
+
 		//Delete all timeranges, because we cant update this :(
 		$this->Timerange->deleteAll(true);
-		
+
 		$this->clearObjectsCache();
 		$this->buildObjectsCache();
 		$this->worker = null;
 		$this->gearmanConnect();
 		while ($this->worker->work());
 	}
-	
+
 	public function disableAll(){
 		//Disable every object in objects, because nagios was restared
 		$this->Objects->updateAll(['Objects.is_active' => 0]);
 	}
-	
+
 	public function dumpObjects($job){
 		$payload = json_decode($job->workload());
 		$this->Objects->create();
@@ -82,15 +82,15 @@ class StatusengineShell extends AppShell{
 						'command_line' => $payload->command_line
 					]
 				];
-				
+
 				$result = $this->Objects->saveAll($data);
-				
+
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->command_name);
-				
+
 				unset($result, $data);
 			break;
-			
+
 			//Timeperiod object
 			case OBJECT_TIMEPERIOD:
 				//Fetch timeranges out of raw data
@@ -112,10 +112,10 @@ class StatusengineShell extends AppShell{
 						}
 					}
 				}
-			
+
 				$timeperiodObjectId = $this->objectIdFromCache($payload->object_type, $payload->name);
 				$timeperiodId = $this->idByObjectIdFromDb('Timeperiod', $timeperiodObjectId);
-	
+
 				$data = [
 					'Objects' => [
 						'objecttype_id' => $payload->object_type,
@@ -152,12 +152,12 @@ class StatusengineShell extends AppShell{
 					}
 					$this->Timerange->saveAll($data);
 				}
-				
+
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->name);
-				
+
 				unset($result, $data);
 				break;
-			
+
 			//Contact object
 			case OBJECT_CONTACT:
 				$data = [
@@ -194,13 +194,13 @@ class StatusengineShell extends AppShell{
 					]
 				];
 				$result = $this->Objects->saveAll($data);
-				
+
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->name);
-				
+
 				unset($result, $data);
 			break;
-			
+
 			//Contactgroup object
 			case OBJECT_CONTACTGROUP:
 				$data = [
@@ -216,12 +216,12 @@ class StatusengineShell extends AppShell{
 						'alias' => $payload->alias
 					]
 				];
-				
+
 				$result = $this->Objects->saveAll($data);
-				
+
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->group_name);
-				
+
 				//associate contactgroups with contacts (HABTM)
 				$_contactgroup = $this->Contactgroup->findByAlias($payload->alias);
 				foreach($payload->contact_members as $ContactName){
@@ -242,15 +242,15 @@ class StatusengineShell extends AppShell{
 					$this->Contact->save($association);
 					unset($association);
 				}
-				
+
 				unset($result, $data);
 				break;
-			
+
 			//Host object
 			case OBJECT_HOST:
 				$hostObjectId = $this->objectIdFromCache($payload->object_type, $payload->name);
 				$hostId = $this->idByObjectIdFromDb('Host', $hostObjectId);
-			
+
 				$data = [
 					'Objects' => [
 						'objecttype_id' => $payload->object_type,
@@ -317,19 +317,19 @@ class StatusengineShell extends AppShell{
 						'stalk_on_unreachable' => $payload->stalk_on_unreachable
 					]
 				];
-				
+
 				$result = $this->Objects->saveAll($data);
-				
+
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->name);
 				unset($data, $result);
 				break;
-	
+
 			//Service object
 			case OBJECT_SERVICE:
 				$serviceObjectId = $this->objectIdFromCache($payload->object_type, $payload->name);
 				$serviceId = $this->idByObjectIdFromDb('Service', $serviceObjectId);
-		
+
 				$data = [
 					'Objects' => [
 						'objecttype_id' => $payload->object_type,
@@ -394,33 +394,33 @@ class StatusengineShell extends AppShell{
 					]
 				];
 				$result = $this->Objects->saveAll($data);
-		
+
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->name);
 				unset($data, $result);
-					
+
 				break;
 		}
 	}
-	
-	
+
+
 	public function gearmanConnect(){
 		$this->worker= new GearmanWorker();
 		$this->worker->addServer();
-		
+
 		// These quese are orderd by priority!
 		$this->worker->addFunction("objects", array($this, 'dumpObjects'));
 		$this->worker->addFunction("hoststatus", array($this, 'my_bob'));
 		$this->worker->addFunction("servicestatus", array($this, 'my_bob'));
 		$this->worker->addFunction("trash", array($this, 'my_bob'));
-		
+
 	}
-	
+
 	public function my_bob($job){
 		//print_r(json_decode($job->workload()));
 		//echo PHP_EOL;
 	}
-	
+
 	public function clearObjectsCache(){
 		$this->objectCache = [
 			12 => [],
@@ -436,7 +436,7 @@ class StatusengineShell extends AppShell{
 			1 =>  []
 		];
 	}
-	
+
 	public function buildObjectsCache(){
 		$objects = $this->Objects->find('all', [
 			'recursive' => -1 //drops associated data, so we dont get an memory limit error, while processing big data ;)
@@ -449,15 +449,15 @@ class StatusengineShell extends AppShell{
 			];
 		}
 	}
-	
+
 	public function objectIdFromCache($objecttype_id, $name1, $name2 = null){
 		if(isset($this->objectCache[$objecttype_id][$name1.$name2]['id'])){
 			return $this->objectCache[$objecttype_id][$name1.$name2]['id'];
 		}
-		
+
 		return null;
 	}
-	
+
 	public function addObjectToCache($objecttype_id, $id, $name1, $name2 = null){
 		if(!isset($this->objectCache[$objecttype_id][$name1.$name2])){
 			$this->objectCache[$objecttype_id][$name1.$name2] = [
@@ -469,16 +469,16 @@ class StatusengineShell extends AppShell{
 		}
 		return false;
 	}
-	
+
 	public function idByObjectIdFromDb($Model, $object_id){
 		$result = $this->{$Model}->findByObjectId($object_id);
 		if(isset($result[$Model]['id']) && $result[$Model]['id'] !== null){
 			return $result[$Model]['id'];
 		}
-		
+
 		return null;
 	}
-	
+
 	private function _constants(){
 		$constants = [
 			'OBJECT_COMMAND'        => 12,
@@ -495,6 +495,6 @@ class StatusengineShell extends AppShell{
 			define($key, $value);
 		}
 	}
-	
+
 
 }

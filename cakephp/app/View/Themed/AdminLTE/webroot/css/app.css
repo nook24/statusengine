@@ -1,0 +1,102 @@
+/*
+Licensed under The MIT License
+*/
+.small-box:hover .icon {
+    font-size: 90px;
+}
+
+.a-no-hover:hover{
+    color: #3c8dbc;
+    text-decoration: none;
+}
+
+.inline-block{
+    display: inline-block;
+}
+
+.bg-muted{
+    background: #d2d6de !important;
+}
+
+.label-muted{
+    background: #777;
+}
+
+.skin-blue .main-header .navbar .dropdown-menu li a {
+    color: #337ab7;
+}
+
+.pnpFrame{
+    width: 100%;
+}
+
+.externalcommand-fixed{
+    position: fixed;
+    top: 6px;
+    z-index: 2;
+}
+
+.login-box,.register-box{
+    width:100%;
+    margin:0 auto;
+    position:absolute;
+    background: rgba(0, 0, 0, 0.5)!important;
+}
+@media (max-width:768px){
+    .login-box,.register-box{
+        width:90%;
+        margin:0 auto;
+        margin-top: 20px;
+        position: relative;
+        background: rgba(0, 0, 0, 0.5);
+    }
+}
+
+.login-headline{
+    margin-bottom: 0px;
+    color: #B8B8B8;
+}
+
+.login-bg{
+    color: #fff;
+    background: transparent;
+}
+
+.login-bg{
+    width:360px;
+    color: #fff;
+    margin:0 auto;
+}
+@media (max-width:768px){
+    .login-bg{
+        color: #fff;
+        width:90%;
+        margin:0 auto;
+    }
+}
+
+.login-submit{
+
+}
+@media (max-width:768px){
+    .login-submit{
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+}
+
+.row-default{
+
+}
+
+.row-default:hover{
+    background: rgb(219, 219, 219);
+}
+
+.row-bg{
+    background: #F7F7F7;
+}
+
+.row-bg:hover{
+    background: rgb(219, 219, 219);
+}

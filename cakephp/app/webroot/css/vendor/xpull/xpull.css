@@ -5,24 +5,24 @@
 */
 .pull-indicator{
     width:25px;
-    height:41px;
+    /*height:41px;*/
     margin-left:auto;
     margin-right:auto;
     margin-bottom:0px;
     margin-top:0px;
-    
+
     -webkit-transform: translate3d(0px,0px,0px) rotate(0deg);
-    
+
     position:relative;
     top:-41px;
     -webkit-transition: -webkit-transform 300ms ease;
 
 }
-.triangle-down { 
-    width: 0; height: 0; 
-    border-left: 5px solid transparent; 
-    border-right: 5px solid transparent; 
-    border-top: 6px solid #CACACA; 
+.triangle-down {
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #CACACA;
     margin-left:auto;
     margin-right:auto;
 }

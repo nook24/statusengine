@@ -74,45 +74,56 @@ class StatusHelper extends AppHelper{
 		return $states[$state];
 	}
 
-	public function hostProgressbar($hoststatus, $hostObjectId = false){
+	public function hostProgressbar($hoststatus, $hostObjectId = false, $options = []){
 		//Dirty workaround for HomeController
 		if($hostObjectId === false){
 			$hoststatus = [$hoststatus];
 		}
+
+		$_options = [
+			'class' => 'progress-bar'
+		];
+		$options = Hash::merge($_options, $options);
+
 		$html = '<div class="progress">';
 		if(isset($hoststatus[$hostObjectId])){
 			$count = array_sum($hoststatus[$hostObjectId]);
 			foreach($hoststatus[$hostObjectId] as $state => $counter){
-				$html .= '<div class="progress-bar progress-bar-'.$this->hostClasses[$state].'" role="progressbar" style="width:'.($counter/$count*100).'%;" title="'.($counter/$count*100).'% '.$this->hostState[$state].'"></div>';
+				$html .= '<div class="'.$options['class'].' progress-bar-'.$this->hostClasses[$state].'" role="progressbar" style="width:'.($counter/$count*100).'%;" title="'.($counter/$count*100).'% '.$this->hostState[$state].'"></div>';
 			}
 		}else{
-			$html .= '<div class="progress-bar progress-bar-unknown" role="progressbar" style="width:100%;"></div>';
+			$html .= '<div class="'.$options['class'].' progress-bar-unknown" role="progressbar" style="width:100%;"></div>';
 		}
 		$html .= '</div>';
 		return $html;
 	}
 
-	 public function serviceProgressbar($servicestatus, $hostObjectId = false, $showValue = false){
+	 public function serviceProgressbar($servicestatus, $hostObjectId = false, $showValue = false, $options = []){
 		//Dirty workaround for HomeController
 		if($hostObjectId === false){
 			$servicestatus = [$servicestatus];
 		}
-		$html = '<div class="progress">';
+		$_options = [
+			'class' => 'progress-bar',
+			'wrapClass' => 'progress'
+		];
+		$options = Hash::merge($_options, $options);
+		$html = '<div class="'.$options['wrapClass'].'">';
 		if(isset($servicestatus[$hostObjectId])){
 			$count = array_sum($servicestatus[$hostObjectId]);
 			if($count > 0){
 				foreach($servicestatus[$hostObjectId] as $state => $counter){
-					$html .= '<div class="progress-bar progress-bar-'.$this->serviceClasses[$state].'" role="progressbar" style="width:'.($counter/$count*100).'%;" title="'.($counter/$count*100).'% '.$this->serviceState[$state].'">';
+					$html .= '<div class="'.$options['class'].' progress-bar-'.$this->serviceClasses[$state].'" role="progressbar" style="width:'.($counter/$count*100).'%;" title="'.($counter/$count*100).'% '.$this->serviceState[$state].'">';
 					if($showValue === true){
 						$html .= '<span style="color: black;">'.($counter/$count*100).'%</span>';
 					}
 					$html .= '</div>';
 				}
 			}else{
-				$html .= '<div class="progress-bar progress-bar-primary" role="progressbar" style="width:100%;"></div>';
+				$html .= '<div class="'.$options['class'].' progress-bar-primary" role="progressbar" style="width:100%;"></div>';
 			}
 		}else{
-			$html .= '<div class="progress-bar progress-bar-unknown" role="progressbar" style="width:100%;"></div>';
+			$html .= '<div class="'.$options['class'].' progress-bar-unknown" role="progressbar" style="width:100%;"></div>';
 		}
 		$html .= '</div>';
 		return $html;

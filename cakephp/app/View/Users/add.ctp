@@ -48,6 +48,12 @@ $this->Paginator->options(['url' => $this->params['named']]);
 		echo $this->Form->input('password', [
 			'label' => __('Password')
 		]);
+
+		echo $this->Form->input('theme', [
+			'label' => __('Theme'),
+			'options' => $themes,
+		]);
+
 		echo $this->Form->submit(__('Submit'), [
 			'div' => 'form-group col-md-8',
 			'class' => 'btn btn-success',

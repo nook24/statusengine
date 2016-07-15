@@ -172,6 +172,7 @@ class LegacyAppModel extends AppModel{
 			$error = $e->getMessage();
 			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
 				if($recursive === false){
+					sleep(10);
 					$this->getDatasource()->reconnect();
 					$this->sqlSave($data, true);
 				}
@@ -197,6 +198,7 @@ class LegacyAppModel extends AppModel{
 			$error = $e->getMessage();
 			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
 				if($recursive === false){
+					sleep(10);
 					$this->getDatasource()->reconnect();
 					$this->sqlQuery($data, true);
 				}

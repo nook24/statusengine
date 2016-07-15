@@ -6,9 +6,6 @@
  */
 
 $config = [
-	//Version of Statusengine
-	'version' => '1.6.0',
-
 	//Logfile moved to SysLog!
 
 	//max age of service status records in gearman queue
@@ -33,9 +30,19 @@ $config = [
 	//process performacne data for you and save them to RRD files
 	//so you don't need to install any additional software to
 	//get the job done.
-	'process_perfdata' => false,
+	'process_perfdata' => true,
+
+	//Checkout Config/Perfdata.php for RRDTool configuration
+	//Checkout Config/Graphite.php for Graphite configuration
+	//
+	// Examples:
+	//  1. RRD only: ['Rrd']
+	//  2. Graphite only: ['Graphite']
+	//  3. RRD and Graphite: ['Rrd', 'Graphite']
+	'perfdata_storage' => ['Rrd', 'Graphite'],
 
 	//Workers Statusengine will fork in worker mode
+	//Check: https://statusengine.org/documentation.php#scaleout-statusengine
 	'workers' => [
 		[
 			'queues' => ['statusngin_servicestatus' => 'processServicestatus']

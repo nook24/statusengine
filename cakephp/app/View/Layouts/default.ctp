@@ -30,17 +30,19 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 		|____/ \__\__,_|\__|\__,_|___/\___|_| |_|\__, |_|_| |_|\___|
 		                                         |___/
 		                  the missing event broker
-		                http://www.statusengine.org
+		               https://www.statusengine.org
 		            https://github.com/nook24/statusengine
 	-->
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>
 		<?php echo __('Statusengine'); ?>:
 		<?php echo $title_for_layout; ?>
+		- powered by Statusengine
 	</title>
 	<?php
-		echo $this->Html->meta('icon');
+		echo $this->element('favicon');
 		echo $this->element('assets');
+
 
 		//echo $this->Html->css('cake.generic');
 
@@ -60,26 +62,16 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 		?>
 
 		<div class="container">
-			<?php echo $this->Session->flash(); ?>
+			<?php echo $this->Flash->render(); ?>
 			<div id="content">
 				<?php echo $this->fetch('content'); ?>
 			</div>
 		</div>
 		<?php
-			Configure::load('Interface');
 			if(Configure::read('Interface.sql_dump') === true && $isLoggedIn === true):
 				 echo $this->element('sql_dump');
 			endif;
-
-			$hideOitc = false;
-			$class ="col-xs-12 col-md-4";
-			if(Configure::read('Interface.hide_oitc') === true):
-				$class ="col-xs-12 col-md-6";
-				$hideOitc = true;
-			else:
-				echo $this->element('oitc_modal');
-			endif;
-			?>
+		?>
 		<br />
 		<br />
 	</div>
@@ -87,20 +79,13 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 		<div class="container">
 			<div class="row text-muted">
 				<?php if($isLoggedIn === true):?>
-					<div class="<?php echo $class; ?>">
+					<div class="col-xs-12 col-md-6">
 						<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
 							<i class="fa fa-github"></i>
-							<?php echo __('Contribute to Statusengine');?>
+							<?php echo __('Contribute to Statusengine');?> - <?php echo h(STATUSENIGNE_VERSION);?>
 						</a>
 					</div>
-					<?php if($hideOitc === false): ?>
-						<div class="col-xs-12 col-md-4 text-center hidden-xs hidden-sm">
-							<a href="javascript:void(0);" class="text-muted" data-toggle="modal" data-target="#oITCModal">
-								<?php echo __('Want more? Check out openITCOCKPIT');?>
-							</a>
-						</div>
-					<?php endif;?>
-					<div class="<?php echo $class; ?> hidden-xs hidden-sm">
+					<div class="col-xs-12 col-md-6 hidden-xs hidden-sm">
 						<div class="pull-right">
 							<a href="http://cakephp.org" target="_blank">
 								<?php echo $this->Html->image('cake-logo-smaller2.png', ['border' => '0']); ?>
@@ -112,14 +97,14 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 						<div class="pull-left">
 							<a href="https://github.com/nook24/statusengine" class="text-muted" target="_blank">
 								<i class="fa fa-github"></i>
-								<?php echo __('Contribute to Statusengine');?>
+								<?php echo __('Contribute to Statusengine');?> - <?php echo h(STATUSENIGNE_VERSION);?>
 							</a>
 						</div>
 					</div>
 					<div class="col-xs-6">
 						<div class="pull-right">
 							<?php Configure::load('Statusengine'); ?>
-							Statusengine - <?php echo h(Configure::read('version'));?>
+							Statusengine - <?php echo h(STATUSENIGNE_VERSION);?>
 						</div>
 					</div>
 				<?php endif;?>

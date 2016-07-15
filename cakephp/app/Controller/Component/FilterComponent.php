@@ -1,28 +1,28 @@
 <?php
 /**
 * Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
-* 
+*
 * This file is part of Statusengine.
-* 
+*
 * Statusengine is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 2 of the License, or
 * (at your option) any later version.
-* 
+*
 * Statusengine is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
 class FilterComponent extends Component{
-	
+
 	public $isFilter = false;
 	protected $request = [];
 	private $_filter   = [];
-	
+
 	public function initialize(Controller $controller, $settings = []) {
 		/*$this->request = $controller->request;
 		$this->Controller = $controller;
@@ -30,30 +30,30 @@ class FilterComponent extends Component{
 			$this->_filter = $this->Controller->filter;
 		}*/
 	}
-	
+
 	public function startup(Controller $controller){
 		$this->Controller = $controller;
 		$this->request = $controller->request;
-		
+
 		$this->isFilter = false;
-		
+
 		if(property_exists($this->Controller, 'filter')){
 			$this->_filter = $this->Controller->filter;
 		}
-		
+
 		if(!isset($this->_filter[$this->Controller->action])){
 			$this->Controller->set('FilterComponent_filter', []);
 			$this->Controller->set('FilterComponent_isFilter', $this->isFilter);
 			return;
 		}
-		
+
 		//Set filter settings for view
 		if(isset($this->request->data['Filter'])){
 			$this->isFilter = true;
 		}
 		$filter = $this->_filter[$this->Controller->action];
 		$this->Controller->set('FilterComponent_filter', $filter);
-		
+
 		if(isset($this->request->data['Filter'])){
 			$url = [];
 			$conditions = [];
@@ -77,7 +77,7 @@ class FilterComponent extends Component{
 									}
 								}
 								break;
-								
+
 							case 'text':
 								if($value != ''){
 									$conditions[$modelName.'.'.$fieldName. ' LIKE'] = '%'.$value.'%';
@@ -93,11 +93,11 @@ class FilterComponent extends Component{
 			if(isset($this->Controller->request->params['pass']) && !empty($this->Controller->request->params['pass'])){
 				$url = Hash::merge($url, $this->Controller->request->params['pass']);
 			}
-			
+
 			if(isset($this->Controller->request->params['named']) && !empty($this->Controller->request->params['named'])){
 				$named = [];
 				foreach($this->Controller->request->params['named'] as $key => $param){
-					
+
 					//Ignore old Filter settings from URL
 					if($key != 'page' && $key !== 'Filter'){
 						$named[$key] = $param;
@@ -105,7 +105,7 @@ class FilterComponent extends Component{
 				}
 				$url = Hash::merge($url, $named);
 			}
-			
+
 			//Set conditions for paginator
 			$this->Controller->paginate = Hash::merge($this->Controller->paginate, array(
 				'conditions' => $conditions
@@ -132,7 +132,7 @@ class FilterComponent extends Component{
 										}
 									}
 									break;
-								
+
 								case 'text':
 									if($value != ''){
 										$conditions[$modelName.'.'.$fieldName. ' LIKE'] = '%'.$value.'%';

@@ -113,10 +113,6 @@ body > .container {
 	font-weight:bold;311
 }
 
-.externalcommand{
-	display: none;
-}
-
 .form-signin {
   max-width: 330px;
   padding: 15px;
@@ -145,4 +141,10 @@ body{
 
 .container .text-muted {
 	margin: 20px 0;
+}
+
+.externalcommand-fixed{
+	position: fixed;
+	top: 6px;
+	z-index: 2;
 }

@@ -5,7 +5,7 @@
 		</div>
 	</div>
 	<div class="col-xs-12">
-		<?php echo $this->Session->flash('auth'); ?>
+		<?php echo $this->Flash->render('auth'); ?>
 	</div>
 	<hr />
 

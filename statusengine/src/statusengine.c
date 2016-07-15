@@ -42,12 +42,20 @@
 * Getting started on Ubuntu 14.04 LTS:
 * apt-get install gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5 php5-cli php5-dev libjson-c-dev manpages-dev build-essential
 *
-* Compile with the following command for Naemon
+* Compile with the following command for Naemon <= 1.0.3
 * LANG=C gcc -shared -DNAEMON -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
+*
+* For NAEMONMASTER you need to install
+* apt-get install libglib2.0-dev
+* LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c -lglib-2.0 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -lglib-2.0 -DNAEMONMASTER
 *
 * Compile with the following command for Nagios 4
 * LANG=C gcc -shared -DNAGIOS -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
 * 
+* Compile on Debian 7
+* apt-get install libgearman-dev gearman-tools uuid-dev php5 php5-cli php5-dev libjson0-dev manpages-dev build-essential
+* LANG=C gcc -shared -DNAEMON -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson -DDEBIAN7
+*
 *
 * Load the broker in your nagios.cfg
 * broker_module=/opt/statusengine/bin/statusengine.o
@@ -66,25 +74,43 @@
 *
 **********************************************************************************/
 
-#if !defined NAEMON && !defined NAGIOS
-#error Please define either NAEMON or NAGIOS using -DNAEMON or -DNAGIOS command line options.
+#if !defined NAEMON && !defined NAGIOS && !defined NAEMONMASTER
+#error Please define either NAEMON or NAGIOS using -DNAEMON or -DNAGIOS -DNAEMONMASTER command line options.
 #endif
 
 
 #ifdef NAEMON
 //Load default event broker stuff
-#include "naemon/naemon.h"
-#include "naemon/nebmodules.h"
-#include "naemon/nebcallbacks.h"
-#include "naemon/nebstructs.h"
-#include "naemon/broker.h"
+#include "naemon-1.0.3/naemon.h"
+#include "naemon-1.0.3/nebmodules.h"
+#include "naemon-1.0.3/nebcallbacks.h"
+#include "naemon-1.0.3/nebstructs.h"
+#include "naemon-1.0.3/broker.h"
 
-#include "naemon/configuration.h"
-#include "naemon/common.h"
-#include "naemon/downtime.h"
-#include "naemon/comments.h"
-#include "naemon/macros.h"
+#include "naemon-1.0.3/configuration.h"
+#include "naemon-1.0.3/common.h"
+#include "naemon-1.0.3/downtime.h"
+#include "naemon-1.0.3/comments.h"
+#include "naemon-1.0.3/macros.h"
 #endif
+
+#ifdef NAEMONMASTER
+//Load default event broker stuff
+#include <glib.h>
+
+#include "naemon-master/naemon.h"
+#include "naemon-master/nebmodules.h"
+#include "naemon-master/nebcallbacks.h"
+#include "naemon-master/nebstructs.h"
+#include "naemon-master/broker.h"
+
+#include "naemon-master/configuration.h"
+#include "naemon-master/common.h"
+#include "naemon-master/downtime.h"
+#include "naemon-master/comments.h"
+#include "naemon-master/macros.h"
+#endif
+
 
 #ifdef NAGIOS
 #include "../include/nebmodules.h"
@@ -101,7 +127,12 @@
 
 //Load external libs
 #include <libgearman/gearman.h>
+
+#ifdef DEBIAN7
+#include <json/json.h>
+#else
 #include <json-c/json.h>
+#endif
 
 #ifdef NAEMON
 #include <string.h>
@@ -127,7 +158,11 @@ extern servicedependency *servicedependency_list;
 
 
 extern char *config_file;
+
+#if defined NAEMON || defined NAGIOS
 extern sched_info scheduling_info;
+#endif
+
 extern char *global_host_event_handler;
 extern char *global_service_event_handler;
 
@@ -151,6 +186,25 @@ void logswitch(int level, char *message){
 #endif
 }
 
+#ifdef NAEMONMASTER
+static gboolean parent_hosts_foreach_callback(gpointer _name, gpointer _hostsmember, gpointer _parent_hosts_array){
+	host *hostsmember = (host *)_hostsmember;
+	json_object *parent_hosts_array = (json_object *)_parent_hosts_array;
+	json_object_array_add(parent_hosts_array, (hostsmember->name != NULL ? json_object_new_string(hostsmember->name) : NULL));
+        return FALSE;
+}
+#endif
+
+#ifdef NAEMONMASTER
+static gboolean hostgroup_foreach_callback(gpointer key, gpointer _hostgroupmember, gpointer _hostgroup_members_array){
+        host *hostgroupmember = (host *)_hostgroupmember;
+        json_object *hostgroup_members_array = (json_object *)_hostgroup_members_array;
+	json_object_array_add(hostgroup_members_array, (hostgroupmember->name != NULL ? json_object_new_string(hostgroupmember->name) : NULL));
+        return FALSE;
+}
+#endif
+
+
 
 //Broker initialize function
 int nebmodule_init(int flags, char *args, nebmodule *handle){
@@ -170,7 +224,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	logswitch(NSLOG_INFO_MESSAGE, "Statusengine - the missing event broker");
 	logswitch(NSLOG_INFO_MESSAGE, "Statusengine - the missing event broker");
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>");
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Please visit http://www.statusengine.org for more information");
+	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Please visit https://www.statusengine.org for more information");
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Contribute to Statusenigne at: https://github.com/nook24/statusengine");
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Thanks for using Statusengine :-)");
 
@@ -338,8 +392,17 @@ int statusengine_handle_data(int event_type, void *data){
 				json_object_object_add(my_object, "attr",      json_object_new_int(programmdata->attr));
 				json_object_object_add(my_object, "timestamp", json_object_new_int(programmdata->timestamp.tv_sec));
 				json_object *processdata_object = json_object_new_object();
+				#if defined NAEMON || defined NAEMONMASTER
+				json_object_object_add(processdata_object, "programmname",      json_object_new_string("Naemon"));
+				#else
 				json_object_object_add(processdata_object, "programmname",      json_object_new_string("Nagios"));
-				json_object_object_add(processdata_object, "modification_data", json_object_new_string(get_program_modification_date()));
+				#endif
+				#if defined NAGIOS || defined NAEMON
+                                json_object_object_add(processdata_object, "modification_data", json_object_new_string(get_program_modification_date()));
+				#endif
+				#if defined NAEMONMASTER
+				json_object_object_add(processdata_object, "modification_data", json_object_new_string("removed"));
+				#endif
 				json_object_object_add(processdata_object, "programmversion",   json_object_new_string(get_program_version()));
 				json_object_object_add(processdata_object, "pid",               json_object_new_int64(getpid()));
 		
@@ -383,7 +446,12 @@ int statusengine_handle_data(int event_type, void *data){
 					HOSTFIELD_STRING(check_period);
 					HOSTFIELD_INT(current_state);
 					HOSTFIELD_INT(has_been_checked);
+					#if defined NAGIOS || defined NAEMON
 					HOSTFIELD_INT(should_be_scheduled);
+					#endif
+					#if defined NAEMONMASTER
+					json_object_object_add(host_object, "should_be_scheduled", json_object_new_int64(1));
+					#endif
 					HOSTFIELD_INT(current_attempt);
 					HOSTFIELD_INT(max_attempts);
 					HOSTFIELD_INT(last_check);
@@ -458,7 +526,12 @@ int statusengine_handle_data(int event_type, void *data){
 					SERVICEFIELD_STRING(check_period);
 					SERVICEFIELD_INT(current_state);
 					SERVICEFIELD_INT(has_been_checked);
+					#if defined NAGIOS || defined NAEMON
 					SERVICEFIELD_INT(should_be_scheduled);
+					#endif
+					#if defined NAEMONMASTER
+					json_object_object_add(service_object, "should_be_scheduled", json_object_new_int64(1));
+					#endif
 					SERVICEFIELD_INT(current_attempt);
 					SERVICEFIELD_INT(max_attempts);
 					SERVICEFIELD_INT(last_check);
@@ -531,7 +604,12 @@ int statusengine_handle_data(int event_type, void *data){
 					SERVICECHECKFIELD_STRING(host_name);
 					SERVICECHECKFIELD_STRING(service_description);
 
+					#if defined NAGIOS || defined NAEMON
 					get_raw_command_line(nag_service->check_command_ptr,nag_service->check_command,&raw_command,0);
+					#endif
+					#if defined NAEMONMASTER
+					get_raw_command_line_r(get_global_macros(),nag_service->check_command_ptr,nag_service->check_command,&raw_command,0);
+					#endif
 					json_object_object_add(servicecheck_object, "command_line", (raw_command != NULL ? json_object_new_string(raw_command) : NULL));
 					json_object_object_add(servicecheck_object, "command_name", (nag_service->check_command != NULL ? json_object_new_string(nag_service->check_command) : NULL));
 
@@ -587,7 +665,12 @@ int statusengine_handle_data(int event_type, void *data){
 
 					HOSTCHECKFIELD_STRING(host_name);
 
+					#if defined NAGIOS || defined NAEMON
 					get_raw_command_line(nag_host->check_command_ptr,nag_host->check_command,&raw_command,0);
+					#endif
+					#if defined NAEMONMASTER
+					get_raw_command_line_r(get_global_macros(),nag_host->check_command_ptr,nag_host->check_command,&raw_command,0);
+					#endif
 					json_object_object_add(hostcheck_object, "command_line", (raw_command != NULL ? json_object_new_string(raw_command) : NULL));
 					json_object_object_add(hostcheck_object, "command_name", (nag_host->check_command != NULL ? json_object_new_string(nag_host->check_command) : NULL));
 
@@ -1216,10 +1299,13 @@ void dump_object_data(){
 	hostgroup *temp_hostgroup=NULL;
 	service *temp_service=NULL;
 	servicegroup *temp_servicegroup=NULL;
+	
+	#if defined NAEMON || defined NAGIOS
 	hostescalation *temp_hostescalation=NULL;
 	serviceescalation *temp_serviceescalation=NULL;
 	hostdependency *temp_hostdependency=NULL;
 	servicedependency *temp_servicedependency=NULL;
+	#endif
 	
 	//contactsmember *temp_contactsmember=NULL;
 	command *_command = NULL;
@@ -1460,11 +1546,19 @@ void dump_object_data(){
 		json_object_object_add(my_object, "stalk_on_unreachable",          json_object_new_int(flag_isset(temp_host->stalking_options,       OPT_UNREACHABLE)));
 
 		//Get parent hosts
-		hostsmember *temp_hostsmember = temp_host->parent_hosts;
 		json_object *parent_hosts_array = json_object_new_array();
+
+		#if defined NAGIOS || defined NAEMON
+		hostsmember *temp_hostsmember = temp_host->parent_hosts;
 		for(temp_hostsmember = temp_host->parent_hosts; temp_hostsmember != NULL; temp_hostsmember = temp_hostsmember->next){
 			json_object_array_add(parent_hosts_array, (temp_hostsmember->host_name != NULL ? json_object_new_string(temp_hostsmember->host_name) : NULL));
 		}
+		#endif
+
+		#if defined NAEMONMASTER
+		g_tree_foreach(temp_host->parent_hosts, parent_hosts_foreach_callback, parent_hosts_array);
+		#endif
+
 		json_object_object_add(my_object, "parent_hosts", parent_hosts_array);
 
 		//Get contact groups
@@ -1510,12 +1604,17 @@ void dump_object_data(){
 		json_object_object_add(my_object, "alias",        (temp_hostgroup->alias      != NULL ? json_object_new_string(temp_hostgroup->alias) : NULL));
 
 		//Get members
-		//Get contact groups
-		hostsmember *temp_hostsmember = temp_hostgroup->members;
 		json_object *hostgroup_members_array = json_object_new_array();
+		#if defined NAGIOS || defined NAEMON
+		hostsmember *temp_hostsmember = temp_hostgroup->members;
 		for(temp_hostsmember = temp_hostgroup->members; temp_hostsmember != NULL; temp_hostsmember = temp_hostsmember->next){
 			json_object_array_add(hostgroup_members_array, (temp_hostsmember->host_name != NULL ? json_object_new_string(temp_hostsmember->host_name) : NULL));
 		}
+		#endif
+		#if defined NAEMONMASTER
+		g_tree_foreach(temp_hostgroup->members, hostgroup_foreach_callback, hostgroup_members_array);
+		#endif
+
 		json_object_object_add(my_object, "members", hostgroup_members_array);
 
 
@@ -1659,7 +1758,8 @@ void dump_object_data(){
 		json_object_put(my_object);
 		
 	}
-	
+
+	#if defined NAEMON || defined NAGIOS
 	//Fetch host escalations
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host escalation configuration");
 	for(x = 0; x < num_objects.hostescalations; x++){
@@ -1797,6 +1897,7 @@ void dump_object_data(){
 
 		json_object_put(my_object);
 	}
+	#endif
 	
 	
 	//Tell the woker, that were done with object dumping
@@ -1809,3 +1910,4 @@ void dump_object_data(){
 	json_object_put(my_object);
 	
 }
+

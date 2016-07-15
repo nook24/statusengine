@@ -1,4 +1,4 @@
-<div class="dropdown" style="padding-top: 15px;">
+<div class="dropdown inline-block" style="padding-top: 15px;">
 	<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
 	<?php echo __('History'); ?>
 		<span class="caret"></span>

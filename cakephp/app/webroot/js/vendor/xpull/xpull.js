@@ -37,9 +37,9 @@
             inst.spinner = elm.parent().find('.pull-spinner:eq(0)');
             inst.arrow = elm.parent().find('.arrow-body:eq(0),.triangle-down:eq(0)');
             inst.indicatorHeight = inst.indicator.outerHeight();
-            $(elm).css({
+            /*$(elm).css({
                 'transform': "translate3d(0px, -" + inst.indicatorHeight + "px, 0px)"
-            });
+            });*/
             elm.parent().css({
                 'overflow-scrolling': 'touch'
             });
@@ -48,7 +48,7 @@
             var top = 0;
             var hasc = false;
             inst.elast = true;
-            inst.arrow.css('visibility', 'hidden');
+            inst.arrow.css('display', 'none');
             inst.indicatorHidden = true;
             elm.unbind('touchstart.' + pluginName);
             elm.on('touchstart.' + pluginName, function(ev) {
@@ -67,7 +67,7 @@
                     return true;
                 }
                 if (inst.indicatorHidden) {
-                    inst.arrow.css('visibility', 'visible');
+                    inst.arrow.css('display', 'block');
                     inst.indicatorHidden = false;
                 }
                 top = (ev.originalEvent.touches[0].pageY - ofstop - fingerOffset);
@@ -141,7 +141,7 @@
                     top = 0;
                 }
                 if (!inst.indicatorHidden) {
-                    inst.arrow.css('visibility', 'hidden');
+                    inst.arrow.css('display', 'none');
                     inst.indicatorHidden = true;
                 }
                 setTimeout(function() {
