@@ -103,6 +103,7 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - Update to CakePHP Version 2.8.2
 - Add support for PHP7
 - Add support for various [debian based distributions](https://statusengine.org/documentation.php#supported-os)
+- Add support for Graphite
 - Add new responsive theme based on [AdminLTE](https://github.com/almasaeed2010/AdminLTE)
 - Fixed hard and soft state display issue for hosts
 - Fixed strange URL issue
@@ -110,6 +111,7 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - Usage of CakeResponse::file() to transmit RRDTool-Graphs PNGs
 - Moved version numbers to app/Config/bootstrap.php
 - App name can be set now over [Interface.php](https://github.com/nook24/statusengine/blob/master/cakephp/app/Config/Interface.php)
+- Prepare for Naemon >= 1.0.4
 
 **1.6.0**
 - Resolve issue with orphaned child processes [Issue 14](https://github.com/nook24/statusengine/issues/14)
