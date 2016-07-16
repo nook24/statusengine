@@ -7,9 +7,16 @@
 $config = [
 	'graphite' => [
 
-		//Statusengine will create a UDP connection to your graphite server
+		//Statusengine will create a TCP connection to your graphite server
 		'host' => 'graphite.example.org',
 		'port' => 2003,
+
+		/* Every character that will not match the RegEx will be replaced with _
+		* in the key name for Graphite
+		* Type: String
+		* Default: /[^a-zA-Z^0-9\-\.]/
+		*/
+		'replace_characters' => '/[^a-zA-Z^0-9\-\.]/',
 
 		//prefix for every key
 		'prefix' => 'statusengine',

@@ -207,28 +207,4 @@ class LegacyAppModel extends AppModel{
 			}
 		}
 	}
-
-	/**
-	*
-	* save
-	*
-	* Licensed under The MIT License
-	*
-	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
-	*/
-	public function save($data = NULL, $validate = true, $fieldList = array(), $recursive = false){
-		try{
-			parent::save($data);
-		}catch(Exception $e){
-			$error = trim($e->getMessage());
-			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
-				if($recursive === false){
-					$this->getDatasource()->reconnect();
-					sleep(10);
-					$this->getDatasource()->reconnect();
-					$this->save($data, $validate, $fieldList, true);
-				}
-			}
-		}
-	}
 }

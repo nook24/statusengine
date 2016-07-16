@@ -125,6 +125,9 @@ class GraphiteBackendTask extends AppShell{
 	}
 
 	private function buildString($datasource, $data, $hostname, $servicedesc, $timestamp){
+		$datasource = $this->replaceCharacters($datasource);
+		$hostname = $this->replaceCharacters($hostname);
+		$servicedesc = $this->replaceCharacters($servicedesc);
 		return sprintf(
 			'%s.%s.%s.%s %s %s',
 			$this->prefix,
@@ -134,6 +137,10 @@ class GraphiteBackendTask extends AppShell{
 			$data['current'],
 			$timestamp
 		);
+	}
+
+	public function replaceCharacters($str){
+		return preg_replace($this->Config['replace_characters'], '_', $str);
 	}
 
 	public function requireHostNameCaching(){

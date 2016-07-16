@@ -53,11 +53,11 @@ class PerfdataBackendTask extends AppShell{
 		$this->graphiteEnabled = $this->isGraphiteEnabled();
 	}
 
-	private function isRrdEnabled(){
+	public function isRrdEnabled(){
 		return in_array('Rrd', $this->Config['perfdata_storage']);
 	}
 
-	private function isGraphiteEnabled(){
+	public function isGraphiteEnabled(){
 		return in_array('Graphite', $this->Config['perfdata_storage']);
 	}
 
