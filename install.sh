@@ -46,7 +46,7 @@ compiler="-ljson-c"
 
 supportedVersion="false"
 
-if [ $DISTRIBUTOR = "Debian" ]; then
+if [ $DISTRIBUTOR = "Debian" ] || [ $DISTRIBUTOR == "Raspbian" ]; then
 	if [ $CODENAME = "wheezy" ]; then
 		packages="gearman-job-server libgearman6 libgearman-dev gearman-tools uuid-dev php5-cli php5-dev libjson0-dev manpages-dev build-essential"
 		compiler=" -ljson -DDEBIAN7"
