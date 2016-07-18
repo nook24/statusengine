@@ -30,7 +30,7 @@ $config = [
 	//process performacne data for you and save them to RRD files
 	//so you don't need to install any additional software to
 	//get the job done.
-	'process_perfdata' => true,
+	'process_perfdata' => false,
 
 	//Checkout Config/Perfdata.php for RRDTool configuration
 	//Checkout Config/Graphite.php for Graphite configuration
