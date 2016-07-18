@@ -39,7 +39,7 @@ $config = [
 	//  1. RRD only: ['Rrd']
 	//  2. Graphite only: ['Graphite']
 	//  3. RRD and Graphite: ['Rrd', 'Graphite']
-	'perfdata_storage' => ['Rrd', 'Graphite'],
+	'perfdata_storage' => ['Rrd'],
 
 	//Workers Statusengine will fork in worker mode
 	//Check: https://statusengine.org/documentation.php#scaleout-statusengine
