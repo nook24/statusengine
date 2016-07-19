@@ -64,7 +64,7 @@ class RrdtoolController extends AppController{
 			'--imgformat','PNG',
 			'--color', 'BACK#FFFFFFFF',
 			'DEF:var0='.$this->Rrdtool->getPath($hostName, $serviceName).':'.$ds.':AVERAGE',
-			'AREA:var0#0287FA66:'.preg_replace($label, '/[^a-zA-Z^0-9\-\.]/', ' '),
+			'AREA:var0#0287FA66:'.preg_replace('/[^a-zA-Z^0-9\-\.]/', ' ', $label),
 			'LINE1:var0#2e6da4',
 			'VDEF:ds'.$ds.'avg=var0,AVERAGE',
 			'GPRINT:ds'.$ds.'avg:'.__('Average').'\:%6.2lf %S',
