@@ -202,7 +202,12 @@ class HostsController extends AppController{
 		}
 		$acknowledgement = [];
 		if(isset($hoststatus['Hoststatus']['problem_has_been_acknowledged']) && $hoststatus['Hoststatus']['problem_has_been_acknowledged'] == 1){
-			$acknowledgement = $this->Acknowledgement->findByObjectId($hostObjectId);
+			$acknowledgement = $this->Acknowledgement->find('first', [
+				'Acknowledgement.object_id' => $hostObjectId,
+				'order' => [
+					'entry_time' => 'desc'
+				]
+			]);
 		}
 
 		$this->set(compact([

@@ -151,6 +151,7 @@ class FilterHelper extends AppHelper{
 		if($renderOptions['wrapRow'] == true){
 			$html .= '</div>';
 		}
+		$html .= $this->Form->end();
 		return $html;
 	}
 }

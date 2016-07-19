@@ -118,9 +118,14 @@ class ServicesController extends AppController{
 
 		$acknowledgement = [];
 		if(isset($servicestatus['Servicestatus']['problem_has_been_acknowledged']) && $servicestatus['Servicestatus']['problem_has_been_acknowledged'] == 1){
-			$acknowledgement = $this->Acknowledgement->findByObjectId($serviceObjectId);
+			$acknowledgement = $this->Acknowledgement->find('first', [
+				'Acknowledgement.object_id' => $serviceObjectId,
+				'order' => [
+					'entry_time' => 'desc'
+				]
+			]);
 		}
-
+		
 		$this->Externalcommands->checkCmd();
 
 		$datasources = [];

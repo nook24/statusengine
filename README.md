@@ -88,8 +88,11 @@ service statusengine start
 Check the documentation for the [migration guide](https://statusengine.org/getting_started.php#migration)
 
 ##Tested with
-- Naemon 0.8.0 up to master
+- Naemon 0.8.0
+- Naemon 1.0.3
+- Naemon master (development)
 - Nagios 4.0.8
+- Nagios 4.1.1
 - mod_gearman
 - NagVis
 - MySQL
@@ -112,6 +115,9 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - Moved version numbers to app/Config/bootstrap.php
 - App name can be set now over [Interface.php](https://github.com/nook24/statusengine/blob/master/cakephp/app/Config/Interface.php)
 - Prepare for Naemon >= 1.0.4
+- Add missing closing form tag for search bar
+- Fix display of acknowledgements
+- Fix SQL schema for host and service dependencies
 
 **1.6.0**
 - Resolve issue with orphaned child processes [Issue 14](https://github.com/nook24/statusengine/issues/14)

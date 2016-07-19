@@ -41,7 +41,7 @@ set -e
 DISTRIBUTOR=$(lsb_release -si)
 CODENAME=$(lsb_release -sc)
 
-packages="gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5-cli php5-dev libjson-c-dev manpages-dev build-essential"
+packages="gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5-cli php5-dev libjson-c-dev manpages-dev build-essential libglib2.0-dev"
 compiler="-ljson-c"
 
 supportedVersion="false"
@@ -95,11 +95,12 @@ apt-get install -y $packages
 
 cd statusengine/src
 LANG=C gcc -shared -o statusengine-naemon.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman $compiler -DNAEMON;
+LANG=C gcc -shared -o statusengine-naemon-1-0-5.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman $compiler -lglib-2.0 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -lglib-2.0 -DNAEMON105
 LANG=C gcc -shared -o statusengine-nagios.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman $compiler -DNAGIOS;
 
 # Naemon master branch
 # apt-get install libglib2.0-dev
-# LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c -lglib-2.0 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -lglib-2.0 -DNAEMONMASTER
+# LANG=C gcc -shared -o statusengine-naemon-master.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c -lglib-2.0 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -lglib-2.0 -DNAEMONMASTER
 
 mkdir -p /opt/statusengine
 cp statusengine-naemon.o /opt/statusengine/
@@ -122,7 +123,11 @@ echo "For Naemon <= 1.0.3 add the following line to your naemon.cfg"
 echo "broker_module=/opt/statusengine/statusengine-naemon.o"
 echo ""
 
-echo "For Naemon master branch add the following line to your naemon.cfg"
+echo "For Naemon  1.0.5 add the following line to your naemon.cfg"
+echo "broker_module=/opt/statusengine/statusengine-naemon-1-0-5.o"
+echo ""
+
+echo "For Naemon master branch add the following line to your naemon.cfg (development)"
 echo "broker_module=/opt/statusengine/statusengine-naemon-master.o"
 echo ""
 
