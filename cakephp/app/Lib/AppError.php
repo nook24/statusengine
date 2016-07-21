@@ -32,7 +32,7 @@ class AppError extends ErrorHandler{
 	 * @param int $line Line that triggered the error
 	 * @param array $context Context
 	 * @return bool true if error was handled
-	 */	
+	 */
 	public static function handleError($code, $description, $file = null,$line = null, $context = null){
 		list($error, $log) = self::mapErrorCode($code);
 		$message = $error . ' (' . $code . '): ' . $description . ' in [' . $file . ', line ' . $line . ']';
@@ -40,15 +40,14 @@ class AppError extends ErrorHandler{
 		$message .= "\nTrace:\n" . $trace . "\n";
 		return CakeLog::write($log, $message);
 	}
-	
+
 	/**
 	 * Stripped version of CakePHP's ErrorHandler::handleException()
 	 *
 	 * @param Exception $exception The exception to render.
 	 * @return bool true if error was handled
 	 */
-	public static function handleException(Exception $exception){
+	public static function handleException($exception){
 		return CakeLog::write(LOG_ERR, self::_getMessage($exception));
 	}
 }
-

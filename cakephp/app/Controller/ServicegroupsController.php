@@ -1,24 +1,24 @@
 <?php
 /**
 * Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
-* 
+*
 * This file is part of Statusengine.
-* 
+*
 * Statusengine is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 2 of the License, or
 * (at your option) any later version.
-* 
+*
 * Statusengine is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
 class ServicegroupsController extends AppController{
-	
+
 	public $uses = [
 		'Legacy.Servicegroup',
 		'Legacy.Servicegroupmember',
@@ -48,7 +48,7 @@ class ServicegroupsController extends AppController{
 			]
 		]
 	];
-	
+
 	public function index(){
 		$query = [
 			'joins' => [
@@ -87,19 +87,21 @@ class ServicegroupsController extends AppController{
 				'Servicegroup.servicegroup_id',
 				'Servicegroup.servicegroup_object_id',
 				'Servicegroup.alias',
-				
+
 				'Servicegroupmember.servicegroup_id',
 				'Servicegroupmember.service_object_id',
-				
+
 				//'Service.*',
 				'Servicestatus.current_state',
 				'Servicestatus.last_check',
 				'Servicestatus.last_state_change',
+				'Servicestatus.problem_has_been_acknowledged',
+				'Servicestatus.scheduled_downtime_depth',
 				'Servicestatus.output',
-				
+
 				'Objects.object_id',
 				'Objects.name1',
-				
+
 				'ServiceObject.object_id',
 				'ServiceObject.name2',
 			],
@@ -108,7 +110,7 @@ class ServicegroupsController extends AppController{
 				'ServiceObject.name2' => 'asc'
 			]
 		];
-		
+
 		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
 		//Read: https://github.com/cakephp/cakephp/blob/2.7/lib/Cake/Controller/Component/PaginatorComponent.php#L121-L128
 		$servicegroups = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Objects.name1']));

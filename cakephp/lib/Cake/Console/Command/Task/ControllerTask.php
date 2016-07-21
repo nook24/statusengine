@@ -384,9 +384,9 @@ class ControllerTask extends BakeTask {
  * @return array Components the user wants to use.
  */
 	public function doComponents() {
-		$components = array('Paginator');
+		$components = array('Paginator', 'Flash');
 		return array_merge($components, $this->_doPropertyChoices(
-			__d('cake_console', "Would you like this controller to use other components\nbesides PaginatorComponent?"),
+			__d('cake_console', "Would you like this controller to use other components\nbesides PaginatorComponent and FlashComponent?"),
 			__d('cake_console', "Please provide a comma separated list of the component names you'd like to use.\nExample: 'Acl, Security, RequestHandler'")
 		));
 	}
@@ -452,14 +452,14 @@ class ControllerTask extends BakeTask {
 				return $this->_stop();
 			}
 
-			if (!$enteredController || intval($enteredController) > count($controllers)) {
+			if (!$enteredController || (int)$enteredController > count($controllers)) {
 				$this->err(__d('cake_console', "The Controller name you supplied was empty,\nor the number you selected was not an option. Please try again."));
 				$enteredController = '';
 			}
 		}
 
-		if (intval($enteredController) > 0 && intval($enteredController) <= count($controllers)) {
-			$controllerName = $controllers[intval($enteredController) - 1];
+		if ((int)$enteredController > 0 && (int)$enteredController <= count($controllers)) {
+			$controllerName = $controllers[(int)$enteredController - 1];
 		} else {
 			$controllerName = Inflector::camelize($enteredController);
 		}

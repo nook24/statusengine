@@ -64,7 +64,7 @@ class RrdtoolController extends AppController{
 			'--imgformat','PNG',
 			'--color', 'BACK#FFFFFFFF',
 			'DEF:var0='.$this->Rrdtool->getPath($hostName, $serviceName).':'.$ds.':AVERAGE',
-			'AREA:var0#0287FA66:'.$label,
+			'AREA:var0#0287FA66:'.preg_replace('/[^a-zA-Z^0-9\-\.]/', ' ', $label),
 			'LINE1:var0#2e6da4',
 			'VDEF:ds'.$ds.'avg=var0,AVERAGE',
 			'GPRINT:ds'.$ds.'avg:'.__('Average').'\:%6.2lf %S',
@@ -86,16 +86,16 @@ class RrdtoolController extends AppController{
 		$error = rrd_error();
 
 		if($res && $error === false){
-			header('Content-Type: image/png');
-		}else{
-			//Debuging stuff
-			debug($error);
-			debug($res);
+			$this->response->file($fileName);
+			// Return response object to prevent controller from trying to render a view
+			return $this->response;
 		}
 
-		$image = imagecreatefrompng($fileName);
-		imagepng($image);
-		imagedestroy($image);
-		unlink($fileName);
+		//We got an error from Rrdtool
+		//Output error as image
+		$errorImage = $this->Rrdtool->createErrorImage($error);
+		$this->response->type('png');
+		$this->response->body(imagepng($errorImage));
+		return $this->response;
 	}
 }

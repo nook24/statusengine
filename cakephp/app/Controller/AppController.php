@@ -37,6 +37,7 @@ class AppController extends Controller {
 		'Frontend.Frontend',
 		'Session',
 		'Filter',
+		'Flash',
 		'Auth' => [
 			'loginRedirect' => [
 				'controller' => 'Home',
@@ -60,7 +61,8 @@ class AppController extends Controller {
 		'Html' => ['className' => 'BoostCake.BoostCakeHtml'],
 		'Form' => ['className' => 'BoostCake.BoostCakeForm'],
 		'Paginator' => ['className' => 'BoostCake.BoostCakePaginator'],
-		'Filter'
+		'Filter',
+		'Flash'
 	];
 
 	function beforeFilter(){
@@ -69,12 +71,92 @@ class AppController extends Controller {
 		$this->Paginator->settings['limit'] = 50;
 		$isLoggedIn = $this->Auth->loggedIn();
 		$this->set('isLoggedIn', $isLoggedIn);
+
+		$this->themes = [
+			'classic' => 'classic',
+			'AdminLTE' => 'AdminLTE'
+		];
+	}
+
+	public function beforeRender(){
+		parent::beforeRender();
+		Configure::load('Interface');
+		$topMenuAppName = Configure::read('Interface.app_name');
+		if($topMenuAppName == ''){
+			$topMenuAppName = 'Statusengine';
+		}
+		$this->set('topMenuAppName', $topMenuAppName);
+
+		if(!$this->Auth->loggedIn()){
+			$this->theme = 'AdminLTE';
+		}else{
+			$theme = $this->Auth->user('theme');
+			if($theme != 'classic'){
+				if($theme == ''){
+					$theme = 'AdminLTE';
+				}
+				$this->theme = $theme;
+			}
+		}
+
+		if($this->theme == 'AdminLTE'){
+			$models = [
+				'Host' => 'host_object_id',
+				'Servicestatus' => 'service_object_id',
+				'Service' => 'service_object_id'
+			];
+
+			foreach($models as $modelName => $primaryKey){
+				$this->loadModel('Legacy.'.$modelName);
+				$this->{$modelName}->primaryKey = $primaryKey;
+			}
+
+			$query = [
+				'bindModels' => true,
+				'fields' => [
+					'Objects.name1',
+					'Objects.name2',
+
+					'Host.host_object_id',
+
+					'Service.service_id',
+					'Service.service_object_id',
+					'Service.host_object_id',
+
+					'Servicestatus.current_state',
+					'Servicestatus.problem_has_been_acknowledged',
+					'Servicestatus.scheduled_downtime_depth',
+
+				],
+
+				'conditions' => [
+					'Servicestatus.current_state > ' => 0,
+					'Servicestatus.problem_has_been_acknowledged' => 0,
+					'Servicestatus.scheduled_downtime_depth' => 0
+				]
+			];
+			$count = $this->Service->find('count', $query);
+
+			$query['order']	= [
+				'Objects.name1' => 'asc'
+			];
+
+			//Avoid annoying short scrollbar
+			$query['limit'] = 4;
+			$problems = $this->Service->find('all', $query);
+			$this->set('topMenuProblemsCounter', $count);
+			$this->set('topMenuProblems', $problems);
+		}
 	}
 
 	public function setFlash($message, $success = true, $key = 'flash'){
-		$this->Session->setFlash($message, 'default', array(
+		$this->Flash->set($message, [
+			'key' => $key,
+			'element' => ($success ? 'success' : 'danger')
+		]);
+		/*$this->Session->setFlash($message, 'default', array(
 			'class' => 'alert alert-' . ($success ? 'success' : 'danger')
-		), $key);
+		), $key);*/
 	}
 
 	public function fixPaginatorOrder($defaultOrder = []){

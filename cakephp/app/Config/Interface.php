@@ -24,10 +24,11 @@ $config = [
 		//If true the interface will show all SQL queries, if false not
 		'sql_dump' => false,
 
-		//Hide the openITCOCKPIT notice in footer
-		'hide_oitc' => true,
-
 		//Load interface in demo mode
 		'demo_mode' => false,
+
+		//The name of the application which will be displayed in the
+		// up right corner
+		'app_name' => 'Statusengine',
 	]
 ];

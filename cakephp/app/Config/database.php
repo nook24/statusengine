@@ -69,7 +69,7 @@ class DATABASE_CONFIG {
 		'persistent' => false,
 		'host' => 'localhost',
 		'login' => 'root',
-		'password' => 'vagrant',
+		'password' => 'password',
 		'database' => 'statusengine',
 		'prefix' => '',
 		'encoding' => 'utf8',
@@ -80,9 +80,9 @@ class DATABASE_CONFIG {
 		'persistent' => false,
 		'host' => 'localhost',
 		'login' => 'root',
-		'password' => 'vagrant',
-		'database' => 'nagios',
-		'prefix' => 'nagios_',
+		'password' => 'password',
+		'database' => 'naemon',
+		'prefix' => 'naemon_',
 		//'encoding' => 'utf8',
 	);
 

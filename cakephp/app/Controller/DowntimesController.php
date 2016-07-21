@@ -1,24 +1,24 @@
 <?php
 /**
 * Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
-* 
+*
 * This file is part of Statusengine.
-* 
+*
 * Statusengine is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 2 of the License, or
 * (at your option) any later version.
-* 
+*
 * Statusengine is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
 class DowntimesController extends AppController{
-	
+
 	public $uses = [
 		'Legacy.Downtimehistory',
 		'Legacy.Objects',
@@ -39,7 +39,7 @@ class DowntimesController extends AppController{
 			]
 		]
 	];
-	
+
 	public function index(){
 		$query = [
 			'joins' => [
@@ -58,20 +58,20 @@ class DowntimesController extends AppController{
 				'Objects.name1' => 'asc',
 			]
 		];
-		
+
 		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
 		//Read: https://github.com/cakephp/cakephp/blob/2.7/lib/Cake/Controller/Component/PaginatorComponent.php#L121-L128
 		$downtimes = $this->Paginator->paginate(null, [], $this->fixPaginatorOrder(['Objects.name1']));
 		$this->set(compact(['downtimes']));
 		$this->set('_serialize', ['downtimes']);
 	}
-	
+
 	public function create($type = 'host'){
 		$types = ['host', 'service'];
 		if(!in_array($type, $types)){
 			$this->redirect(['action' => 'create', 'host']);
 		}
-		
+
 		if($this->request->is('post') || $this->request->is('put')){
 			if(!$this->Objects->exists($this->request->data('Downtimehistory.host'))){
 				throw new NotFoundException(__('Host not found'));
@@ -118,12 +118,13 @@ class DowntimesController extends AppController{
 
 				$this->Externalcommands->createDowntime($type, $downtimeOptions);
 				sleep(1);
+				$this->setFlash(__('Downtime saved'));
 				$this->redirect(['action' => 'index']);
 			}else{
 				$this->setFlash(__('Data validation error'), false);
 			}
 		}
-		
+
 		//Set default values
 		$defaults = [
 			'Downtimehistory' => [
@@ -132,7 +133,7 @@ class DowntimesController extends AppController{
 			]
 		];
 		$this->request->data = Hash::merge($defaults, $this->request->data);
-		
+
 		$hosts = $this->Objects->findList(1);
 		$services = [];
 		if($type == 'service' && !empty($hosts)){
@@ -147,7 +148,7 @@ class DowntimesController extends AppController{
 			'services'
 		]));
 	}
-	
+
 	public function getServices($hostObjectId = null){
 		if(!$this->request->is('ajax')){
 			throw new MethodNotAllowedException();
@@ -155,7 +156,7 @@ class DowntimesController extends AppController{
 		if(!$this->Objects->exists($hostObjectId)){
 			throw new NotFoundException(__('Host not found'));
 		}
-		
+
 		$services = $this->Service->find('all', [
 			'conditions' => [
 				'Service.host_object_id' => $hostObjectId
@@ -179,13 +180,14 @@ class DowntimesController extends AppController{
 		$this->set('services', $services);
 		$this->set('_serialize', ['services']);
 	}
-	
+
 	public function delete($type = 'host', $internalDowntimeId = null){
 		if(!$this->request->is('post')){
 			throw new MethodNotAllowedException();
 		}
 		$this->Externalcommands->deleteDowntime($type, $internalDowntimeId);
 		sleep(1);
+		$this->setFlash(__('Downtime deleted'));
 		$this->redirect(['action' => 'index']);
 	}
 }

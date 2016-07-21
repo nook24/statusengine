@@ -1,24 +1,24 @@
 <?php
 /**
 * Copyright (C) 2015 Daniel Ziegler <daniel@statusengine.org>
-* 
+*
 * This file is part of Statusengine.
-* 
+*
 * Statusengine is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 2 of the License, or
 * (at your option) any later version.
-* 
+*
 * Statusengine is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
-* 
+*
 * You should have received a copy of the GNU General Public License
 * along with Statusengine.  If not, see <http://www.gnu.org/licenses/>.
 */
 class HostsController extends AppController{
-	
+
 	public $uses = [
 		'Legacy.Host',
 		'Legacy.Hoststatus',
@@ -31,7 +31,7 @@ class HostsController extends AppController{
 	];
 	public $helpers = ['Status'];
 	public $components = ['Externalcommands'];
-	
+
 	public $filter = [
 		'index' => [
 			'Hoststatus' => [
@@ -48,7 +48,7 @@ class HostsController extends AppController{
 			]
 		]
 	];
-	
+
 	public function index(){
 		//Models are not linked for StatusengineLegacyShell, so we need to to the dirty job now :(
 		$this->Hoststatus->primaryKey = 'host_object_id';
@@ -64,18 +64,18 @@ class HostsController extends AppController{
 				],
 			]
 		]);
-		
+
 		$query = [
 			'fields' => [
 				'Objects.object_id',
 				'Objects.name1',
-				
+
 				'Host.host_id',
 				'Host.host_object_id',
 				'Host.alias',
 				'Host.display_name',
 				'Host.address',
-				
+
 				'Hoststatus.current_state',
 				'Hoststatus.last_check',
 				'Hoststatus.last_state_change',
@@ -86,20 +86,20 @@ class HostsController extends AppController{
 				'Objects.name1' => 'asc'
 			]
 		];
-		
+
 		$this->Paginator->settings = Hash::merge($query, $this->Paginator->settings);
 		$hosts = $this->Paginator->paginate();
-		
+
 		//Get services + service status
 		$hostObjectIds = Hash::extract($hosts, '{n}.Host.host_object_id');
-		
+
 		$stateTypes = [
 			0 => 0,
 			1 => 0,
 			2 => 0,
 			3 => 0
 		];
-		
+
 		foreach($hostObjectIds as $hostObjectId){
 			$servicestatus[$hostObjectId] = $stateTypes;
 			$_servicestatus = $this->Service->find('all', [
@@ -124,24 +124,24 @@ class HostsController extends AppController{
 					]
 				]
 			]);
-			
+
 			foreach($_servicestatus as $state){
 				$servicestatus[$hostObjectId][$state['Servicestatus']['current_state']] = $state[0]['count'];
 			}
 		}
-		
+
 		$this->set(compact([
 			'hosts',
 			'servicestatus'
 		]));
 		$this->set('_serialize', ['hosts']);
 	}
-	
+
 	public function details($hostObjectId = null){
 		if(!$this->Objects->exists($hostObjectId)){
 			throw new NotFoundException(__('Host not found'));
 		}
-		
+
 		$hoststatus = $this->Hoststatus->findByHostObjectId($hostObjectId);
 		$object = $this->Objects->findByObjectId($hostObjectId);
 		$host = $this->Host->find('first', [
@@ -153,7 +153,7 @@ class HostsController extends AppController{
 				'Host.display_name'
 			]
 		]);
-		
+
 		$this->Service->primaryKey = 'service_object_id';
 		$this->Servicestatus->primaryKey = 'service_object_id';
 		$this->Service->bindModel([
@@ -189,21 +189,27 @@ class HostsController extends AppController{
 				'Servicestatus.last_state_change' => 'DESC'
 			]
 		]);
-		
+
 		$this->Externalcommands->checkCmd();
-		
+
 		$this->Frontend->setJson('url', Router::url(['controller' => 'Externalcommands', 'action' => 'receiver']));
+		$this->Frontend->setJson('currentUrl', Router::url(['controller' => 'Hosts', 'action' => 'details', $hostObjectId]));
 		$this->Frontend->setJson('hostObjectId', $hostObjectId);
-		
+
 		$downtime = [];
 		if(isset($hoststatus['Hoststatus']['scheduled_downtime_depth']) && $hoststatus['Hoststatus']['scheduled_downtime_depth'] > 0){
 			$downtime = $this->Downtimehistory->findByObjectId($hostObjectId);
 		}
 		$acknowledgement = [];
 		if(isset($hoststatus['Hoststatus']['problem_has_been_acknowledged']) && $hoststatus['Hoststatus']['problem_has_been_acknowledged'] == 1){
-			$acknowledgement = $this->Acknowledgement->findByObjectId($hostObjectId);
+			$acknowledgement = $this->Acknowledgement->find('first', [
+				'Acknowledgement.object_id' => $hostObjectId,
+				'order' => [
+					'entry_time' => 'desc'
+				]
+			]);
 		}
-		
+
 		$this->set(compact([
 			'host',
 			'hoststatus',

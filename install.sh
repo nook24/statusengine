@@ -29,48 +29,175 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 #**********************************************************************************
+
+which lsb_release > /dev/null
+if [ $? -ne 0 ]; then
+        echo "lsb_release is missing on your system! Please run 'apt-get install lsb-release' first"
+        exit 1
+fi
+
 set -e
 
-if grep -q DISTRIB_CODENAME=trusty /etc/lsb-release; then
-	apt-get update
-	apt-get install gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5 php5-cli php5-dev libjson-c-dev manpages-dev build-essential
-	cd statusengine/src
+DISTRIBUTOR=$(lsb_release -si)
+CODENAME=$(lsb_release -sc)
 
-	echo -e "\nPlease define either NAEMON or NAGIOS."
-	read monengine
-	case "$monengine" in 
-		
-		NAEMON)
-		LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c -DNAEMON;
-		;;
-	
-		NAGIOS)
-                LANG=C gcc -shared -o statusengine.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c -DNAGIOS;
-                ;;
+packages="gearman-job-server libgearman-dev gearman-tools uuid-dev php5-gearman php5-cli php5-dev libjson-c-dev manpages-dev build-essential libglib2.0-dev"
+compiler="-ljson-c"
 
-		*)
-	        echo "ERR: Please define either 'NAEMON' or 'NAGIOS'. Script aborted.";
-	        exit 2;
-		;;
-	
-	esac
+supportedVersion="false"
+php7="false"
+systemd="false"
+xenial="false"
 
-	#mkdir -p /opt/openitc/nagios/share/perfdata/
-	mkdir -p /opt/statusengine
-	cp statusengine.o /opt/statusengine/
-	cd ../../
-	cp -r cakephp /opt/statusengine/
-	cp etc/init.d/statusengine /etc/init.d/statusengine
-	cp etc/init.d/mod_perfdata /etc/init.d/mod_perfdata
-	chmod +x /etc/init.d/statusengine
-	chmod +x /etc/init.d/mod_perfdata
-	chmod +x /opt/statusengine/cakephp/app/Console/cake
-	mkdir -p /opt/statusengine/cakephp/app/tmp
-	chown www-data:www-data /opt/statusengine/cakephp/app/tmp -R
-	echo -e "\033[0;32mInstallation done...\033[0m"
-	echo -e "\033[0;34mSet broker_module=/opt/statusengine/statusengine.o in your config\033[0m"
-	echo -e "\033[0;34mSet the right MySQL username and passwort in cakephp/app/Config/database.php\033[0m"
-	cd /opt/statusengine
-else
-	echo "This installer only support Ubuntu 14.04 LTS (trusty)"
+if [ $DISTRIBUTOR = "Debian" ] || [ $DISTRIBUTOR == "Raspbian" ]; then
+        if [ $CODENAME = "wheezy" ]; then
+                packages="gearman-job-server libgearman6 libgearman-dev gearman-tools uuid-dev php5-cli php5-dev libjson0-dev manpages-dev build-essential libglib2.0-dev"
+                compiler=" -ljson -DDEBIAN7"
+                supportedVersion="true"
+        fi
+
+        if [ $CODENAME = "jessie" ]; then
+                supportedVersion="true"
+                systemd="true"
+        fi
+
+        if [ $supportedVersion = "false" ]; then
+                echo "###########################"
+                echo "This installer only support Debian Wheezy and Jessie"
+                echo "Check out https://statusengine.org/documentation.php#advanced-installation"
+                echo "###########################"
+        fi
+
 fi
+
+if [ $DISTRIBUTOR = "Ubuntu" ]; then
+        if [ $CODENAME = "trusty" ]; then
+                supportedVersion="true"
+        fi
+
+        if [ $CODENAME = "xenial" ]; then
+                packages="mysql-server apache2 libapache2-mod-php gearman-job-server libgearman-dev gearman-tools uuid-dev php-cli php-dev libjson-c-dev manpages-dev build-essential rrdtool php-rrd php-mysqlnd php-gd unzip libglib2.0-dev"
+                supportedVersion="true"
+                php7="true"
+                systemd="true"
+                xenial="true"
+        fi
+
+        if [ $supportedVersion = "false" ]; then
+                echo "###########################"
+                echo "This installer only support Ubuntu 14.04 and Ubuntu 16.04"
+                echo "Check out https://statusengine.org/documentation.php#advanced-installation"
+                echo "###########################"
+                supportedVersion="false"
+        fi
+fi
+
+if [ $supportedVersion = "false" ]; then
+        echo "Sorry your OS is not supported by the installer."
+        echo "Read https://statusengine.org/documentation.php#advanced-installation for manual installation instructions"
+        exit 1;
+fi
+
+apt-get update
+apt-get install -y $packages
+
+cd statusengine/src
+LANG=C gcc -shared -o statusengine-naemon.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman $compiler -DNAEMON;
+LANG=C gcc -shared -o statusengine-naemon-1-0-5.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman $compiler -lglib-2.0 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -lglib-2.0 -DNAEMON105
+LANG=C gcc -shared -o statusengine-nagios.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman $compiler -DNAGIOS;
+
+# Naemon master branch
+# apt-get install libglib2.0-dev
+# LANG=C gcc -shared -o statusengine-naemon-master.o -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c -lglib-2.0 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -lglib-2.0 -DNAEMONMASTER
+
+
+if [ $php7 = "true" ] && [ $xenial == "true" ]; then
+    echo "###########################"
+    echo "enable php-rrd extension"
+    echo "###########################"
+    ln -s /etc/php/mods-available/rrd.ini /etc/php/7.0/mods-available/rrd.ini
+    phpenmod -v ALL -s ALL rrd
+    
+    echo "###########################"
+    echo "php-gearman is missing in Ubuntu 16.04"
+    echo "I will compile and enable the php extension for you..."
+    echo "###########################"
+    apt-get install -y git libgearman-dev
+    git clone https://github.com/wcgallego/pecl-gearman.git
+    cd pecl-gearman/
+    phpize
+    ./configure
+    make
+    make install
+    echo "extension=gearman.so" >> /etc/php/7.0/mods-available/gearman.ini
+    phpenmod -s ALL gearman
+    cd ../
+fi
+
+mkdir -p /opt/statusengine
+cp statusengine-naemon.o /opt/statusengine/
+cp statusengine-nagios.o /opt/statusengine/
+cd ../../
+cp -r cakephp /opt/statusengine/
+if [ $systemd = "false" ]; then
+    cp etc/init.d/statusengine /etc/init.d/statusengine
+    cp etc/init.d/mod_perfdata /etc/init.d/mod_perfdata
+    chmod +x /etc/init.d/statusengine
+    chmod +x /etc/init.d/mod_perfdata
+fi
+
+if [ $systemd = "true" ]; then
+    cp etc/systemd/system/statusengine.service /etc/systemd/system/statusengine.service
+    systemctl enable statusengine.service
+fi
+
+chmod +x /opt/statusengine/cakephp/app/Console/cake
+mkdir -p /opt/statusengine/cakephp/app/tmp
+chown www-data:www-data /opt/statusengine/cakephp/app/tmp -R
+
+echo "###########################"
+echo "Installation done..."
+echo ""
+
+echo "For Naemon <= 1.0.3 add the following line to your naemon.cfg"
+echo "broker_module=/opt/statusengine/statusengine-naemon.o"
+echo ""
+
+#echo "For Naemon 1.0.5 add the following line to your naemon.cfg"
+#echo "broker_module=/opt/statusengine/statusengine-naemon-1-0-5.o"
+#echo ""
+
+echo "For Naemon master branch add the following line to your naemon.cfg (development)"
+echo "broker_module=/opt/statusengine/statusengine-naemon-master.o"
+echo ""
+
+echo "For Nagios 4 add the following line to your nagios.cfg"
+echo "broker_module=/opt/statusengine/statusengine-nagios.o"
+echo ""
+
+if [ $DISTRIBUTOR = "Debian" ]; then
+        if [ $CODENAME = "wheezy" ]; then
+                echo "###########################"
+                echo "Debian wheezy is not 100% supported by this installer due to missing packages in the package manager"
+                echo "You need to install php5-gearman manually!"
+                echo "Check out https://statusengine.org/documentation.php#advanced-installation"
+                echo ""
+                echo "Statusengine Event Broker Module is read to use right now!"
+                echo "But to use the PHP part of Statusengine, you need to install the php extension"
+                echo "Download the following archiv for Debian Wheezy"
+                echo "wget https://pecl.php.net/get/gearman-1.0.3.tgz"
+                echo "###########################"
+        fi
+fi
+
+echo ""
+echo "Don't forget to set your MySQL credentials in /opt/statusengine/cakephp/app/Config/database.php"
+
+echo ""
+echo "Read https://statusengine.org/getting_started.php#installation to see how to continue."
+
+echo ""
+echo "Have fun :)"
+
+
+

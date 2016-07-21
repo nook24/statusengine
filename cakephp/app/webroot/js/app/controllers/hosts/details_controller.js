@@ -1,8 +1,45 @@
 App.Controllers.HostsDetailsController = Frontend.AppController.extend({
+	$nonFixed:null,
+	$extFixed: null,
 	components: ['Ajax'],
 	_initialize: function(){
-		this.Ajax.setup(this.getVar('url'));
+		this.Ajax.setup(this.getVar('url'), this.getVar('currentUrl'));
 		var self = this;
+
+		this.$nonFixed = $('#nonFixed');
+		this.$extFixed = $('#fixed');
+
+		//width fix
+		this.$extFixed.width(this.$nonFixed.width()+'px');
+		this.$nonFixed.hide();
+		this.$extFixed.hide();
+
+
+		$(document).on("scroll", function(e){
+			//Fix display fixed message on page load and scrolling
+			if(this.$nonFixed.css('display') != 'none'){
+				if($(window).scrollTop() > 250){
+					//Show fixed message
+					//Hide static one
+					this.$nonFixed.css('visibility', 'hidden');
+					this.$extFixed.show();
+				}else{
+					//Hide fixed message
+					//Show static one
+					this.$nonFixed.css('visibility', 'visible');
+					this.$extFixed.hide();
+				}
+			}else{
+				//Fix, on scroll up if an event was triggert
+				// while the static message was hidden
+				if($(window).scrollTop() < 250){
+					if(this.$extFixed.css('display') != 'none'){
+						this.$extFixed.hide();
+						this.$nonFixed.show();
+					}
+				}
+			}
+		}.bind(this));
 
 		$('.extClickCommand').click(function(){
 			var data = {

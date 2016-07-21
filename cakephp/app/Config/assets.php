@@ -12,6 +12,7 @@ $config = array(
 			'vendor/test.js',
 			'vendor/bootstrap.min',
 			'vendor/xpull/xpull.js',
+			'vendor/jquery.backgrounder.js',
 		),
 		'jsFrontendPluginDependent' => array()
 	)

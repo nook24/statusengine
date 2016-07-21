@@ -40,6 +40,7 @@ class UsersController extends AppController{
 			$this->redirect(['action' => 'index']);
 			return;
 		}
+		$this->set('themes', $this->themes);
 
 		if($this->request->is('post') || $this->request->is('put')){
 			$this->User->create();
@@ -61,8 +62,22 @@ class UsersController extends AppController{
 		if(!$this->User->exists($id)){
 			throw new NotFoundException(__('User not found'));
 		}
+
+		if($this->request->is('post') || $this->request->is('put')){
+			if($this->User->save($this->request->data)){
+				$this->setFlash(__('User edit successfully'));
+				if($id == $this->Auth->user('id')){
+					$this->Session->write('Auth.User.theme', $this->request->data('User.theme'));
+				}
+				return $this->redirect(['action' => 'index']);
+			}
+			$this->setFlash(__('Could not save data'), false);
+		}
+
 		$user = $this->User->findById($id);
 		$this->set('user', $user);
+		$this->set('themes', $this->themes);
+		$this->set('userTheme', $this->Auth->user('theme'));
 	}
 
 	public function delete($id){
@@ -85,6 +100,10 @@ class UsersController extends AppController{
 		}
 
 		if($this->User->delete($id)){
+			if($id == $this->Auth->user('id')){
+				$this->Auth->logout();
+			}
+
 			$this->setFlash(__('User deleted successfully'));
 			return $this->redirect(['action' => 'index']);
 		}
@@ -101,7 +120,7 @@ class UsersController extends AppController{
 			if($this->Auth->login()){
 				return $this->redirect($this->Auth->redirectUrl());
 			}
-			$this->Session->setFlash(__('Invalid username or password, try again'));
+			$this->setFlash(__('Invalid username or password, try again'), false);
 		}
 	}
 

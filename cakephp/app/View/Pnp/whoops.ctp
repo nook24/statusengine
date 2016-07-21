@@ -21,7 +21,8 @@
 			</div>
 			<hr />
 			2. <?php echo __('PNP4Nagios is not installed on your system. This guide will help you to install PNP4Nagios for <b>Apache2</b>.');?>
-			2.1 <?php echo __('Install PNP4Nagios using Ubuntu\'s packet manager'); ?>
+			<br />
+			2.1 <?php echo __('Install PNP4Nagios using Ubuntu\'s packet manager (14.04)'); ?>
 			<div class="well">
 				sudo su<br/>
 				apt-get update<br />

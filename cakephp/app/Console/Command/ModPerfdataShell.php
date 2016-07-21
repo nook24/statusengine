@@ -79,7 +79,7 @@ class ModPerfdataShell extends AppShell{
 		//Load CakePHP's File class
 		App::uses('File', 'Utility');
 
-		$this->out('Starting Statusengine ModPerfdata extension -  version: '.$this->Config['version'].'...');
+		$this->out('Starting Statusengine ModPerfdata extension -  version: '.PERFDATA_VERSION.'...');
 		if($this->Config['MOD_GEARMAN']['encryption'] === true){
 			//Mod_Gearman use a 32bit key to encrypt data, if encryption is enabled
 			//Mod_Gearman data is crypted with AES 128 bit
