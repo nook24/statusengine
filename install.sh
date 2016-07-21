@@ -163,7 +163,7 @@ echo "For Naemon <= 1.0.3 add the following line to your naemon.cfg"
 echo "broker_module=/opt/statusengine/statusengine-naemon.o"
 echo ""
 
-#echo "For Naemon  1.0.5 add the following line to your naemon.cfg"
+#echo "For Naemon 1.0.5 add the following line to your naemon.cfg"
 #echo "broker_module=/opt/statusengine/statusengine-naemon-1-0-5.o"
 #echo ""
 
