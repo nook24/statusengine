@@ -173,11 +173,12 @@ class LegacyAppModel extends AppModel{
 			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
 				if($recursive === false){
 					$this->getDatasource()->reconnect();
-					sleep(10);
+					sleep(1);
 					$this->getDatasource()->reconnect();
-					$this->sqlSave($data, true);
+					return $this->sqlSave($data, true);
 				}
 			}
+			CakeLog::error($e->getMessage());
 		}
 	}
 
@@ -197,14 +198,50 @@ class LegacyAppModel extends AppModel{
 			$this->query($data);
 		}catch(Exception $e){
 			$error = $e->getMessage();
+			print_r($error.PHP_EOL);
 			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
 				if($recursive === false){
 					$this->getDatasource()->reconnect();
-					sleep(10);
+					sleep(1);
 					$this->getDatasource()->reconnect();
-					$this->sqlQuery($data, true);
+					return $this->sqlQuery($data, true);
 				}
 			}
+			CakeLog::error($e->getMessage());
+		}
+	}
+
+	public function save($data = null, $validate = true, $fieldList = [], $recursive = false){
+		try{
+			return parent::save($data, $validate, $fieldList);
+		}catch(Exception $e){
+			$error = $e->getMessage();
+			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
+				if($recursive === false){
+					$this->getDatasource()->reconnect();
+					sleep(1);
+					$this->getDatasource()->reconnect();
+					return $this->save($data, $validate, $fieldList, true);
+				}
+			}
+			CakeLog::error($e->getMessage());
+		}
+	}
+
+	public function find($type = 'first', $query = [], $recursive = false){
+		try{
+			return parent::find($type, $query);
+		}catch(Exception $e){
+			$error = $e->getMessage();
+			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
+				if($recursive === false){
+					$this->getDatasource()->reconnect();
+					sleep(1);
+					$this->getDatasource()->reconnect();
+					return $this->find($type, $query, true);
+				}
+			}
+			CakeLog::error($e->getMessage());
 		}
 	}
 }
