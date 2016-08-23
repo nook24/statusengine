@@ -326,7 +326,7 @@ class StatusengineLegacyShell extends AppShell{
 					'Configvariable'
 				];
 				foreach($truncate as $Model){
-					$this->{$Model}->deleteAll(true);
+					$this->{$Model}->truncate();
 				}
 
 				$this->clearObjectsCache();

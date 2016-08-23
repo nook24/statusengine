@@ -244,4 +244,27 @@ class LegacyAppModel extends AppModel{
 			CakeLog::error($e->getMessage());
 		}
 	}
+
+	public function truncate($recursive = false){
+		$db = $this->getDataSource();
+
+		$dbName = $db->config['database'];
+		$tableName = $this->tablePrefix.$this->table;
+		$query = sprintf('TRUNCATE `%s`.`%s`', $dbName, $tableName);
+
+		try{
+			$this->sqlQuery($query);
+		}catch(Exception $e){
+			$error = $e->getMessage();
+			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
+				if($recursive === false){
+					$this->getDatasource()->reconnect();
+					sleep(1);
+					$this->getDatasource()->reconnect();
+					return $this->truncate(true);
+				}
+			}
+			CakeLog::error($e->getMessage());
+		}
+	}
 }
