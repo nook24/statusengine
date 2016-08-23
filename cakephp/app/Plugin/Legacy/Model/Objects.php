@@ -66,7 +66,7 @@ class Objects extends LegacyAppModel{
 
 		//Insert new record
 		$result = $db->fetchAll(
-			'SET NAMES utf8; INSERT INTO
+			'INSERT INTO
 			'.$this->tablePrefix.$this->table.' (
 				object_id, instance_id, objecttype_id, name1, name2, is_active
 			)VALUES(
