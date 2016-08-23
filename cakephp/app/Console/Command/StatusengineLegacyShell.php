@@ -158,6 +158,7 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function main(){
 		Configure::load('Statusengine');
+
 		$this->childPids = [];
 		$this->_constants();
 		$this->clearQ = false;
@@ -379,7 +380,7 @@ class StatusengineLegacyShell extends AppShell{
 					]
 				];
 
-				$result = $this->Objects->save($data);
+				$result = $this->Objects->replace($data);
 
 				$data = [
 					'Command' => [
@@ -416,7 +417,7 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					],
 				];
-				$result = $this->Objects->save($data);
+				$result = $this->Objects->replace($data);
 
 				$data = [
 					'Timeperiod' => [
@@ -480,7 +481,7 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				];
-				$result = $this->Objects->save($data);
+				$result = $this->Objects->replace($data);
 				$data = [
 					'Contact' => [
 						'instance_id' => $this->instance_id,
@@ -586,7 +587,7 @@ class StatusengineLegacyShell extends AppShell{
 					],
 				];
 
-				$result = $this->Objects->save($data);
+				$result = $this->Objects->replace($data);
 
 				$data = [
 					'Contactgroup' => [
@@ -635,7 +636,7 @@ class StatusengineLegacyShell extends AppShell{
 					]
 				];
 
-				$result = $this->Objects->save($data);
+				$result = $this->Objects->replace($data);
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->name);
 
@@ -771,7 +772,7 @@ class StatusengineLegacyShell extends AppShell{
 					]
 				];
 
-				$result = $this->Objects->save($data);
+				$result = $this->Objects->replace($data);
 
 				$data = [
 					'Hostgroup' => [
@@ -847,7 +848,7 @@ class StatusengineLegacyShell extends AppShell{
 				//];
 				//$result = $this->Objects->save($data);
 
-				if($objectId === null){
+				/*******if($objectId === null){
 					$data = [
 						'Objects' => [
 							'instance_id' => $this->instance_id,
@@ -875,6 +876,20 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				//$objectId = $result['Objects']['object_id'];
+				*/
+
+				$data = [
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->host_name,
+						'name2' => $payload->description,
+						'is_active' => 1,
+						'object_id' => $objectId,
+						'instance_id' => $this->instance_id,
+					]
+				];
+				$result = $this->Objects->replace($data);
+				$objectId = $result['Objects']['object_id'];
 
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $objectId, $payload->host_name, $payload->description);
@@ -1031,7 +1046,7 @@ class StatusengineLegacyShell extends AppShell{
 					]
 				];
 
-				$result = $this->Objects->save($data);
+				$result = $this->Objects->replace($data);
 
 				$data = [
 					'Servicegroup' => [
@@ -1077,7 +1092,7 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				];
-				$this->Objects->save($data);
+				$this->Objects->replace($data);
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->host_name);
 
@@ -1139,7 +1154,7 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				];
-				$this->Objects->save($data);
+				$this->Objects->replace($data);
 				//Add the object to objectCache
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->host_name);
 
@@ -1204,7 +1219,7 @@ class StatusengineLegacyShell extends AppShell{
 					]
 				];
 
-				$result = $this->Objects->save($data);
+				$result = $this->Objects->replace($data);
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->host_name);
 				$this->Hostdependency->create();
 				$data = [
@@ -1243,7 +1258,7 @@ class StatusengineLegacyShell extends AppShell{
 					]
 				];
 
-				$result = $this->Objects->save($data);
+				$result = $this->Objects->replace($data);
 				$this->addObjectToCache($payload->object_type, $this->Objects->id, $payload->host_name, $payload->service_description);
 
 				$this->Servicedependency->create();
