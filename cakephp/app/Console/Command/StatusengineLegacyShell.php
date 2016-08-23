@@ -236,6 +236,9 @@ class StatusengineLegacyShell extends AppShell{
 			]);
 
 			$this->gearmanConnect();
+
+			$this->cacheHostNamesForGraphiteIfRequried();
+			$this->cacheServiceNamesForGraphiteIfRequried();
 			CakeLog::info('Lets rock!');
 		}
 
@@ -747,14 +750,6 @@ class StatusengineLegacyShell extends AppShell{
 					$this->Customvariable->save($data);
 				}
 
-				if($this->processPerfdata === true){
-					if($this->PerfdataBackend->isGraphiteEnabled()){
-						if($this->GraphiteBackend->requireNameCaching()){
-							$this->GraphiteBackend->addHostdisplayNameToCache($payload->name, $payload->display_name);
-						}
-					}
-				}
-
 				unset($data, $result);
 				break;
 
@@ -1013,14 +1008,6 @@ class StatusengineLegacyShell extends AppShell{
 						]
 					];
 					$this->Customvariable->save($data);
-				}
-
-				if($this->processPerfdata === true){
-					if($this->PerfdataBackend->isGraphiteEnabled()){
-						if($this->GraphiteBackend->requireNameCaching()){
-							$this->GraphiteBackend->addServicedisplayNameToCache($payload->description, $payload->display_name);
-						}
-					}
 				}
 
 				unset($data, $result, $objectId);
@@ -1569,7 +1556,7 @@ class StatusengineLegacyShell extends AppShell{
 					}
 
 					if($this->GraphiteBackend->requireServiceNameCaching()){
-						$_servicedesc = $this->GraphiteBackend->getServicedisplayNameFromCache($_servicedesc);
+						$_servicedesc = $this->GraphiteBackend->getServicedisplayNameFromCache($payload->servicecheck->host_name, $_servicedesc);
 					}
 
 					$this->GraphiteBackend->save(
@@ -2742,7 +2729,6 @@ class StatusengineLegacyShell extends AppShell{
 		$this->sendSignal(SIGUSR1);
 		$this->worker->setTimeout(1000);
 
-
 		while(true){
 			pcntl_signal_dispatch();
 			$this->worker->work();
@@ -2809,16 +2795,19 @@ class StatusengineLegacyShell extends AppShell{
 					}
 				}
 
+				$this->cacheHostNamesForGraphiteIfRequried();
+				$this->cacheServiceNamesForGraphiteIfRequried();
+
 				CakeLog::info('I will continue my work');
 				$this->childWork();
 
 			}
 			pcntl_signal_dispatch();
-                        //Check if the parent process still exists
-                        if($this->parentPid != posix_getppid()){
-                                CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
-                                exit(3);
-                        }
+			//Check if the parent process still exists
+			if($this->parentPid != posix_getppid()){
+				CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
+				exit(3);
+			}
 			usleep(250000);
 		}
 	}
@@ -2976,6 +2965,84 @@ class StatusengineLegacyShell extends AppShell{
 			}
 		}else{
 			CakeLog::info('ERROR: Core config '.$configFile.' not found!!!');
+		}
+	}
+
+	public function cacheHostNamesForGraphiteIfRequried(){
+		if($this->processPerfdata === true){
+			if($this->PerfdataBackend->isGraphiteEnabled()){
+				if($this->GraphiteBackend->requireNameCaching()){
+					CakeLog::info('Build up host name cache for Graphite');
+					$query = sprintf('
+						SELECT
+							`%s`.`name1`,
+							`%s`.`display_name`
+						FROM `%s`
+						LEFT JOIN `%s` ON `%s`.object_id = `%s`.host_object_id
+						WHERE `%s`.objecttype_id = %s; -- %s',
+						$this->Objects->tablePrefix.$this->Objects->table,
+						$this->Host->tablePrefix.$this->Host->table,
+						$this->Objects->tablePrefix.$this->Objects->table,
+						$this->Host->tablePrefix.$this->Host->table,
+						$this->Objects->tablePrefix.$this->Objects->table,
+						$this->Host->tablePrefix.$this->Host->table,
+						$this->Objects->tablePrefix.$this->Objects->table,
+						OBJECT_HOST,
+						time() //disable caching
+					);
+
+					$results = $this->Objects->query($query);
+
+					foreach($results as $result){
+						$this->GraphiteBackend->addHostdisplayNameToCache(
+							$result[$this->Objects->tablePrefix.$this->Objects->table]['name1'],
+							$result[$this->Host->tablePrefix.$this->Host->table]['display_name']
+						);
+					}
+					$this->Objects->clear();
+				}
+			}
+		}
+	}
+
+	public function cacheServiceNamesForGraphiteIfRequried(){
+		if($this->processPerfdata === true){
+			if($this->PerfdataBackend->isGraphiteEnabled()){
+				if($this->GraphiteBackend->requireNameCaching()){
+					CakeLog::info('Build up service name cache for Graphite');
+
+					$query = sprintf('
+						SELECT
+							`%s`.`name1`,
+							`%s`.`name2`,
+							`%s`.`display_name`
+						FROM `%s`
+						LEFT JOIN `%s` ON `%s`.object_id = `%s`.service_object_id
+						WHERE `%s`.objecttype_id = %s; -- %s',
+						$this->Objects->tablePrefix.$this->Objects->table,
+						$this->Objects->tablePrefix.$this->Objects->table,
+						$this->Service->tablePrefix.$this->Service->table,
+						$this->Objects->tablePrefix.$this->Objects->table,
+						$this->Service->tablePrefix.$this->Service->table,
+						$this->Objects->tablePrefix.$this->Objects->table,
+						$this->Service->tablePrefix.$this->Service->table,
+						$this->Objects->tablePrefix.$this->Objects->table,
+						OBJECT_SERVICE,
+						time() //disable caching
+					);
+
+					$results = $this->Objects->query($query);
+
+					foreach($results as $result){
+						$this->GraphiteBackend->addServicedisplayNameToCache(
+							$result[$this->Objects->tablePrefix.$this->Objects->table]['name1'],
+							$result[$this->Objects->tablePrefix.$this->Objects->table]['name2'],
+							$result[$this->Service->tablePrefix.$this->Service->table]['display_name']
+						);
+					}
+					$this->Objects->clear();
+				}
+			}
 		}
 	}
 }

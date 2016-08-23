@@ -180,13 +180,16 @@ class GraphiteBackendTask extends AppShell{
 		return null;
 	}
 
-	public function addServicedisplayNameToCache($servicedesc, $servicedisplayname){
-		$this->servicenameCache[md5($servicedesc)] = $servicedisplayname;
+	public function addServicedisplayNameToCache($hostname, $servicedesc, $servicedisplayname){
+		if(!isset($this->servicenameCache[md5($hostname)])){
+			$this->servicenameCache[md5($hostname)] = [];
+		}
+		$this->servicenameCache[md5($hostname)][md5($servicedesc)] = $servicedisplayname;
 	}
 
-	public function getServicedisplayNameFromCache($servicedesc){
-		if(isset($this->servicenameCache[md5($servicedesc)])){
-			return $this->servicenameCache[md5($servicedesc)];
+	public function getServicedisplayNameFromCache($hostname, $servicedesc){
+		if(isset($this->servicenameCache[md5($hostname)][md5($servicedesc)])){
+			return $this->servicenameCache[md5($hostname)][md5($servicedesc)];
 		}
 		return null;
 	}
