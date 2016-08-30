@@ -640,6 +640,7 @@ class LegacySchema extends CakeSchema {
 		'check_timeperiod_object_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'hoststatus_id', 'unique' => 1),
+			'object_id_instance_id' => array('column' => array('host_object_id', 'instance_id'), 'unique' => 1),
 			'hoststatus' => array('column' => array('host_object_id', 'current_state'), 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'InnoDB')
@@ -1133,4 +1134,3 @@ class LegacySchema extends CakeSchema {
 	);
 
 }
-

@@ -65,6 +65,77 @@ class LegacyAppModel extends AppModel{
 		return true;
 	}
 
+	public function saveHoststatus($data, $returnLastInserId = true){
+		$schema = array_keys($data['Hoststatus']);
+		$data = [$data];
+		return $this->rawSaveStatus($data, $returnLastInserId, $schema);
+	}
+
+	public function saveServicestatus($data, $returnLastInserId = true){
+		$schema = array_keys($data['Servicestatus']);
+		$data = [$data];
+		return $this->rawSaveStatus($data, $returnLastInserId, $schema);
+	}
+
+	/**
+	*
+	* rawSaveStatus
+	*
+	* Licensed under The MIT License
+	* Redistributions of files must retain the above copyright notice.
+	*
+	* @copyright 2014 - present Marc Ypes, The Netherlands
+	* @author Ceeram
+	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
+	*/
+	public function rawSaveStatus($data, $returnLastInserId = true, $schema){
+		$this->saveTemplate = 'SET NAMES utf8; INSERT INTO `%s` (%s) VALUES %s ON DUPLICATE KEY UPDATE %s;';
+		if(empty($data)) {
+			return true;
+		}
+
+		$data = Set::extract('{n}.' . $this->alias, $data);
+		$duplicate_data = [];
+
+		if(isset($schema['id'])){
+			unset($schema['id']);
+		}
+
+		if(isset($schema['servicestatus_id'])){
+			unset($schema['servicestatus_id']);
+		}
+
+		if(isset($schema['hoststatus_id'])){
+			unset($schema['hoststatus_id']);
+		}
+
+		$keyData = '`' . implode('`, `', $schema) . '`';
+
+		$db = $this->getDataSource();
+
+		foreach($data as $k => $row) {
+			foreach ($row as $field => $value) {
+				$row[$field] = $db->value($value, $field);
+			}
+
+			//Insert on duplicate key update syntax
+			foreach($row as $column => $_value){
+				if($column != $this->primaryKey){
+					$duplicate_data[] = $column.'='.$_value;
+				}
+			}
+
+			$data[$k] = "(" . implode(", ", $row) . ")";
+		}
+		$data = sprintf($this->saveTemplate, $this->tablePrefix.$this->table, $keyData, implode(', ', $data), implode(',',$duplicate_data));
+		$this->sqlQuery($data);
+		if($returnLastInserId){
+			return $db->lastInsertId();
+		}
+
+		return true;
+	}
+
 	/**
 	*
 	* rawSaveServicestatus

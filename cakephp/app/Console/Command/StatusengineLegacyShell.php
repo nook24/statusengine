@@ -226,8 +226,6 @@ class StatusengineLegacyShell extends AppShell{
 			$this->createInstance();
 			$this->clearObjectsCache();
 			$this->buildObjectsCache();
-			$this->buildHoststatusCache();
-			$this->buildServicestatusCache();
 			$this->Scheduleddowntime->cleanup();
 			$this->Dbversion->save([
 				'Dbversion' => [
@@ -341,8 +339,6 @@ class StatusengineLegacyShell extends AppShell{
 
 			case FINISH_OBJECT_DUMP:
 				CakeLog::info('Finished dumping objects');
-				$this->buildHoststatusCache();
-				$this->buildServicestatusCache();
 				$this->saveParentHosts();
 				$this->saveParentServices();
 				//We are done with object dumping and can write parent hosts and services to DB
@@ -1311,7 +1307,6 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		$hoststatusId = $this->hoststatusIdFromCache($this->objectIdFromCache(OBJECT_HOST, $payload->hoststatus->name));
 		$hostObjectId = $this->objectIdFromCache(OBJECT_HOST, $payload->hoststatus->name);
 		//debug('Hoststatus Id: '.$hoststatusId);
 		if($hostObjectId == null){
@@ -1321,7 +1316,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		$data = [
 			'Hoststatus' => [
-				'hoststatus_id' => $hoststatusId,
+				//'hoststatus_id' => $hoststatusId,
 				'instance_id' => $this->instance_id,
 				'host_object_id' => $hostObjectId,
 				'status_update_time' => date('Y-m-d H:i:s', $payload->timestamp),
@@ -1371,15 +1366,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
-		if($hoststatusId == null){
-			$result = $this->Hoststatus->save($data);
-		}else{
-			$result = $this->Hoststatus->rawSave([$data]);
-		}
-
-		if($hoststatusId == null){
-			$this->addToHoststatusCache($hostObjectId, $result['Hoststatus']['hoststatus_id']);
-		}
+		$this->Hoststatus->saveHoststatus($data, false);
 	}
 
 	/**
@@ -1400,7 +1387,6 @@ class StatusengineLegacyShell extends AppShell{
 		if($payload->timestamp < (time() - $this->servicestatus_freshness)){
 			return;
 		}
-		//$this->Servicestatus->create();
 
 		if($this->useMemcached === true){
 			$this->Memcached->setServicestatus($payload);
@@ -1416,10 +1402,6 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		//$servicestatus_id = $this->servicestatusIdFromCache($service_object_id);
-
-		//debug('Servicestatus Id: '.$servicestatus_id);
-		//debug($payload);
 		$data = [
 			'Servicestatus' => [
 				//'servicestatus_id' => $servicestatus_id,
@@ -1473,17 +1455,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
-		$result = $this->Servicestatus->rawSaveServicestatus([$data]);
-
-		/*if($servicestatus_id == null){
-			$result = $this->Servicestatus->save($data);
-		}else{
-			$result = $this->Servicestatus->rawSave([$data]);
-		}
-
-		if($servicestatus_id == null){
-			$this->addToServicestatusCache($service_object_id, $result['Servicestatus']['servicestatus_id']);
-		}*/
+		$this->Servicestatus->saveServicestatus($data, false);
 	}
 
 	/**
@@ -2504,62 +2476,6 @@ class StatusengineLegacyShell extends AppShell{
 		return false;
 	}
 
-	/**
-	 * Every time we recive an hoststatus we need to update the last record in DB
-	 * Cause of we don't want to lookup the id on every update again, we create us an cache of it
-	 *
-	 * @since 1.0.0
-	 * @author Daniel Ziegler <daniel@statusengine.org>
-	 *
-	 * @return void
-	 */
-	public function buildHoststatusCache(){
-		$this->hoststatusCache = [];
-		foreach($this->Hoststatus->find('all', ['fields' => ['hoststatus_id', 'host_object_id']]) as $hs){
-			$this->hoststatusCache[$hs['Hoststatus']['host_object_id']] = $hs['Hoststatus']['hoststatus_id'];
-		}
-	}
-
-	public function addToHoststatusCache($hostObjectId, $hoststatus){
-		$this->hoststatusCache[$hostObjectId] = $hoststatus;
-	}
-
-	public function hoststatusIdFromCache($hostObjectId){
-		if(isset($this->hoststatusCache[$hostObjectId])){
-			return $this->hoststatusCache[$hostObjectId];
-		}
-
-		return null;
-	}
-
-	/**
-	 * Every time we recive an servucestatus we need to update the last record in DB
-	 * Cause of we don't want to lookup the id on every update again, we create us an cache of it
-	 *
-	 * @since 1.0.0
-	 * @author Daniel Ziegler <daniel@statusengine.org>
-	 *
-	 * @return void
-	 */
-	public function buildServicestatusCache(){
-		$this->servicestatusCache = [];
-		foreach($this->Servicestatus->find('all', ['fields' => ['servicestatus_id', 'service_object_id']]) as $ss){
-			$this->servicestatusCache[$ss['Servicestatus']['service_object_id']] = $ss['Servicestatus']['servicestatus_id'];
-		}
-	}
-
-	public function addToServicestatusCache($serviceObjectId, $servicestatus_id){
-		$this->servicestatusCache[$serviceObjectId] = $servicestatus_id;
-	}
-
-	public function servicestatusIdFromCache($serviceObjectId){
-		if(isset($this->servicestatusCache[$serviceObjectId])){
-			return $this->servicestatusCache[$serviceObjectId];
-		}
-
-		return null;
-	}
-
 	public function buildProcessPerfdataCache(){
 		$this->processPerfdataCache = [];
 		$result = $this->Service->find('all', [
@@ -2729,8 +2645,6 @@ class StatusengineLegacyShell extends AppShell{
 		$this->createInstance();
 		$this->clearObjectsCache();
 		$this->buildObjectsCache();
-		$this->buildHoststatusCache();
-		$this->buildServicestatusCache();
 		$this->Scheduleddowntime->cleanup();
 		$this->Dbversion->save([
 			'Dbversion' => [
@@ -2797,11 +2711,6 @@ class StatusengineLegacyShell extends AppShell{
 				$this->buildObjectsCache();
 				//CakeLog::debug(var_export($this->objectCache, true));
 
-				CakeLog::info('Build up new hoststatus cache');
-				$this->buildHoststatusCache();
-
-				CakeLog::info('Build up new servicestatus cache');
-				$this->buildServicestatusCache();
 
 				if($this->processPerfdata === true){
 					if(isset($this->queues['statusngin_servicechecks'])){
