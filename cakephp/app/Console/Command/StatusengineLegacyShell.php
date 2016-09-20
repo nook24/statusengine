@@ -95,6 +95,7 @@ class StatusengineLegacyShell extends AppShell{
 		'Legacy.Statehistory',
 		'Legacy.Logentry',
 		'Legacy.Comment',
+		'Legacy.Commenthistory',
 		'Legacy.Externalcommand',
 		'Legacy.Acknowledgement',
 		'Legacy.Flapping',
@@ -158,6 +159,9 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function main(){
 		Configure::load('Statusengine');
+
+		$NebTypes = new NebTypes();
+		$NebTypes->defineNebTypesAsGlobals();
 
 		$this->childPids = [];
 		$this->_constants();
@@ -290,6 +294,7 @@ class StatusengineLegacyShell extends AppShell{
 				//Legacy behavior :(
 				$truncate = [
 					'Command',
+					'Comment',
 					'Timeperiod',
 					'Timerange',
 					'Contact',
@@ -1574,7 +1579,7 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Hostcheck->create();
 
 		$is_raw_check = 0;
-		if($payload->type == 802 || $payload->type == 803){
+		if($payload->type == NEBTYPE_HOSTCHECK_RAW_START || $payload->type == NEBTYPE_HOSTCHECK_RAW_END){
 			$is_raw_check = 1;
 		}
 
@@ -1710,27 +1715,92 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		//$this->Comment->create();
-		$data = [
-			'Comment' => [
-				'instance_id' => $this->instance_id,
-				'entry_time' => date('Y-m-d H:i:s', $payload->comment->entry_time),
-				'entry_time_usec' => $payload->comment->entry_time,
-				'comment_type' => $payload->comment->comment_type,
-				'entry_type' => $payload->comment->entry_time,
-				'object_id' => $object_id,
-				'comment_time' => date('Y-m-d H:i:s', $payload->timestamp),
-				'internal_comment_id' => $payload->comment->comment_id,
-				'author_name' => $payload->comment->author_name,
-				'comment_data' => $payload->comment->comment_data,
-				'is_persistent' => $payload->comment->persistent,
-				'comment_source' => $payload->comment->source,
-				'expires' => $payload->comment->expires,
-				'expiration_time' => $payload->comment->expire_time
-			]
-		];
+		//expiration_time was remove!
+		//https://github.com/naemon/naemon-core/blob/f730f72bfb8027fbaf21badfce3b53012424fc38/src/naemon/comments.c#L50-L62
 
-		$this->Comment->rawInsert([$data], false);
+		if($payload->type == NEBTYPE_COMMENT_DELETE){
+			//Delete comment from DB, if exists;
+			$comments = $this->Comment->find('all', [
+				'conditions' => [
+					'object_id' => $object_id,
+					'internal_comment_id' => $payload->comment->comment_id
+				]
+			]);
+			foreach($comments as $comment){
+				$this->Comment->delete($comment['Comment']['comment_id']);
+			}
+			
+			//Update comment history
+			$data = [
+				'Commenthistory' => [
+					'instance_id' => $this->instance_id,
+					'entry_time' => date('Y-m-d H:i:s', $payload->comment->entry_time),
+					'entry_time_usec' => $payload->comment->entry_time,
+					'comment_type' => $payload->comment->comment_type,
+					'entry_type' => $payload->comment->entry_type,
+					'object_id' => $object_id,
+					'comment_time' => date('Y-m-d H:i:s', $payload->timestamp),
+					'internal_comment_id' => $payload->comment->comment_id,
+					'author_name' => $payload->comment->author_name,
+					'comment_data' => $payload->comment->comment_data,
+					'is_persistent' => $payload->comment->persistent,
+					'comment_source' => $payload->comment->source,
+					'expires' => $payload->comment->expires,
+					'expiration_time' => '1970-01-01 00:00:00',
+					'deletion_time' => date('Y-m-d H:i:s', $payload->timestamp),
+					'deletion_time_usec' => $payload->timestamp,
+				]
+			];
+			$this->Commenthistory->saveOnDuplicate($data);
+			return true;
+		}
+
+		if($payload->type == NEBTYPE_COMMENT_ADD || $payload->type == NEBTYPE_COMMENT_LOAD){
+			//Create new comment or update existing comment
+			$data = [
+				'Comment' => [
+					'instance_id' => $this->instance_id,
+					'entry_time' => date('Y-m-d H:i:s', $payload->comment->entry_time),
+					'entry_time_usec' => $payload->comment->entry_time,
+					'comment_type' => $payload->comment->comment_type,
+					'entry_type' => $payload->comment->entry_type,
+					'object_id' => $object_id,
+					'comment_time' => date('Y-m-d H:i:s', $payload->timestamp),
+					'internal_comment_id' => $payload->comment->comment_id,
+					'author_name' => $payload->comment->author_name,
+					'comment_data' => $payload->comment->comment_data,
+					'is_persistent' => $payload->comment->persistent,
+					'comment_source' => $payload->comment->source,
+					'expires' => $payload->comment->expires,
+					'expiration_time' => '1970-01-01 00:00:00'
+				]
+			];
+			
+			$this->Comment->saveOnDuplicate($data);
+			
+			//Save to comment history
+			$data = [
+				'Commenthistory' => [
+					'instance_id' => $this->instance_id,
+					'entry_time' => date('Y-m-d H:i:s', $payload->comment->entry_time),
+					'entry_time_usec' => $payload->comment->entry_time,
+					'comment_type' => $payload->comment->comment_type,
+					'entry_type' => $payload->comment->entry_type,
+					'object_id' => $object_id,
+					'comment_time' => date('Y-m-d H:i:s', $payload->timestamp),
+					'internal_comment_id' => $payload->comment->comment_id,
+					'author_name' => $payload->comment->author_name,
+					'comment_data' => $payload->comment->comment_data,
+					'is_persistent' => $payload->comment->persistent,
+					'comment_source' => $payload->comment->source,
+					'expires' => $payload->comment->expires,
+					'expiration_time' => '1970-01-01 00:00:00',
+					'deletion_time' => '1970-01-01 00:00:00',
+					'deletion_time_usec' => 0,
+				]
+			];
+			$this->Commenthistory->saveOnDuplicate($data);
+		}
 	}
 
 	public function processExternalcommands($job){
@@ -1839,7 +1909,7 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		if($payload->type == 1100 || $payload->type == 1102){
+		if($payload->type == NEBTYPE_DOWNTIME_ADD || $payload->type == NEBTYPE_DOWNTIME_LOAD){
 			//Add a new downtime
 			$downtime = $this->Downtimehistory->find('first', [
 				'conditions' => [
@@ -1930,7 +2000,7 @@ class StatusengineLegacyShell extends AppShell{
 			$this->Scheduleddowntime->save($data);
 		}
 
-		if($payload->type == 1103){
+		if($payload->type == NEBTYPE_DOWNTIME_START){
 			//The downtime exists, and was started now
 			$downtime = $this->Downtimehistory->find('first', [
 				'conditions' => [
@@ -1982,7 +2052,7 @@ class StatusengineLegacyShell extends AppShell{
 			}
 		}
 
-		if($payload->type == 1104){
+		if($payload->type == NEBTYPE_DOWNTIME_STOP){
 			//The downtime exists, but ends now
 			$downtime = $this->Downtimehistory->find('first', [
 				'conditions' => [

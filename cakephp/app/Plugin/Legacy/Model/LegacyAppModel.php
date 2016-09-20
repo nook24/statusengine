@@ -338,4 +338,50 @@ class LegacyAppModel extends AppModel{
 			CakeLog::error($e->getMessage());
 		}
 	}
+	
+	/**
+	 * @param array $data => default cakephp array to save data
+	 * @param array $keys => keys to remove from $data (for example primary key id or so...)
+	 */
+	public function saveOnDuplicate($data, $keys = []){
+		$db = $this->getDataSource();
+
+		//Insert new record
+		$schema = array_keys($data[$this->name]);
+		
+		$queryTemplate = 'INSERT INTO %s (%s)VALUES(%s) ON DUPLICATE KEY UPDATE %s';
+		$table = $this->tablePrefix.$this->table;
+		//object_id, instance_id, objecttype_id, name1, name2, is_active
+		$columns = implode(', ', $schema);
+		
+		//:object_id, :instance_id, :objecttype_id, :name1, :name2, :is_active
+		$_schema = [];
+		foreach($schema as $_key){
+			$_schema[] = sprintf(':%s', $_key);
+		}
+		$values = implode(', ', $_schema);
+		
+		//instance_id = :instance_id, objecttype_id = :objecttype_id, name1 = :name1, name2 = :name2, is_active = :is_active
+		$_schema = [];
+		foreach($schema as $_key){
+			$_schema[] = sprintf('%s = :%s', $_key, $_key);
+		}
+		$onDumplicate = implode(', ', $_schema);
+		
+		$query = sprintf($queryTemplate, $table, $columns, $values, $onDumplicate);
+	
+		$result = $db->fetchAll(
+			$query,
+			$data[$this->name]
+			//[
+			//	'object_id' => $data[$this->name]['object_id'],
+			//	'instance_id' => $data[$this->name]['instance_id'],
+			//	'objecttype_id' => $data[$this->name]['objecttype_id'],
+			//	'name1' => $data[$this->name]['name1'],
+			//	'name2' => $data[$this->name]['name2'],
+			//	'is_active' => $data[$this->name]['is_active']
+			//]
+		);
+
+	}
 }

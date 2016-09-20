@@ -105,6 +105,9 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 **2.0.1**
 - MySQL query improvements [#19](https://github.com/nook24/statusengine/issues/19)
 - Fixed display_name for Graphite
+- Add composer.json
+- Add commenthistory support
+- Refactor comment and comment history entries
 
 **2.0.0**
 - Update to CakePHP Version 2.8.2

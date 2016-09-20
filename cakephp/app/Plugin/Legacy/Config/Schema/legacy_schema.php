@@ -65,6 +65,31 @@ class LegacySchema extends CakeSchema {
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
 	);
 
+	public $commenthistory = array(
+		'commenthistory_id' => array('type' => 'integer', 'null' => false, 'default' => null, 'unsigned' => false, 'key' => 'primary'),
+		'instance_id' => array('type' => 'integer', 'null' => true, 'default' => '0', 'length' => 6, 'unsigned' => false, 'key' => 'index'),
+		'entry_time' => array('type' => 'datetime', 'null' => true, 'default' => '1970-01-01 00:00:00'),
+		'entry_time_usec' => array('type' => 'integer', 'null' => true, 'default' => '0', 'unsigned' => false),
+		'comment_type' => array('type' => 'integer', 'null' => true, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'entry_type' => array('type' => 'integer', 'null' => true, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'object_id' => array('type' => 'integer', 'null' => true, 'default' => '0', 'unsigned' => false),
+		'comment_time' => array('type' => 'datetime', 'null' => true, 'default' => '1970-01-01 00:00:00'),
+		'internal_comment_id' => array('type' => 'integer', 'null' => true, 'default' => '0', 'unsigned' => false),
+		'author_name' => array('type' => 'string', 'null' => true, 'length' => 64, 'collate' => 'latin1_swedish_ci', 'charset' => 'latin1'),
+		'comment_data' => array('type' => 'string', 'null' => true, 'collate' => 'latin1_swedish_ci', 'charset' => 'latin1'),
+		'is_persistent' => array('type' => 'integer', 'null' => true, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'comment_source' => array('type' => 'integer', 'null' => true, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'expires' => array('type' => 'integer', 'null' => true, 'default' => '0', 'length' => 6, 'unsigned' => false),
+		'expiration_time' => array('type' => 'datetime', 'null' => true, 'default' => '1970-01-01 00:00:00'),
+		'deletion_time' => array('type' => 'datetime', 'null' => true, 'default' => '1970-01-01 00:00:00'),
+		'deletion_time_usec' => array('type' => 'integer', 'null' => true, 'default' => '0', 'unsigned' => false),
+		'indexes' => array(
+			'PRIMARY' => array('column' => 'commenthistory_id', 'unique' => 1),
+			'object_id_internal_comment_id' => array('column' => array('object_id', 'internal_comment_id'), 'unique' => 1)
+		),
+		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM', 'comment' => 'Historical host and service comments')
+	);
+
 	public $comments = array(
 		'comment_id' => array('type' => 'integer', 'null' => false, 'default' => null, 'unsigned' => false, 'key' => 'primary'),
 		'instance_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
@@ -82,7 +107,8 @@ class LegacySchema extends CakeSchema {
 		'expires' => array('type' => 'integer', 'null' => false, 'default' => '0', 'length' => 6, 'unsigned' => false),
 		'expiration_time' => array('type' => 'datetime', 'null' => false, 'default' => '1970-01-01 00:00:00'),
 		'indexes' => array(
-			'PRIMARY' => array('column' => 'comment_id', 'unique' => 1)
+			'PRIMARY' => array('column' => 'comment_id', 'unique' => 1),
+			'object_id_internal_comment_id' => array('column' => array('object_id', 'internal_comment_id'), 'unique' => 1)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
 	);
