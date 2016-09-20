@@ -341,9 +341,8 @@ class LegacyAppModel extends AppModel{
 	
 	/**
 	 * @param array $data => default cakephp array to save data
-	 * @param array $keys => keys to remove from $data (for example primary key id or so...)
 	 */
-	public function saveOnDuplicate($data, $keys = []){
+	public function saveOnDuplicate($data){
 		$db = $this->getDataSource();
 
 		//Insert new record
