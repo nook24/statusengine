@@ -107,7 +107,7 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - Fixed display_name for Graphite
 - Add composer.json
 - Add commenthistory support
-- Refactor comment and comment history entries
+- Refactor comment and comment history entries [Require database schema update!](https://statusengine.org/getting_started.php#migration)
 
 **2.0.0**
 - Update to CakePHP Version 2.8.2
