@@ -268,6 +268,11 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Contribute to Statusenigne at: https://github.com/nook24/statusengine");
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Thanks for using Statusengine :-)");
 
+	if (statusengine_process_module_args(args) == ERROR) {
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] An error occurred while attempting to process module arguments.");
+		return -1;
+	}
+
 	//Register callbacks
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Register callbacks");
 	neb_register_callback(NEBCALLBACK_HOST_STATUS_DATA,                 statusengine_module_handle, 0, statusengine_handle_data);
