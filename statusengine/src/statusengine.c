@@ -224,7 +224,27 @@ static gboolean hostgroup_foreach_callback(gpointer key, gpointer _hostgroupmemb
 }
 #endif
 
-
+int use_host_data = 1;
+int use_service_status_data = 1;
+int use_process_data = 1;
+int use_service_check_data = 1;
+int use_host_check_data = 1;
+int use_state_change_data = 1;
+int use_log_data = 1;
+int use_system_command_data = 1;
+int use_comment_data = 1;
+int use_external_command_data = 1;
+int use_acknowledgement_data = 1;
+int use_flapping_data = 1;
+int use_downtime_data = 1;
+int use_notification_data = 1;
+int use_program_status_data = 1;
+int use_contact_status_data = 1;
+int use_contact_notification_data = 1;
+int use_contact_notification_method_data = 1;
+int use_event_handler_data = 1;
+int statusengine_process_config_var(char *arg);
+int statusengine_process_module_args(char *args);
 
 //Broker initialize function
 int nebmodule_init(int flags, char *args, nebmodule *handle){
@@ -318,6 +338,104 @@ int nebmodule_deinit(int flags, int reason){
 	return 0;
 }
 
+int statusengine_process_module_args(char *args_orig) {
+	char *ptr = NULL;
+	char *args;
+
+	args = strdup(args_orig);
+
+	if (args == NULL)
+		return OK;
+
+	while ((ptr = strsep(&args, " ")) != NULL ) {
+		if(statusengine_process_config_var(ptr) == ERROR) {
+			return ERROR;
+		}
+	}
+
+	return OK;
+}
+
+int statusengine_process_config_var(char *arg) {
+	char *var = NULL;
+	char *val = NULL;
+
+	/* split var/val */
+	var = strtok(arg, "=");
+	val = strtok(NULL, "\n");
+
+	/* skip incomplete var/val pairs */
+	if (var == NULL || val == NULL)
+		return OK;
+
+	/* strip var/val */
+	strip(var);
+	strip(val);
+
+	/* process the variable... */
+	if (!strcmp(var, "use_host_data"))
+		use_host_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled host_data");
+	else if (!strcmp(var, "use_service_status_data"))
+		use_service_status_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled service_status_data");
+	else if (!strcmp(var, "use_process_data"))
+		use_process_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled process_data");
+	else if (!strcmp(var, "use_service_check_data"))
+		use_service_check_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled service_check_data");
+	else if (!strcmp(var, "use_host_check_data"))
+		use_host_check_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled host_check_data");
+	else if (!strcmp(var, "use_state_change_data"))
+		use_state_change_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled state_change_data");
+	else if (!strcmp(var, "use_log_data"))
+		use_log_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled log_data");
+	else if (!strcmp(var, "use_system_command_data"))
+		use_system_command_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled system_command_data");
+	else if (!strcmp(var, "use_comment_data"))
+		use_comment_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled comment_data");
+	else if (!strcmp(var, "use_external_command_data"))
+		use_external_command_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled external_command_data");
+	else if (!strcmp(var, "use_acknowledgement_data"))
+		use_acknowledgement_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled acknowledgement_data");
+	else if (!strcmp(var, "use_flapping_data"))
+		use_flapping_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled flapping_data");
+	else if (!strcmp(var, "use_downtime_data"))
+		use_downtime_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled downtime_data");
+	else if (!strcmp(var, "use_notification_data"))
+		use_notification_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled notification_data");
+	else if (!strcmp(var, "use_program_status_data"))
+		use_program_status_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled program_status_data");
+	else if (!strcmp(var, "use_contact_status_data"))
+		use_contact_status_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled contact_status_data");
+	else if (!strcmp(var, "use_contact_notification_data"))
+		use_contact_notification_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled contact_notification_data");
+	else if (!strcmp(var, "use_contact_notification_method_data"))
+		use_contact_notification_method_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled contact_notification_method_data");
+	else if (!strcmp(var, "use_event_handler_data"))
+		use_event_handler_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled event_handler_data");
+	else
+		return ERROR;
+
+	return OK;
+}
+
 
 #define HOSTFIELD_STRING(FIELD) \
 	json_object_object_add(host_object, #FIELD, (nag_hoststatus->FIELD != NULL ? json_object_new_string(nag_hoststatus->FIELD) : NULL))
@@ -354,7 +472,7 @@ int nebmodule_deinit(int flags, int reason){
 
 #define HOSTCHECKFIELD_DOUBLE(FIELD) \
 	json_object_object_add(hostcheck_object, #FIELD, json_object_new_double(nag_hostcheck->FIELD))
-		
+
 #define STATECHANGE_STRING(FIELD) \
 	json_object_object_add(statechange_object, #FIELD, (statechange->FIELD != NULL ? json_object_new_string(statechange->FIELD) : NULL))
 
@@ -394,7 +512,7 @@ int statusengine_handle_data(int event_type, void *data){
 	switch(event_type){
 
 		case NEBCALLBACK_PROCESS_DATA:
-
+			if(!use_process_data) return 0;
 			programmdata=(nebstruct_process_data *)data;
 			if(programmdata == NULL){
 				return 0;
@@ -404,7 +522,7 @@ int statusengine_handle_data(int event_type, void *data){
 			if(programmdata->type == NEBTYPE_PROCESS_START){
 				dump_object_data();
 			}
-			
+
 			if((programmdata = (nebstruct_process_data *)data)){
 				my_object = json_object_new_object();
 				json_object_object_add(my_object, "type",      json_object_new_int(programmdata->type));
@@ -425,7 +543,7 @@ int statusengine_handle_data(int event_type, void *data){
 				#endif
 				json_object_object_add(processdata_object, "programmversion",   json_object_new_string(get_program_version()));
 				json_object_object_add(processdata_object, "pid",               json_object_new_int64(getpid()));
-		
+
 				json_object_object_add(my_object, "processdata", processdata_object);
 				const char* json_string = json_object_to_json_string(my_object);
 				ret= gearman_client_do_background(&gman_client, "statusngin_processdata", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
@@ -435,11 +553,12 @@ int statusengine_handle_data(int event_type, void *data){
 				json_object_put(processdata_object);
 				json_object_put(my_object);
 			}
-			
+
 			break;
 
 
 			case NEBCALLBACK_HOST_STATUS_DATA:
+				if (!use_host_data) return 0;
 				if((hoststatusdata = (nebstruct_host_status_data *)data)){
 					if(hoststatusdata == NULL){
 						return 0;
@@ -519,6 +638,7 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_SERVICE_STATUS_DATA:
+				if (!use_service_status_data) return 0;
 				if((servicestatusdata = (nebstruct_service_status_data *)data)){
 					if(servicestatusdata == NULL){
 						return 0;
@@ -593,7 +713,7 @@ int statusengine_handle_data(int event_type, void *data){
 					ret= gearman_client_do_background(&gman_client, "statusngin_servicestatus", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
-					
+
 					json_object_put(service_object);
 					json_object_put(my_object);
 
@@ -601,6 +721,7 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_SERVICE_CHECK_DATA:
+				if (!use_service_check_data) return 0;
 				if((servicecheck = (nebstruct_service_check_data *)data)){
 					if(servicecheck == NULL){
 						return 0;
@@ -655,14 +776,15 @@ int statusengine_handle_data(int event_type, void *data){
 					ret= gearman_client_do_background(&gman_client, "statusngin_servicechecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
-				
-					json_object_put(servicecheck_object);	
+
+					json_object_put(servicecheck_object);
 					json_object_put(my_object);
 
 				}
 				break;
 
 			case NEBCALLBACK_HOST_CHECK_DATA:
+				if (!use_host_check_data) return 0;
 				if((hostcheck = (nebstruct_host_check_data *)data)){
 					if(hostcheck == NULL){
 						return 0;
@@ -719,11 +841,12 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_put(hostcheck_object);
 					json_object_put(my_object);
-				
+
 				}
 				break;
 
 			case NEBCALLBACK_STATE_CHANGE_DATA:
+				if (!use_state_change_data) return 0;
 				if((statechange = (nebstruct_statechange_data *)data)){
 					if(statechange == NULL){
 						return 0;
@@ -782,6 +905,7 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_LOG_DATA:
+				if (!use_log_data) return 0;
 				if((logentry = (nebstruct_log_data *)data)){
 					if(logentry == NULL){
 						return 0;
@@ -810,6 +934,7 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_SYSTEM_COMMAND_DATA:
+				if (!use_system_command_data) return 0;
 				if((systemcommand = (nebstruct_system_command_data *)data)){
 					if(systemcommand == NULL){
 						return 0;
@@ -848,6 +973,7 @@ int statusengine_handle_data(int event_type, void *data){
 
 
 			case NEBCALLBACK_COMMENT_DATA:
+				if (!use_comment_data) return 0;
 				if((_comment = (nebstruct_comment_data *)data)){
 					if(_comment == NULL){
 						return 0;
@@ -885,6 +1011,7 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_EXTERNAL_COMMAND_DATA:
+				if (!use_external_command_data) return 0;
 				if((extcommand = (nebstruct_external_command_data *)data)){
 					if(extcommand == NULL){
 						return 0;
@@ -906,13 +1033,14 @@ int statusengine_handle_data(int event_type, void *data){
 					ret= gearman_client_do_background(&gman_client, "statusngin_externalcommands", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
-		
-					json_object_put(extcommand_object);	
+
+					json_object_put(extcommand_object);
 					json_object_put(my_object);
 				}
 				break;
 
 			case NEBCALLBACK_ACKNOWLEDGEMENT_DATA:
+				if (!use_acknowledgement_data) return 0;
 				if((acknowledgement = (nebstruct_acknowledgement_data *)data)){
 					if(acknowledgement == NULL){
 						return 0;
@@ -947,6 +1075,7 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_FLAPPING_DATA:
+				if (!use_flapping_data) return 0;
 				if((_flapping = (nebstruct_flapping_data *)data)){
 					if(_flapping == NULL){
 						return 0;
@@ -960,7 +1089,7 @@ int statusengine_handle_data(int event_type, void *data){
 					json_object *flapping_object = json_object_new_object();
 					json_object_object_add(flapping_object, "host_name",           (_flapping->host_name           != NULL ? json_object_new_string(_flapping->host_name) : NULL));
 					json_object_object_add(flapping_object, "service_description", (_flapping->service_description != NULL ? json_object_new_string(_flapping->service_description) : NULL));
-					
+
 
 					if(_flapping->flapping_type == 0){
 						//I'm a host
@@ -969,10 +1098,10 @@ int statusengine_handle_data(int event_type, void *data){
 						//I'm a service
 						tmp_comment = find_service_comment(_flapping->comment_id);
 					}
-					
+
 					json_object_object_add(flapping_object, "flapping_type",      json_object_new_int64(_flapping->flapping_type));
 					json_object_object_add(flapping_object, "comment_id",         json_object_new_int64(_flapping->comment_id));
-					
+
 					//May be you can explain me this?
 					if(tmp_comment != NULL){
 						json_object_object_add(flapping_object, "comment_entry_time", json_object_new_int64(tmp_comment->entry_time));
@@ -997,6 +1126,7 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_DOWNTIME_DATA:
+				if (!use_downtime_data) return 0;
 				if((_downtime = (nebstruct_downtime_data *)data)){
 					if(_downtime == NULL){
 						return 0;
@@ -1013,7 +1143,7 @@ int statusengine_handle_data(int event_type, void *data){
 					json_object_object_add(downtime_object, "author_name",         (_downtime->author_name         != NULL ? json_object_new_string(_downtime->author_name) : NULL));
 					json_object_object_add(downtime_object, "comment_data",        (_downtime->comment_data        != NULL ? json_object_new_string(_downtime->comment_data) : NULL));
 					json_object_object_add(downtime_object, "host_name",           (_downtime->host_name           != NULL ? json_object_new_string(_downtime->host_name) : NULL));
-					
+
 
 					json_object_object_add(downtime_object, "downtime_type", json_object_new_int64(_downtime->downtime_type));
 					json_object_object_add(downtime_object, "entry_time",    json_object_new_int64(_downtime->entry_time));
@@ -1022,9 +1152,9 @@ int statusengine_handle_data(int event_type, void *data){
 					json_object_object_add(downtime_object, "triggered_by",  json_object_new_int64(_downtime->triggered_by));
 					json_object_object_add(downtime_object, "downtime_id",   json_object_new_int64(_downtime->downtime_id));
 					json_object_object_add(downtime_object, "fixed",         json_object_new_int64(_downtime->fixed));
-					
+
 					json_object_object_add(downtime_object, "duration",      json_object_new_double(_downtime->duration));
-	
+
 
 					json_object_object_add(my_object, "downtime", downtime_object);
 					const char* json_string = json_object_to_json_string(my_object);
@@ -1036,8 +1166,9 @@ int statusengine_handle_data(int event_type, void *data){
 					json_object_put(my_object);
 				}
 				break;
-				
+
 			case NEBCALLBACK_NOTIFICATION_DATA:
+				if (!use_notification_data) return 0;
 				if((notificationdata = (nebstruct_notification_data *)data)){
 					if(notificationdata == NULL){
 						return 0;
@@ -1079,6 +1210,7 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_PROGRAM_STATUS_DATA:
+				if (!use_program_status_data) return 0;
 				if((procstats = (nebstruct_program_status_data *)data)){
 					if(procstats == NULL){
 						return 0;
@@ -1126,6 +1258,7 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 				case NEBCALLBACK_CONTACT_STATUS_DATA:
+					if (!use_contact_status_data) return 0;
 					if((contactstatus = (nebstruct_contact_status_data *)data)){
 						if(contactstatus == NULL){
 							return 0;
@@ -1142,7 +1275,7 @@ int statusengine_handle_data(int event_type, void *data){
 
 						json_object *contactstatus_object = json_object_new_object();
 						json_object_object_add(contactstatus_object, "contact_name", (tmp_contact->name != NULL ? json_object_new_string(tmp_contact->name) : NULL));
-						
+
 						json_object_object_add(contactstatus_object, "host_notifications_enabled",    json_object_new_int64(tmp_contact->host_notifications_enabled));
 						json_object_object_add(contactstatus_object, "service_notifications_enabled", json_object_new_int64(tmp_contact->service_notifications_enabled));
 						json_object_object_add(contactstatus_object, "last_host_notification",        json_object_new_int64(tmp_contact->last_host_notification));
@@ -1161,8 +1294,9 @@ int statusengine_handle_data(int event_type, void *data){
 						json_object_put(my_object);
 					}
 					break;
-					
+
 				case NEBCALLBACK_CONTACT_NOTIFICATION_DATA:
+					if (!use_contact_notification_data) return 0;
 					if((cnd = (nebstruct_contact_notification_data *)data)){
 						if(cnd == NULL){
 							return 0;
@@ -1201,6 +1335,7 @@ int statusengine_handle_data(int event_type, void *data){
 					break;
 
 				case NEBCALLBACK_CONTACT_NOTIFICATION_METHOD_DATA:
+					if (!use_contact_notification_method_data) return 0;
 					if((cnm = (nebstruct_contact_notification_method_data *)data)){
 						if(cnm == NULL){
 							return 0;
@@ -1236,8 +1371,9 @@ int statusengine_handle_data(int event_type, void *data){
 						json_object_put(my_object);
 					}
 					break;
-					
+
 				case NEBCALLBACK_EVENT_HANDLER_DATA:
+					if (!use_event_handler_data) return 0;
 					if((event_handler_data = (nebstruct_event_handler_data *)data)){
 						if(event_handler_data == NULL){
 							return 0;
@@ -1319,20 +1455,20 @@ void dump_object_data(){
 	hostgroup *temp_hostgroup=NULL;
 	service *temp_service=NULL;
 	servicegroup *temp_servicegroup=NULL;
-	
+
 	#if defined NAEMON || defined NAGIOS
 	hostescalation *temp_hostescalation=NULL;
 	serviceescalation *temp_serviceescalation=NULL;
 	hostdependency *temp_hostdependency=NULL;
 	servicedependency *temp_servicedependency=NULL;
 	#endif
-	
+
 	//contactsmember *temp_contactsmember=NULL;
 	command *_command = NULL;
 	commandsmember *contactcommand = NULL;
 	//Fetch commands
 	//Logging that we dump commands right now
-	
+
 	//Tell the woker, that were start object dumping
 	my_object = json_object_new_object();
 	json_object_object_add(my_object, "object_type",       json_object_new_int(100));
@@ -1342,7 +1478,7 @@ void dump_object_data(){
 		logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 	json_object_put(my_object);
-	
+
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping command configuration");
 	for(temp_command = command_list; temp_command != NULL; temp_command = temp_command->next){
 		my_object = json_object_new_object();
@@ -1359,7 +1495,7 @@ void dump_object_data(){
 		json_object_put(my_object);
 
 	}
-	
+
 	//Fetch timeperiods
 	//Logging that we dump commands right now
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping timeperiod configuration");
@@ -1385,7 +1521,7 @@ void dump_object_data(){
 
 			json_object_object_add(timeranges, daystr, timerange_array);
 		}
-		
+
 		json_object_object_add(my_object, "timeranges", timeranges);
 		const char* json_string = json_object_to_json_string(my_object);
 
@@ -1394,9 +1530,9 @@ void dump_object_data(){
 			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
-		
+
 	}
-	
+
 	//Fetch contact configuration
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping contact configuration");
 	for(temp_contact = contact_list; temp_contact != NULL; temp_contact = temp_contact->next){
@@ -1434,11 +1570,11 @@ void dump_object_data(){
 
 		//Fetch contact notification commands (host)
 		json_object *hostcommands_array = json_object_new_array();
-		
+
 		//commandsmember *contactcommand = NULL;
 		for(contactcommand = temp_contact->host_notification_commands; contactcommand != NULL; contactcommand = contactcommand->next){
 			json_object *hostcommand_object = json_object_new_object();
-			
+
 			_command = contactcommand->command_ptr;
 			if(_command != NULL){
 				json_object_object_add(hostcommand_object, "command_name", json_object_new_string(_command->name));
@@ -1451,11 +1587,11 @@ void dump_object_data(){
 
 		//Fetch contact notification commands (service)
 		json_object *servicecommands_array = json_object_new_array();
-		
+
 		//commandsmember *contactcommand = NULL;
 		for(contactcommand = temp_contact->service_notification_commands; contactcommand != NULL; contactcommand = contactcommand->next){
 			json_object *servicecommand_object = json_object_new_object();
-			
+
 			_command = contactcommand->command_ptr;
 			if(_command != NULL){
 				json_object_object_add(servicecommand_object, "command_name", json_object_new_string(_command->name));
@@ -1463,7 +1599,7 @@ void dump_object_data(){
 				json_object_array_add(servicecommands_array, servicecommand_object);
 			}
 		}
-		
+
 		json_object_object_add(my_object, "service_commands", servicecommands_array);
 
 
@@ -1501,7 +1637,7 @@ void dump_object_data(){
 
 		json_object_put(my_object);
 	}
-	
+
 	//Fetch host configuration
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host configuration");
 	for(temp_host = host_list; temp_host != NULL; temp_host = temp_host->next){
@@ -1588,7 +1724,7 @@ void dump_object_data(){
 			json_object_array_add(contactgroups_array, (temp_contactgroupsmember->group_name != NULL ? json_object_new_string(temp_contactgroupsmember->group_name) : NULL));
 		}
 		json_object_object_add(my_object, "contactgroups", contactgroups_array);
-		
+
 		//Get contacts
 		contactsmember *temp_contacts = temp_host->contacts;
 		json_object *contacts_array = json_object_new_array();
@@ -1614,7 +1750,7 @@ void dump_object_data(){
 
 		json_object_put(my_object);
 	}
-	
+
 	//Fetch hostgroup configuration
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host group configuration");
 	for(temp_hostgroup = hostgroup_list; temp_hostgroup != NULL; temp_hostgroup=temp_hostgroup->next){
@@ -1749,7 +1885,7 @@ void dump_object_data(){
 
 		json_object_put(my_object);
 	}
-	
+
 	//Fetch service groups
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service group configuration");
 	for(temp_servicegroup = servicegroup_list; temp_servicegroup != NULL; temp_servicegroup = temp_servicegroup->next){
@@ -1776,7 +1912,7 @@ void dump_object_data(){
 			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
-		
+
 	}
 
 	#if defined NAEMON || defined NAGIOS
@@ -1814,14 +1950,14 @@ void dump_object_data(){
 		json_object_object_add(my_object, "contacts", contacts_array);
 
 		const char* json_string = json_object_to_json_string(my_object);
-	
+
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
 			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
 		json_object_put(my_object);
 	}
-	
+
 	//Fetch service escalations
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping servcie escalation configuration");
 	for(x = 0; x < num_objects.serviceescalations; x++) {
@@ -1831,16 +1967,16 @@ void dump_object_data(){
 		json_object_object_add(my_object, "host_name",         (temp_serviceescalation->host_name         != NULL ? json_object_new_string(temp_serviceescalation->host_name) : NULL));
 		json_object_object_add(my_object, "description",       (temp_serviceescalation->description         != NULL ? json_object_new_string(temp_serviceescalation->description) : NULL));
 		json_object_object_add(my_object, "escalation_period", (temp_serviceescalation->escalation_period         != NULL ? json_object_new_string(temp_serviceescalation->escalation_period) : NULL));
-		
+
 		json_object_object_add(my_object, "first_notification",    json_object_new_int64(temp_serviceescalation->first_notification));
 		json_object_object_add(my_object, "last_notification",     json_object_new_int64(temp_serviceescalation->last_notification));
 		json_object_object_add(my_object, "notification_interval", json_object_new_int64(temp_serviceescalation->notification_interval));
-		
+
 		json_object_object_add(my_object, "escalate_on_recovery", json_object_new_int64(flag_isset(temp_serviceescalation->escalation_options, OPT_RECOVERY)));
 		json_object_object_add(my_object, "escalate_on_warning",  json_object_new_int64(flag_isset(temp_serviceescalation->escalation_options, OPT_WARNING)));
 		json_object_object_add(my_object, "escalate_on_unknown",  json_object_new_int64(flag_isset(temp_serviceescalation->escalation_options, OPT_UNKNOWN)));
 		json_object_object_add(my_object, "escalate_on_critical", json_object_new_int64(flag_isset(temp_serviceescalation->escalation_options, OPT_CRITICAL)));
-		
+
 		//Get contact groups
 		contactgroupsmember *temp_contactgroupsmember = temp_serviceescalation->contact_groups;
 		json_object *contactgroups_array = json_object_new_array();
@@ -1864,7 +2000,7 @@ void dump_object_data(){
 
 		json_object_put(my_object);
 	}
-	
+
 	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host dependency configuration");
 	for(x = 0; x < num_objects.hostdependencies; x++){
 		temp_hostdependency = hostdependency_ary[x];
@@ -1873,14 +2009,14 @@ void dump_object_data(){
 		json_object_object_add(my_object, "host_name",           (temp_hostdependency->host_name           != NULL ? json_object_new_string(temp_hostdependency->host_name) : NULL));
 		json_object_object_add(my_object, "dependent_host_name", (temp_hostdependency->dependent_host_name != NULL ? json_object_new_string(temp_hostdependency->dependent_host_name) : NULL));
 		json_object_object_add(my_object, "dependency_period",   (temp_hostdependency->dependency_period   != NULL ? json_object_new_string(temp_hostdependency->dependency_period) : NULL));
-		
+
 		json_object_object_add(my_object, "dependency_type", json_object_new_int64(temp_hostdependency->dependency_type));
 		json_object_object_add(my_object, "inherits_parent", json_object_new_int64(temp_hostdependency->inherits_parent));
-		
+
 		json_object_object_add(my_object, "fail_on_up",          json_object_new_int64(flag_isset(temp_hostdependency->failure_options, OPT_UP)));
 		json_object_object_add(my_object, "fail_on_down",        json_object_new_int64(flag_isset(temp_hostdependency->failure_options, OPT_DOWN)));
 		json_object_object_add(my_object, "fail_on_unreachable", json_object_new_int64(flag_isset(temp_hostdependency->failure_options, OPT_UNREACHABLE)));
-		
+
 		const char* json_string = json_object_to_json_string(my_object);
 		ret= gearman_client_do_background(&gman_client, "statusngin_objects", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 		if (ret != GEARMAN_SUCCESS)
@@ -1904,7 +2040,7 @@ void dump_object_data(){
 
 		json_object_object_add(my_object, "dependency_type", json_object_new_int64(temp_servicedependency->dependency_type));
 		json_object_object_add(my_object, "inherits_parent", json_object_new_int64(temp_servicedependency->inherits_parent));
-		
+
 		json_object_object_add(my_object, "fail_on_ok",       json_object_new_int64(flag_isset(temp_servicedependency->failure_options, OPT_OK)));
 		json_object_object_add(my_object, "fail_on_warning",  json_object_new_int64(flag_isset(temp_servicedependency->failure_options, OPT_WARNING)));
 		json_object_object_add(my_object, "fail_on_unknown",  json_object_new_int64(flag_isset(temp_servicedependency->failure_options, OPT_UNKNOWN)));
@@ -1918,8 +2054,8 @@ void dump_object_data(){
 		json_object_put(my_object);
 	}
 	#endif
-	
-	
+
+
 	//Tell the woker, that were done with object dumping
 	my_object = json_object_new_object();
 	json_object_object_add(my_object, "object_type",       json_object_new_int(101));
@@ -1928,6 +2064,6 @@ void dump_object_data(){
 	if (ret != GEARMAN_SUCCESS)
 		logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 	json_object_put(my_object);
-	
+
 }
 
