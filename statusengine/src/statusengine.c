@@ -224,7 +224,7 @@ static gboolean hostgroup_foreach_callback(gpointer key, gpointer _hostgroupmemb
 }
 #endif
 
-int use_host_data = 1;
+int use_host_status_data = 1;
 int use_service_status_data = 1;
 int use_process_data = 1;
 int use_service_check_data = 1;
@@ -374,9 +374,9 @@ int statusengine_process_config_var(char *arg) {
 	strip(val);
 
 	/* process the variable... */
-	if (!strcmp(var, "use_host_data")) {
-		use_host_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled host_data");
+	if (!strcmp(var, "use_host_status_data")) {
+		use_host_status_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled host_status_data");
 	} else if (!strcmp(var, "use_service_status_data")) {
 		use_service_status_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled service_status_data");
@@ -559,7 +559,7 @@ int statusengine_handle_data(int event_type, void *data){
 
 
 			case NEBCALLBACK_HOST_STATUS_DATA:
-				if (!use_host_data) return 0;
+				if (!use_host_status_data) return 0;
 				if((hoststatusdata = (nebstruct_host_status_data *)data)){
 					if(hoststatusdata == NULL){
 						return 0;
