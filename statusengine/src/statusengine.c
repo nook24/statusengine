@@ -378,66 +378,66 @@ int statusengine_process_config_var(char *arg) {
 	strip(val);
 
 	/* process the variable... */
-	if (!strcmp(var, "use_host_data"))
+	if (!strcmp(var, "use_host_data")) {
 		use_host_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled host_data");
-	else if (!strcmp(var, "use_service_status_data"))
+	} else if (!strcmp(var, "use_service_status_data")) {
 		use_service_status_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled service_status_data");
-	else if (!strcmp(var, "use_process_data"))
+	} else if (!strcmp(var, "use_process_data")) {
 		use_process_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled process_data");
-	else if (!strcmp(var, "use_service_check_data"))
+	} else if (!strcmp(var, "use_service_check_data")) {
 		use_service_check_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled service_check_data");
-	else if (!strcmp(var, "use_host_check_data"))
+	} else if (!strcmp(var, "use_host_check_data")) {
 		use_host_check_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled host_check_data");
-	else if (!strcmp(var, "use_state_change_data"))
+	} else if (!strcmp(var, "use_state_change_data")) {
 		use_state_change_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled state_change_data");
-	else if (!strcmp(var, "use_log_data"))
+	} else if (!strcmp(var, "use_log_data")) {
 		use_log_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled log_data");
-	else if (!strcmp(var, "use_system_command_data"))
+	} else if (!strcmp(var, "use_system_command_data")) { 
 		use_system_command_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled system_command_data");
-	else if (!strcmp(var, "use_comment_data"))
+	} else if (!strcmp(var, "use_comment_data")) {
 		use_comment_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled comment_data");
-	else if (!strcmp(var, "use_external_command_data"))
+	} else if (!strcmp(var, "use_external_command_data")) {
 		use_external_command_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled external_command_data");
-	else if (!strcmp(var, "use_acknowledgement_data"))
+	} else if (!strcmp(var, "use_acknowledgement_data")) {
 		use_acknowledgement_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled acknowledgement_data");
-	else if (!strcmp(var, "use_flapping_data"))
+	} else if (!strcmp(var, "use_flapping_data")) { 
 		use_flapping_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled flapping_data");
-	else if (!strcmp(var, "use_downtime_data"))
+	} else if (!strcmp(var, "use_downtime_data")) {
 		use_downtime_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled downtime_data");
-	else if (!strcmp(var, "use_notification_data"))
+	} else if (!strcmp(var, "use_notification_data")) {
 		use_notification_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled notification_data");
-	else if (!strcmp(var, "use_program_status_data"))
+	} else if (!strcmp(var, "use_program_status_data")) {
 		use_program_status_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled program_status_data");
-	else if (!strcmp(var, "use_contact_status_data"))
+	} else if (!strcmp(var, "use_contact_status_data")) { 
 		use_contact_status_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled contact_status_data");
-	else if (!strcmp(var, "use_contact_notification_data"))
+	} else if (!strcmp(var, "use_contact_notification_data")) { 
 		use_contact_notification_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled contact_notification_data");
-	else if (!strcmp(var, "use_contact_notification_method_data"))
+	} else if (!strcmp(var, "use_contact_notification_method_data")) {
 		use_contact_notification_method_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled contact_notification_method_data");
-	else if (!strcmp(var, "use_event_handler_data"))
+	} else if (!strcmp(var, "use_event_handler_data")) {
 		use_event_handler_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled event_handler_data");
-	else
+	} else {
 		return ERROR;
-
+	}
 	return OK;
 }
 
