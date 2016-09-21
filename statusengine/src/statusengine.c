@@ -270,7 +270,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 
 	if (statusengine_process_module_args(args) == ERROR) {
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] An error occurred while attempting to process module arguments.");
-		return -1;
+		return ERROR;
 	}
 
 	//Register callbacks
@@ -343,22 +343,18 @@ int nebmodule_deinit(int flags, int reason){
 	return 0;
 }
 
-int statusengine_process_module_args(char *args_orig) {
-	char *ptr = NULL;
-	char *args;
+int statusengine_process_module_args(char *args) {
+        char *ptr = NULL;
 
-	args = strdup(args_orig);
+        if (args == NULL) return OK;
 
-	if (args == NULL)
-		return OK;
+        while ((ptr = strsep(&args, " ")) != NULL ) {
+                if(statusengine_process_config_var(ptr) == ERROR) {
+                        return ERROR;
+                }
+        }
 
-	while ((ptr = strsep(&args, " ")) != NULL ) {
-		if(statusengine_process_config_var(ptr) == ERROR) {
-			return ERROR;
-		}
-	}
-
-	return OK;
+        return OK;
 }
 
 int statusengine_process_config_var(char *arg) {
