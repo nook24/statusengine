@@ -30,7 +30,8 @@
 *
 * --------------------------------------------------------------------------------
 */
-class Comment extends LegacyAppModel{
+class Commenthistory extends LegacyAppModel{
 	public $useDbConfig = 'legacy';
-	public $primaryKey = 'comment_id';
+	public $useTable = 'commenthistory';
+	public $primaryKey = 'commenthistory_id';
 }

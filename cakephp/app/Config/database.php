@@ -83,7 +83,7 @@ class DATABASE_CONFIG {
 		'password' => 'password',
 		'database' => 'naemon',
 		'prefix' => 'naemon_',
-		//'encoding' => 'utf8',
+		'encoding' => 'utf8',
 	);
 
 	public $test = array(

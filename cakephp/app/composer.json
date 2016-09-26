@@ -1,0 +1,21 @@
+{
+  "name": "Statusengine",
+  "description": "The missing event broker + responsive web frontend for Nagios and Naemon",
+  "version": "2",
+  "homepage": "https://statusengine.org/",
+  "license": "GPLv2",
+  "authors": [
+    {
+      "name": "Daniel Ziegler (nook24)",
+      "role": "Developer"
+    }
+  ],
+
+  "autoload": {
+    "classmap": ["src/"]
+  },
+
+  "config": {
+    "vendor-dir": "Vendor"
+  }
+}
