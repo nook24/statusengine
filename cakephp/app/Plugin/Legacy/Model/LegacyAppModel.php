@@ -249,7 +249,7 @@ class LegacyAppModel extends AppModel{
 					return $this->sqlSave($data, true);
 				}
 			}
-			CakeLog::error($e->getMessage());
+			$this->logError($e);
 		}
 	}
 
@@ -278,7 +278,7 @@ class LegacyAppModel extends AppModel{
 					return $this->sqlQuery($data, true);
 				}
 			}
-			CakeLog::error($e->getMessage());
+			$this->logError($e);
 		}
 	}
 
@@ -295,7 +295,7 @@ class LegacyAppModel extends AppModel{
 					return $this->save($data, $validate, $fieldList, true);
 				}
 			}
-			CakeLog::error($e->getMessage());
+			$this->logError($e);
 		}
 	}
 
@@ -312,7 +312,7 @@ class LegacyAppModel extends AppModel{
 					return $this->find($type, $query, true);
 				}
 			}
-			CakeLog::error($e->getMessage());
+			$this->logError($e);
 		}
 	}
 
@@ -335,7 +335,7 @@ class LegacyAppModel extends AppModel{
 					return $this->truncate(true);
 				}
 			}
-			CakeLog::error($e->getMessage());
+			$this->logError($e);
 		}
 	}
 	
@@ -381,6 +381,17 @@ class LegacyAppModel extends AppModel{
 			//	'is_active' => $data[$this->name]['is_active']
 			//]
 		);
+	}
+	
+	protected function logError($PDOException){
+		$error = trim($PDOException->getMessage());
+		$query = trim($PDOException->queryString);
 
+		$errorMsg = $error;
+		if(strlen($query) > 0){
+			$errorMsg .= PHP_EOL.$query;
+		}
+		
+		CakeLog::error($errorMsg);
 	}
 }
