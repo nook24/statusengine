@@ -118,7 +118,7 @@ CakePlugin::loadAll();
 CakePlugin::load('BoostCake');
 
 //Define versions
-define('STATUSENIGNE_VERSION', '2.0.1');
+define('STATUSENIGNE_VERSION', '2.0.2');
 define('PERFDATA_VERSION', '1.2.0');
 
 

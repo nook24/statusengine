@@ -2763,7 +2763,7 @@ class StatusengineLegacyShell extends AppShell{
 			 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 			 */
 			$this->worker->addOptions(GEARMAN_WORKER_NON_BLOCKING);
-			$this->worker->setTimeout(1000);
+			$this->worker->setTimeout(250);
 
 			$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 			foreach($this->queues as $queueName => $functionName){
@@ -2786,16 +2786,17 @@ class StatusengineLegacyShell extends AppShell{
 					if(isset($this->queues['statusngin_servicechecks'])){
 						CakeLog::info('Build up new process perfdata cache');
 						$this->buildProcessPerfdataCache();
+						
+						$this->cacheHostNamesForGraphiteIfRequried();
+						$this->cacheServiceNamesForGraphiteIfRequried();
 					}
 				}
 
-				$this->cacheHostNamesForGraphiteIfRequried();
-				$this->cacheServiceNamesForGraphiteIfRequried();
-
 				CakeLog::info('I will continue my work');
 				$this->childWork();
-
 			}
+			
+			
 			pcntl_signal_dispatch();
 			//Check if the parent process still exists
 			if($this->parentPid != posix_getppid()){
