@@ -85,7 +85,8 @@ class LegacySchema extends CakeSchema {
 		'deletion_time_usec' => array('type' => 'integer', 'null' => true, 'default' => '0', 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'commenthistory_id', 'unique' => 1),
-			'object_id_internal_comment_id' => array('column' => array('object_id', 'internal_comment_id'), 'unique' => 1)
+			'object_id_internal_comment_id' => array('column' => array('object_id', 'internal_comment_id'), 'unique' => 1),
+			'object_id' => array('column' => array('object_id'), 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM', 'comment' => 'Historical host and service comments')
 	);
@@ -388,7 +389,8 @@ class LegacySchema extends CakeSchema {
 		'internal_comment_id' => array('type' => 'integer', 'null' => false, 'default' => '0', 'unsigned' => false),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'flappinghistory_id', 'unique' => 1),
-			'instance_id' => array('column' => array('instance_id', 'object_id'), 'unique' => 0)
+			'instance_id' => array('column' => array('instance_id', 'object_id'), 'unique' => 0),
+			'object_id' => array('column' => array('object_id'), 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
 	);
@@ -1111,7 +1113,8 @@ class LegacySchema extends CakeSchema {
 		'long_output' => array('type' => 'text', 'null' => false, 'default' => null, 'collate' => 'utf8_swedish_ci', 'charset' => 'utf8'),
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'statehistory_id', 'unique' => 1),
-			'state_time' => array('column' => array('state_time', 'state_time_usec'), 'unique' => 0)
+			'state_time' => array('column' => array('state_time', 'state_time_usec'), 'unique' => 0),
+			'object_id' => array('column' => array('object_id'), 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
 	);

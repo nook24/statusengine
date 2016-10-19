@@ -101,6 +101,9 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - PHP7
 
 ##Changelog
+**2.0.3**
+- Add index for object_id in history tables
+
 **2.0.2**
 - Fix buildProcessPerfdataCache on low loaded systems
 
