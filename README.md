@@ -101,6 +101,12 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - PHP7
 
 ##Changelog
+**2.0.4**
+- Add broker option enable_ochp
+- Add broker option enable_ocsp
+- Add broker option use_object_data
+- Fix that objects will be dumped if use_process_data=0 and use_object_data=1
+
 **2.0.3**
 - Add index for object_id in history tables
 
