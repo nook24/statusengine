@@ -264,7 +264,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_TITLE,   "Statusengine - the missing event broker");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_AUTHOR,  "Daniel Ziegler");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_TITLE,   "Copyright (c) 2014 - present Daniel Ziegler");
-	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.3");
+	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.4");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v2");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_DESC,    "A powerful and flexible event broker");
 
