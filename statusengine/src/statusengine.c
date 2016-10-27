@@ -191,6 +191,8 @@ extern char *global_service_event_handler;
 gearman_return_t ret; //remove me!!!
 gearman_client_st gman_client;
 
+gearman_client_st gman_client_ochp;
+
 void *statusengine_module_handle = NULL;
 
 int statusengine_handle_data(int, void *);
@@ -243,6 +245,10 @@ int use_contact_status_data = 1;
 int use_contact_notification_data = 1;
 int use_contact_notification_method_data = 1;
 int use_event_handler_data = 1;
+
+int enable_ochp = 0;
+int enable_ocsp = 0;
+
 int statusengine_process_config_var(char *arg);
 int statusengine_process_module_args(char *args);
 
@@ -305,6 +311,18 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	if (ret != GEARMAN_SUCCESS){
 		logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 	}
+	
+	if(enable_ochp || enable_ocsp){
+		//Create gearman client for ochp/ocsp
+		if (gearman_client_create(&gman_client_ochp) == NULL){
+			logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Memory allocation failure on client creation for OCHP/OCSP\n");
+		}
+
+		ret= gearman_client_add_server(&gman_client_ochp, "127.0.0.1", 4730);
+		if (ret != GEARMAN_SUCCESS){
+			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client_ochp));
+		}
+	}
 
 	return 0;
 }
@@ -344,17 +362,17 @@ int nebmodule_deinit(int flags, int reason){
 }
 
 int statusengine_process_module_args(char *args) {
-        char *ptr = NULL;
+	char *ptr = NULL;
 
-        if (args == NULL) return OK;
+	if (args == NULL) return OK;
 
-        while ((ptr = strsep(&args, " ")) != NULL ) {
-                if(statusengine_process_config_var(ptr) == ERROR) {
-                        return ERROR;
-                }
-        }
+	while ((ptr = strsep(&args, " ")) != NULL ) {
+		if(statusengine_process_config_var(ptr) == ERROR) {
+			return ERROR;
+		}
+	}
 
-        return OK;
+	return OK;
 }
 
 int statusengine_process_config_var(char *arg) {
@@ -431,6 +449,12 @@ int statusengine_process_config_var(char *arg) {
 	} else if (!strcmp(var, "use_event_handler_data")) {
 		use_event_handler_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled event_handler_data");
+	} else if (!strcmp(var, "enable_ochp")) {
+		enable_ochp = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with enabled enable_ochp");
+	} else if (!strcmp(var, "enable_ocsp")) {
+		enable_ocsp = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with enabled enable_ocsp");
 	} else {
 		return ERROR;
 	}
@@ -722,7 +746,9 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_SERVICE_CHECK_DATA:
-				if (!use_service_check_data) return 0;
+				if (!use_service_check_data && !enable_ocsp){
+					return 0;
+				}
 				if((servicecheck = (nebstruct_service_check_data *)data)){
 					if(servicecheck == NULL){
 						return 0;
@@ -774,9 +800,18 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "servicecheck", servicecheck_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&gman_client, "statusngin_servicechecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
-					if (ret != GEARMAN_SUCCESS)
-						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
+					
+					if(use_service_check_data){
+						ret= gearman_client_do_background(&gman_client, "statusngin_servicechecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+						if (ret != GEARMAN_SUCCESS)
+							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
+					}
+					
+					if(enable_ocsp){
+						ret= gearman_client_do_background(&gman_client_ochp, "statusngin_ocsp", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+						if (ret != GEARMAN_SUCCESS)
+							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client_ochp));
+					}
 
 					json_object_put(servicecheck_object);
 					json_object_put(my_object);
@@ -785,7 +820,9 @@ int statusengine_handle_data(int event_type, void *data){
 				break;
 
 			case NEBCALLBACK_HOST_CHECK_DATA:
-				if (!use_host_check_data) return 0;
+				if (!use_host_check_data && !enable_ochp){
+					return 0;
+				}
 				if((hostcheck = (nebstruct_host_check_data *)data)){
 					if(hostcheck == NULL){
 						return 0;
@@ -836,9 +873,18 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "hostcheck", hostcheck_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&gman_client, "statusngin_hostchecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
-					if (ret != GEARMAN_SUCCESS)
-						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
+					
+					if(use_host_check_data){
+						ret= gearman_client_do_background(&gman_client, "statusngin_hostchecks", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+						if (ret != GEARMAN_SUCCESS)
+							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
+					}
+					
+					if(enable_ochp){
+						ret= gearman_client_do_background(&gman_client_ochp, "statusngin_ochp", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+						if (ret != GEARMAN_SUCCESS)
+							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client_ochp));
+					}
 
 					json_object_put(hostcheck_object);
 					json_object_put(my_object);
