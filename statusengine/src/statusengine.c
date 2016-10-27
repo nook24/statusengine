@@ -555,8 +555,6 @@ int statusengine_handle_data(int event_type, void *data){
 			if(programmdata->type == NEBTYPE_PROCESS_START){
 				if(use_object_data){
 					dump_object_data();
-				}else{
-					return 0;
 				}
 			}
 			
