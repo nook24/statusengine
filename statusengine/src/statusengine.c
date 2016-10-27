@@ -246,6 +246,8 @@ int use_contact_notification_data = 1;
 int use_contact_notification_method_data = 1;
 int use_event_handler_data = 1;
 
+int use_object_data = 1;
+
 int enable_ochp = 0;
 int enable_ocsp = 0;
 
@@ -262,7 +264,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_TITLE,   "Statusengine - the missing event broker");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_AUTHOR,  "Daniel Ziegler");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_TITLE,   "Copyright (c) 2014 - present Daniel Ziegler");
-	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_VERSION, "1.0.0");
+	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.3");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v2");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_DESC,    "A powerful and flexible event broker");
 
@@ -455,6 +457,9 @@ int statusengine_process_config_var(char *arg) {
 	} else if (!strcmp(var, "enable_ocsp")) {
 		enable_ocsp = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with enabled enable_ocsp");
+	} else if (!strcmp(var, "use_object_data")) {
+		use_object_data = atoi(strdup(val));
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with enabled use_object_data");
 	} else {
 		return ERROR;
 	}
@@ -537,7 +542,10 @@ int statusengine_handle_data(int event_type, void *data){
 	switch(event_type){
 
 		case NEBCALLBACK_PROCESS_DATA:
-			if(!use_process_data) return 0;
+			if(!use_process_data && !use_object_data){
+				return 0;
+			}
+			
 			programmdata=(nebstruct_process_data *)data;
 			if(programmdata == NULL){
 				return 0;
@@ -545,7 +553,15 @@ int statusengine_handle_data(int event_type, void *data){
 
 			//Core process was started, so we need to dump every object
 			if(programmdata->type == NEBTYPE_PROCESS_START){
-				dump_object_data();
+				if(use_object_data){
+					dump_object_data();
+				}else{
+					return 0;
+				}
+			}
+			
+			if(!use_process_data){
+				return 0;
 			}
 
 			if((programmdata = (nebstruct_process_data *)data)){
@@ -561,7 +577,7 @@ int statusengine_handle_data(int event_type, void *data){
 				json_object_object_add(processdata_object, "programmname",      json_object_new_string("Nagios"));
 				#endif
 				#if defined NAGIOS || defined NAEMON
-                                json_object_object_add(processdata_object, "modification_data", json_object_new_string(get_program_modification_date()));
+					json_object_object_add(processdata_object, "modification_data", json_object_new_string(get_program_modification_date()));
 				#endif
 				#if defined NAEMON105 || defined NAEMONMASTER
 				json_object_object_add(processdata_object, "modification_data", json_object_new_string("removed"));

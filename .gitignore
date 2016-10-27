@@ -1,2 +1,5 @@
 statusengine.o
+statusengine-naemon-1-0-5.o
+statusengine-naemon-1-0-3.o
+statusengine-nagios.o
 ._*
