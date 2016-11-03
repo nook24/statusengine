@@ -101,6 +101,9 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - PHP7
 
 ##Changelog
+**2.0.5**
+- Fix parsing of negative performance data
+
 **2.0.4**
 - Add broker option enable_ochp
 - Add broker option enable_ocsp
