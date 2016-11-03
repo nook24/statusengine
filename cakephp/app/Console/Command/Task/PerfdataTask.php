@@ -148,7 +148,7 @@ class PerfdataTask extends AppShell{
 				break;
 
 				case 'SEARCH_VALUE':
-					if($char == '.' || $char == ',' || ($char >= '0' && $char <= '9')){
+					if($char == '.' || $char == ',' || $char == '-' || ($char >= '0' && $char <= '9')){
 						$char = $this->makeUsDecimal($char);
 						$result['current'] .= $char;
 					}else{
