@@ -7,7 +7,9 @@ namespace Composer\Autoload;
 class ComposerStaticInit2b71738deea9c6a12da89c1f29fd7bfc
 {
     public static $classMap = array (
+        'MySQLBulk' => __DIR__ . '/../..' . '/src/MySQL.php',
         'NebTypes' => __DIR__ . '/../..' . '/src/NebTypes.php',
+        'StatusRepository' => __DIR__ . '/../..' . '/src/StatusRepository.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
