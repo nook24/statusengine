@@ -40,6 +40,12 @@ $config = [
 	//  2. Graphite only: ['Graphite']
 	//  3. RRD and Graphite: ['Rrd', 'Graphite']
 	'perfdata_storage' => ['Rrd'],
+	
+	//Use bulk queries for host and servicestatus
+	'use_bulk_queries_for_status' => false,
+	
+	//Records per query
+	'query_limit' => 200,
 
 	//Workers Statusengine will fork in worker mode
 	//Check: https://statusengine.org/documentation.php#scaleout-statusengine
