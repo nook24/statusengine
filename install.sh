@@ -182,7 +182,7 @@ if [ $DISTRIBUTOR = "Debian" ]; then
                 echo "You need to install php5-gearman manually!"
                 echo "Check out https://statusengine.org/documentation.php#advanced-installation"
                 echo ""
-                echo "Statusengine Event Broker Module is read to use right now!"
+                echo "Statusengine Event Broker Module is ready to use right now!"
                 echo "But to use the PHP part of Statusengine, you need to install the php extension"
                 echo "Download the following archiv for Debian Wheezy"
                 echo "wget https://pecl.php.net/get/gearman-1.0.3.tgz"
