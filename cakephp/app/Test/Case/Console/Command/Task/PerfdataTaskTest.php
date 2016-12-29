@@ -174,4 +174,21 @@ class PerfdataTaskTest extends CakeTestCase {
 		$this->assertEquals($expected, $result);
 	}
 
+        public function testParseNegativValue(){
+                $perfdata = 'Taupunkt=-7.48C;;;;';
+                $result = $this->Perfdata->parsePerfdataString($perfdata);
+
+                $expected = [
+                        'Taupunkt' => [
+                                'current' => '-7.48',
+                                'unit' => 'C',
+                                'warning' => null,
+                                'critical' => null,
+                                'min' => null,
+                                'max' => null
+                        ],
+                ];
+                $this->assertEquals($expected, $result);
+        }
+
 }
