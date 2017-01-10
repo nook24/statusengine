@@ -2798,24 +2798,21 @@ class StatusengineLegacyShell extends AppShell{
 				$this->worker->addFunction($queueName, [$this, $functionName]);
 			}
 			$this->bindQueues = false;
-
-			$MySQL = new MySQLBulk($this->Servicecheck->getDataSource());
-			$MySQL->connect();
 			
 			if(isset($this->queues['statusngin_servicechecks']) && $this->useBulkQueries){
-				$this->StatusRepository['Servicecheck'] = new StatusRepository($this->Servicecheck, $this->queryLimit, $MySQL);
+				$this->StatusRepository['Servicecheck'] = new StatusRepository($this->Servicecheck, $this->queryLimit);
 			}
 			
 			if(isset($this->queues['statusngin_hostchecks']) && $this->useBulkQueries){
-				$this->StatusRepository['Hostcheck'] = new StatusRepository($this->Hostcheck, $this->queryLimit, $MySQL);
+				$this->StatusRepository['Hostcheck'] = new StatusRepository($this->Hostcheck, $this->queryLimit);
 			}
 			
 			if(isset($this->queues['statusngin_servicestatus']) && $this->useBulkQueries){
-				$this->StatusRepository['Servicestatus'] = new StatusRepository($this->Servicestatus, $this->queryLimit, $MySQL);
+				$this->StatusRepository['Servicestatus'] = new StatusRepository($this->Servicestatus, $this->queryLimit);
 			}
 			
 			if(isset($this->queues['statusngin_hoststatus']) && $this->useBulkQueries){
-				$this->StatusRepository['Hoststatus'] = new StatusRepository($this->Hoststatus, $this->queryLimit, $MySQL);
+				$this->StatusRepository['Hoststatus'] = new StatusRepository($this->Hoststatus, $this->queryLimit);
 			}
 		}
 		while(true){

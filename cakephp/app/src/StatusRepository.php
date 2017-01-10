@@ -71,15 +71,9 @@ class StatusRepository{
 	 */
 	private $Model;
 	
-	/**
-	 * @var MySQLBulk
-	 */
-	private $MySQL;
-	
-	public function __construct(Model $Model, $queryLimit, MySQLBulk $MySQL){
+	public function __construct(Model $Model, $queryLimit){
 		$this->Model = $Model;
 		$this->queryLimit = $queryLimit;
-		$this->MySQL = $MySQL;
 		
 		$this->lastPush = time();
 		
@@ -180,7 +174,13 @@ class StatusRepository{
 	 * @param string $query
 	 */
 	public function save($query){
-		$this->MySQL->query($query);
+		try{
+			$this->db->rawQuery($query);
+		}catch(PDOException $e){
+			if($e->getMessage() == 'SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock; try restarting transaction'){
+				$this->db->rawQuery($query);
+			}
+		}
 	}
 	
 	/**
