@@ -1793,6 +1793,10 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
+		if($this->useBulkQueries === true){
+			$this->StatusRepository['Logentry']->commit($data['Logentry']);
+			return;
+		}
 		$this->Logentry->rawInsert([$data], false);
 	}
 
@@ -1939,6 +1943,10 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
+		if($this->useBulkQueries === true){
+			$this->StatusRepository['Externalcommand']->commit($data['Externalcommand']);
+			return;
+		}
 		$this->Externalcommand->rawInsert([$data], false);
 	}
 
@@ -2930,6 +2938,15 @@ class StatusengineLegacyShell extends AppShell{
 			if(isset($this->queues['statusngin_hoststatus']) && $this->useBulkQueries){
 				$this->StatusRepository['Hoststatus'] = new StatusRepository($this->Hoststatus, $this->queryLimit);
 			}
+
+			if(isset($this->queues['statusngin_externalcommands']) && $this->useBulkQueries){
+				$this->StatusRepository['Externalcommand'] = new StatusRepository($this->Externalcommand, $this->queryLimit);
+			}
+
+			if(isset($this->queues['statusngin_logentries']) && $this->useBulkQueries){
+				$this->StatusRepository['Logentry'] = new StatusRepository($this->Logentry, $this->queryLimit);
+			}
+
 			if(isset($this->queues['statusngin_objects']) && $this->useBulkQueries){
 				$this->ObjectsRepository['Timerange'] = new StatusRepository($this->Timerange, $this->queryLimit);
 				$this->ObjectsRepository['Contactaddress'] = new StatusRepository($this->Contactaddress, $this->queryLimit);
@@ -3022,6 +3039,14 @@ class StatusengineLegacyShell extends AppShell{
 
 				if(isset($this->queues['statusngin_hoststatus']) && $this->useBulkQueries){
 					$this->StatusRepository['Hoststatus']->pushIfRequired();
+				}
+
+				if(isset($this->queues['statusngin_externalcommands']) && $this->useBulkQueries){
+					$this->StatusRepository['Externalcommand']->pushIfRequired();
+				}
+
+				if(isset($this->queues['statusngin_logentries']) && $this->useBulkQueries){
+					$this->StatusRepository['Logentry']->pushIfRequired();
 				}
 			}
 		}
