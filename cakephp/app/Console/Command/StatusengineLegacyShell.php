@@ -2507,6 +2507,24 @@ class StatusengineLegacyShell extends AppShell{
 	public function gearmanConnect(){
 		$this->worker = new GearmanWorker();
 
+		// Prepare Bulk Repository for Objects Operations
+		$this->ObjectsRepository = [];
+		$this->ObjectsRepository['Timerange'] = new StatusRepository($this->Timerange, $this->queryLimit);
+		$this->ObjectsRepository['Contactaddress'] = new StatusRepository($this->Contactaddress, $this->queryLimit);
+		$this->ObjectsRepository['Contactnotificationcommand'] = new StatusRepository($this->Contactnotificationcommand, $this->queryLimit);
+		$this->ObjectsRepository['Contactgroupmember'] = new StatusRepository($this->Contactgroupmember, $this->queryLimit);
+		$this->ObjectsRepository['Hostcontactgroup'] = new StatusRepository($this->Hostcontactgroup, $this->queryLimit);
+		$this->ObjectsRepository['Hostcontact'] = new StatusRepository($this->Hostcontact, $this->queryLimit);
+		$this->ObjectsRepository['Customvariable'] = new StatusRepository($this->Customvariable, $this->queryLimit);
+		$this->ObjectsRepository['Hostgroupmember'] = new StatusRepository($this->Hostgroupmember, $this->queryLimit);
+		$this->ObjectsRepository['Servicecontactgroup'] = new StatusRepository($this->Servicecontactgroup, $this->queryLimit);
+		$this->ObjectsRepository['Servicecontact'] = new StatusRepository($this->Servicecontact, $this->queryLimit);
+		$this->ObjectsRepository['Servicegroupmember'] = new StatusRepository($this->Servicegroupmember, $this->queryLimit);
+		$this->ObjectsRepository['Hostescalationcontacts'] = new StatusRepository($this->Hostescalationcontacts, $this->queryLimit);
+		$this->ObjectsRepository['Hostescalationcontactgroup'] = new StatusRepository($this->Hostescalationcontactgroup, $this->queryLimit);
+		$this->ObjectsRepository['Serviceescalationcontact'] = new StatusRepository($this->Serviceescalationcontact, $this->queryLimit);
+		$this->ObjectsRepository['Serviceescalationcontactgroup'] = new StatusRepository($this->Serviceescalationcontactgroup, $this->queryLimit);
+
 		/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
 		 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 		 */
@@ -2906,7 +2924,6 @@ class StatusengineLegacyShell extends AppShell{
 		CakeLog::info('Ok, i will wait for instructions');
 		if($this->bindQueues === true){
 			$this->StatusRepository = [];
-			$this->ObjectsRepository = [];
 
 			$this->worker = new GearmanWorker();
 
@@ -2945,24 +2962,6 @@ class StatusengineLegacyShell extends AppShell{
 
 			if(isset($this->queues['statusngin_logentries']) && $this->useBulkQueries){
 				$this->StatusRepository['Logentry'] = new StatusRepository($this->Logentry, $this->queryLimit);
-			}
-
-			if(isset($this->queues['statusngin_objects']) && $this->useBulkQueries){
-				$this->ObjectsRepository['Timerange'] = new StatusRepository($this->Timerange, $this->queryLimit);
-				$this->ObjectsRepository['Contactaddress'] = new StatusRepository($this->Contactaddress, $this->queryLimit);
-				$this->ObjectsRepository['Contactnotificationcommand'] = new StatusRepository($this->Contactnotificationcommand, $this->queryLimit);
-				$this->ObjectsRepository['Contactgroupmember'] = new StatusRepository($this->Contactgroupmember, $this->queryLimit);
-				$this->ObjectsRepository['Hostcontactgroup'] = new StatusRepository($this->Hostcontactgroup, $this->queryLimit);
-				$this->ObjectsRepository['Hostcontact'] = new StatusRepository($this->Hostcontact, $this->queryLimit);
-				$this->ObjectsRepository['Customvariable'] = new StatusRepository($this->Customvariable, $this->queryLimit);
-				$this->ObjectsRepository['Hostgroupmember'] = new StatusRepository($this->Hostgroupmember, $this->queryLimit);
-				$this->ObjectsRepository['Servicecontactgroup'] = new StatusRepository($this->Servicecontactgroup, $this->queryLimit);
-				$this->ObjectsRepository['Servicecontact'] = new StatusRepository($this->Servicecontact, $this->queryLimit);
-				$this->ObjectsRepository['Servicegroupmember'] = new StatusRepository($this->Servicegroupmember, $this->queryLimit);
-				$this->ObjectsRepository['Hostescalationcontacts'] = new StatusRepository($this->Hostescalationcontacts, $this->queryLimit);
-				$this->ObjectsRepository['Hostescalationcontactgroup'] = new StatusRepository($this->Hostescalationcontactgroup, $this->queryLimit);
-				$this->ObjectsRepository['Serviceescalationcontact'] = new StatusRepository($this->Serviceescalationcontact, $this->queryLimit);
-				$this->ObjectsRepository['Serviceescalationcontactgroup'] = new StatusRepository($this->Serviceescalationcontactgroup, $this->queryLimit);
 			}
 		}
 		while(true){
