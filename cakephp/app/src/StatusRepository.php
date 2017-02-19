@@ -93,6 +93,8 @@ class StatusRepository{
 	public function push(){
 
 		if($this->counter > 1){
+			CakeLog::debug(sprintf('Push bulk %d bulk inserts for %s', $this->counter, get_class($this->Model)));
+			
 			$query = $this->buildQuery();
 			$this->save($query);
 		}
@@ -183,15 +185,22 @@ class StatusRepository{
 				// we're done, exit here
 				return;
 			} catch(PDOException $e){
+				// deadlock --> retry
 				if($i < $trys && $e->errorInfo[0] == 40001 && $e->errorInfo[1] == 1213) {
 					$sleep = 50000 + rand(0,450000);
 					CakeLog::info('Encountered MySQL Deadlock during transaction. Retry Command in '.floor($sleep/1000).'ms (try '.($i+1).'/'.$trys.')');
 					usleep($sleep);
 				}
 
-				// forward error
-				else {
+				// too many dealocks
+				elseif($e->errorInfo[0] == 40001 && $e->errorInfo[1] == 1213) {
 					CakeLog::info("Couldn't solve deadlock. Ignore for now to prevent crash: Exception: $e");
+				}
+
+				// everything else forward error
+				else {
+					CakeLog::info("QUERY: ".$query);
+					throw $e;
 				}
 			}
 		}
