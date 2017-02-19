@@ -208,8 +208,11 @@ class StatusengineLegacyShell extends AppShell{
 		$this->useBulkQueries = false;
 		$this->useBulkQueries = Configure::read('use_bulk_queries_for_status');
 
-		$this->queryLimit = 200;
-		$this->queryLimit = Configure::read('query_limit');
+		$this->bulkQueryLimit = 200;
+		$this->bulkQueryLimit = Configure::read('bulk_query_limit');
+
+		$this->bulkQueryTime = 10;
+		$this->bulkQueryTime = Configure::read('bulk_query_time');
 
 		if($this->processPerfdata === true){
 			$this->PerfdataBackend->init(Configure::read());
@@ -2550,24 +2553,24 @@ class StatusengineLegacyShell extends AppShell{
 
 		// Prepare Bulk Repository for Objects Operations
 		$this->ObjectsRepository = [];
-		$this->ObjectsRepository['Command'] = new StatusRepository($this->Command, $this->queryLimit);
-		$this->ObjectsRepository['Timerange'] = new StatusRepository($this->Timerange, $this->queryLimit);
-		$this->ObjectsRepository['Contactaddress'] = new StatusRepository($this->Contactaddress, $this->queryLimit);
-		$this->ObjectsRepository['Contactnotificationcommand'] = new StatusRepository($this->Contactnotificationcommand, $this->queryLimit);
-		$this->ObjectsRepository['Contactgroupmember'] = new StatusRepository($this->Contactgroupmember, $this->queryLimit);
-		$this->ObjectsRepository['Hostcontactgroup'] = new StatusRepository($this->Hostcontactgroup, $this->queryLimit);
-		$this->ObjectsRepository['Hostcontact'] = new StatusRepository($this->Hostcontact, $this->queryLimit);
-		$this->ObjectsRepository['Customvariable'] = new StatusRepository($this->Customvariable, $this->queryLimit);
-		$this->ObjectsRepository['Hostgroupmember'] = new StatusRepository($this->Hostgroupmember, $this->queryLimit);
-		$this->ObjectsRepository['Servicecontactgroup'] = new StatusRepository($this->Servicecontactgroup, $this->queryLimit);
-		$this->ObjectsRepository['Servicecontact'] = new StatusRepository($this->Servicecontact, $this->queryLimit);
-		$this->ObjectsRepository['Servicegroupmember'] = new StatusRepository($this->Servicegroupmember, $this->queryLimit);
-		$this->ObjectsRepository['Hostescalationcontacts'] = new StatusRepository($this->Hostescalationcontacts, $this->queryLimit);
-		$this->ObjectsRepository['Hostescalationcontactgroup'] = new StatusRepository($this->Hostescalationcontactgroup, $this->queryLimit);
-		$this->ObjectsRepository['Serviceescalationcontact'] = new StatusRepository($this->Serviceescalationcontact, $this->queryLimit);
-		$this->ObjectsRepository['Serviceescalationcontactgroup'] = new StatusRepository($this->Serviceescalationcontactgroup, $this->queryLimit);
-		$this->ObjectsRepository['Hostdependency'] = new StatusRepository($this->Hostdependency, $this->queryLimit);
-		$this->ObjectsRepository['Servicedependency'] = new StatusRepository($this->Servicedependency, $this->queryLimit);
+		$this->ObjectsRepository['Command'] = new StatusRepository($this->Command, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Timerange'] = new StatusRepository($this->Timerange, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Contactaddress'] = new StatusRepository($this->Contactaddress, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Contactnotificationcommand'] = new StatusRepository($this->Contactnotificationcommand, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Contactgroupmember'] = new StatusRepository($this->Contactgroupmember, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostcontactgroup'] = new StatusRepository($this->Hostcontactgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostcontact'] = new StatusRepository($this->Hostcontact, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Customvariable'] = new StatusRepository($this->Customvariable, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostgroupmember'] = new StatusRepository($this->Hostgroupmember, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Servicecontactgroup'] = new StatusRepository($this->Servicecontactgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Servicecontact'] = new StatusRepository($this->Servicecontact, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Servicegroupmember'] = new StatusRepository($this->Servicegroupmember, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostescalationcontacts'] = new StatusRepository($this->Hostescalationcontacts, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostescalationcontactgroup'] = new StatusRepository($this->Hostescalationcontactgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Serviceescalationcontact'] = new StatusRepository($this->Serviceescalationcontact, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Serviceescalationcontactgroup'] = new StatusRepository($this->Serviceescalationcontactgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostdependency'] = new StatusRepository($this->Hostdependency, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Servicedependency'] = new StatusRepository($this->Servicedependency, $this->bulkQueryLimit, $this->bulkQueryTime);
 
 		/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
 		 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
@@ -2774,7 +2777,7 @@ class StatusengineLegacyShell extends AppShell{
 
 	public function saveParentHosts(){
 		if ($this->useBulkQueries) {
-			$bulk = new StatusRepository($this->Parenthost, $this->queryLimit);
+			$bulk = new StatusRepository($this->Parenthost, $this->bulkQueryLimit, $this->bulkQueryTime);
 		}
 		foreach($this->createParentHosts as $host_id => $hostNamesAsArray){
 			foreach($hostNamesAsArray as $hostName){
@@ -2801,7 +2804,7 @@ class StatusengineLegacyShell extends AppShell{
 
 	public function saveParentServices(){
 		if ($this->useBulkQueries) {
-			$bulk = new StatusRepository($this->Parenthost, $this->queryLimit);
+			$bulk = new StatusRepository($this->Parenthost, $this->bulkQueryLimit, $this->bulkQueryTime);
 		}
 		//CakeLog::debug(var_export($this->createParentServices, true));
 		foreach($this->createParentServices as $service_id => $servicesArray){
@@ -2986,27 +2989,27 @@ class StatusengineLegacyShell extends AppShell{
 			$this->bindQueues = false;
 
 			if(isset($this->queues['statusngin_servicechecks']) && $this->useBulkQueries){
-				$this->StatusRepository['Servicecheck'] = new StatusRepository($this->Servicecheck, $this->queryLimit);
+				$this->StatusRepository['Servicecheck'] = new StatusRepository($this->Servicecheck, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
 
 			if(isset($this->queues['statusngin_hostchecks']) && $this->useBulkQueries){
-				$this->StatusRepository['Hostcheck'] = new StatusRepository($this->Hostcheck, $this->queryLimit);
+				$this->StatusRepository['Hostcheck'] = new StatusRepository($this->Hostcheck, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
 
 			if(isset($this->queues['statusngin_servicestatus']) && $this->useBulkQueries){
-				$this->StatusRepository['Servicestatus'] = new StatusRepository($this->Servicestatus, $this->queryLimit);
+				$this->StatusRepository['Servicestatus'] = new StatusRepository($this->Servicestatus, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
 
 			if(isset($this->queues['statusngin_hoststatus']) && $this->useBulkQueries){
-				$this->StatusRepository['Hoststatus'] = new StatusRepository($this->Hoststatus, $this->queryLimit);
+				$this->StatusRepository['Hoststatus'] = new StatusRepository($this->Hoststatus, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
 
 			if(isset($this->queues['statusngin_externalcommands']) && $this->useBulkQueries){
-				$this->StatusRepository['Externalcommand'] = new StatusRepository($this->Externalcommand, $this->queryLimit);
+				$this->StatusRepository['Externalcommand'] = new StatusRepository($this->Externalcommand, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
 
 			if(isset($this->queues['statusngin_logentries']) && $this->useBulkQueries){
-				$this->StatusRepository['Logentry'] = new StatusRepository($this->Logentry, $this->queryLimit);
+				$this->StatusRepository['Logentry'] = new StatusRepository($this->Logentry, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
 		}
 		while(true){

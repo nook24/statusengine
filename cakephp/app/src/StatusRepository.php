@@ -52,6 +52,11 @@ class StatusRepository{
 	private $queryLimit;
 
 	/**
+	 * @var int
+	 */
+	private $queryTime;
+
+	/**
 	 * @var array
 	 */
 	private $schema;
@@ -71,9 +76,10 @@ class StatusRepository{
 	 */
 	private $Model;
 
-	public function __construct(Model $Model, $queryLimit){
+	public function __construct(Model $Model, $queryLimit = 200, $queryTime = 10){
 		$this->Model = $Model;
 		$this->queryLimit = $queryLimit;
+		$this->queryTime = $queryTime;
 
 		$this->lastPush = time();
 
@@ -214,7 +220,7 @@ class StatusRepository{
 			return true;
 		}
 
-		if($this->lastPush < time() - 10){
+		if($this->lastPush < time() - $this->queryTime){
 			return true;
 		}
 

@@ -44,8 +44,11 @@ $config = [
 	//Use bulk queries for host and servicestatus
 	'use_bulk_queries_for_status' => false,
 	
-	//Records per query
-	'query_limit' => 200,
+	//Records per bulk operations
+	'bulk_query_limit' => 200,
+
+	//Time between forced bulk flushes
+	'bulk_query_time' => 10,
 
 	//Workers Statusengine will fork in worker mode
 	//Check: https://statusengine.org/documentation.php#scaleout-statusengine
