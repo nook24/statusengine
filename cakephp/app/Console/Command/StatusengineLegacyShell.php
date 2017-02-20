@@ -302,7 +302,7 @@ class StatusengineLegacyShell extends AppShell{
 		}
 
 		// check every second if there's something left to push
-		if($this->bulkLastCheck < time()) {
+		if($this->useBulkQueries && $this->bulkLastCheck < time()) {
 			foreach ($this->ObjectsRepository AS $repo) {
 				$repo->pushIfRequired();
 			}
@@ -2991,10 +2991,10 @@ class StatusengineLegacyShell extends AppShell{
 		while(true){
 			pcntl_signal_dispatch();
 			$this->worker->work();
+
 			if($this->worker->returnCode() == GEARMAN_SUCCESS){
 				continue;
 			}
-
 
 			if(!@$this->worker->wait()){
 				if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
@@ -3118,28 +3118,12 @@ class StatusengineLegacyShell extends AppShell{
 					exit(3);
 				}
 
-				if(isset($this->queues['statusngin_servicechecks']) && $this->useBulkQueries){
-					$this->StatusRepository['Servicecheck']->pushIfRequired();
-				}
-
-				if(isset($this->queues['statusngin_hostchecks']) && $this->useBulkQueries){
-					$this->StatusRepository['Hostcheck']->pushIfRequired();
-				}
-
-				if(isset($this->queues['statusngin_servicestatus']) && $this->useBulkQueries){
-					$this->StatusRepository['Servicestatus']->pushIfRequired();
-				}
-
-				if(isset($this->queues['statusngin_hoststatus']) && $this->useBulkQueries){
-					$this->StatusRepository['Hoststatus']->pushIfRequired();
-				}
-
-				if(isset($this->queues['statusngin_externalcommands']) && $this->useBulkQueries){
-					$this->StatusRepository['Externalcommand']->pushIfRequired();
-				}
-
-				if(isset($this->queues['statusngin_logentries']) && $this->useBulkQueries){
-					$this->StatusRepository['Logentry']->pushIfRequired();
+				// check every second if there's something left to push
+				if($this->useBulkQueries && $this->bulkLastCheck < time()) {
+					foreach ($this->StatusRepository AS $repo) {
+						$repo->pushIfRequired();
+					}
+					$this->bulkLastCheck = time();
 				}
 			}
 		}
