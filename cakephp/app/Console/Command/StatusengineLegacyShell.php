@@ -493,9 +493,9 @@ class StatusengineLegacyShell extends AppShell{
 									'timeperiod_timerange_id' => NULL,
 									'instance_id' => $this->instance_id,
 									'timeperiod_id' => $timeperiod_id,
+									'day' => $day,
 									'start_sec' => $timerange->start,
-									'end_sec' => $timerange->end,
-									'day' => $day
+									'end_sec' => $timerange->end
 								]
 							];
 							if ($this->useBulkQueries === true) {
@@ -510,9 +510,9 @@ class StatusengineLegacyShell extends AppShell{
 									'timeperiod_timerange_id' => NULL,
 									'instance_id' => $this->instance_id,
 									'timeperiod_id' => $timeperiod_id,
+									'day' => $day,
 									'start_sec' => 0,
-									'end_sec' => 0,
-									'day' => $day
+									'end_sec' => 0
 								]
 							];
 							if ($this->useBulkQueries === true) {
