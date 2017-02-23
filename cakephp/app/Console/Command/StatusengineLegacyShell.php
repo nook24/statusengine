@@ -219,7 +219,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->bulkLastCheck = time();
 
 		$this->empty_method = 'truncate';
-		$this->bulkQueryTime = Configure::read('empty_method');
+		$this->empty_method = Configure::read('empty_method');
 
 		if($this->processPerfdata === true){
 			$this->PerfdataBackend->init(Configure::read());
@@ -413,14 +413,15 @@ class StatusengineLegacyShell extends AppShell{
 					'Configvariable'
 				];
 				foreach($truncate as $Model){
-					CakeLog::debug('Empty table for '.$Model);
 					if (strtolower($this->empty_method) == 'delete') {
+						CakeLog::debug('Delete from table for '.$Model);
 						$this->{$Model}->getDataSource()->rawQuery(sprintf(
 							'DELETE FROM %s%s',
 							$this->{$Model}->tablePrefix,
 							$this->{$Model}->table
 						));
 					} else {
+						CakeLog::debug('Truncate table for '.$Model);
 						$this->{$Model}->truncate();
 					}
 				}
