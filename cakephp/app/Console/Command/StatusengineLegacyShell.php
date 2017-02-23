@@ -830,7 +830,7 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				foreach($payload->parent_hosts as $parentHost){
-					$this->createParentHosts[$host_id][] = $parentHost;
+					$this->createParentHosts[$objectId][] = $parentHost;
 				}
 
 				foreach($payload->contactgroups as $contactgroupName){
@@ -1189,7 +1189,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Servicegroupmember' => [
 							'servicegroup_member_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'servicegroup_id' => $result['Servicegroup']['servicegroup_id'],
+							'servicegroup_id' => $objectId,
 							'service_object_id' => $objectId,
 						]
 					];
