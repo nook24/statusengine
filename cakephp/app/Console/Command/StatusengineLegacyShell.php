@@ -191,9 +191,12 @@ class StatusengineLegacyShell extends AppShell{
 		//If you killed it on dump, restart statusengine and restart nagios
 		$this->dumpObjects = true;
 		$this->dumpStart = null;
+		$this->dumpIds = [];
 
 		$this->instance_id = Configure::read('instance_id');
 		$this->config_type = Configure::read('config_type');
+
+		$this->fakeObjectId = 1; // maybe instance_id * 1000000 + 1 would be better
 
 		$this->parentPid = getmypid();
 		$this->parser = $this->getOptionParser();
@@ -286,6 +289,47 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	/**
+	 * Activate Objects (set is_active to 1) for given list of object Ids
+	 *
+	 * @since 2.0.6
+	 * @author Daniel Hoffend <dh@dotlan.net>
+	 *
+	 * @return void
+	 */
+	public function activateObjects(array $ids){
+		if(!count($ids))
+			return;
+
+		$this->Objects->updateAll(['Objects.is_active' => 1], ['Objects.object_id' => $ids]);
+	}
+
+	/**
+	 * Check if object exists in cache, otherwise create it
+	 *
+	 * @since 2.0.6
+	 * @author Daniel Hoffend <dh@dotlan.net>
+	 *
+	 * @param array $data object attributes
+	 * @return integer objectId (cached or new)
+	 */
+	protected function checkObject(array $data) {
+
+		// get old object id
+		$objectId = $this->objectIdFromCache($data['objecttype_id'], $data['name1'], $data['name2']);
+
+		// create new object if object is not there and cache it
+		if (!$objectId) {
+			$data['object_id'] = null;
+			$objectResult = $this->Objects->replace(['Object' => $data]);
+			$objectId = $objectResult['Objects']['object_id'];
+			$this->addObjectToCache($data['objecttype_id'], $objectId, $data['name1'], $data['name2']);
+		}
+
+		$this->dumpIds[] = $objectId;
+		return $objectId;
+	}
+
+	/**
 	 * Dump all objects to the DB
 	 *
 	 * If there are entries in gearmands Q objects, this function will process them
@@ -320,6 +364,7 @@ class StatusengineLegacyShell extends AppShell{
 				$this->dumpObjects = true;
 				$this->GraphiteBackend->clearCache();
 				$this->dumpStart = time();
+				$this->dumpIds = [];
 
 				CakeLog::info('Start dumping objects');
 				$this->disableAll();
@@ -387,6 +432,11 @@ class StatusengineLegacyShell extends AppShell{
 
 				$this->saveParentHosts();
 				$this->saveParentServices();
+
+				// activate objects
+				$this->activateObjects($this->dumpIds);
+				$this->dumpIds = [];
+
 				//We are done with object dumping and can write parent hosts and services to DB
 
 				CakeLog::info('Start dumping core config '.Configure::read('coreconfig').' to database');
@@ -412,27 +462,21 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->command_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->command_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->command_name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->command_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Save Command
 				$data = [
 					'Command' => [
-						'command_id' => $objectResult['Objects']['object_id'],
+						'command_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'object_id' => $objectResult['Objects']['object_id'],
+						'object_id' => $objectId,
 						'command_line' => $payload->command_line
 					]
 				];
@@ -441,9 +485,7 @@ class StatusengineLegacyShell extends AppShell{
 				} else {
 					$this->Command->rawInsert([$data], false);
 				}
-
-				unset($result, $data, $objectResult);
-			break;
+				break;
 
 			//Timeperiod object
 			case OBJECT_TIMEPERIOD:
@@ -452,28 +494,21 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$timeperiodObjectId = $this->objectIdFromCache($payload->object_type, $payload->name);
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $timeperiodObjectId,
-						'instance_id' => $this->instance_id,
-					],
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Timeperiod
 				$data = [
 					'Timeperiod' => [
-						'timeperiod' => $objectResult['Objects']['object_id'],
+						'timeperiod' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'timeperiod_object_id' => $objectResult['Objects']['object_id'],
+						'timeperiod_object_id' => $objectId,
 						'alias' => $payload->alias,
 					]
 				];
@@ -481,9 +516,8 @@ class StatusengineLegacyShell extends AppShell{
 					$this->ObjectsRepository['Timeperiod']->commit($data['Timeperiod']);
 				} else {
 					$this->Timeperiod->create();
-					$result = $this->Timeperiod->save($data);
+					$this->Timeperiod->save($data);
 				}
-				$timeperiod_id = $objectResult['Objects']['object_id'];
 
 				foreach($payload->timeranges as $day => $timerangesPerDay){
 					foreach($timerangesPerDay as $timerange){
@@ -492,7 +526,7 @@ class StatusengineLegacyShell extends AppShell{
 								'Timerange' => [
 									'timeperiod_timerange_id' => NULL,
 									'instance_id' => $this->instance_id,
-									'timeperiod_id' => $timeperiod_id,
+									'timeperiod_id' => $objectId,
 									'day' => $day,
 									'start_sec' => $timerange->start,
 									'end_sec' => $timerange->end
@@ -509,7 +543,7 @@ class StatusengineLegacyShell extends AppShell{
 								'Timerange' => [
 									'timeperiod_timerange_id' => NULL,
 									'instance_id' => $this->instance_id,
-									'timeperiod_id' => $timeperiod_id,
+									'timeperiod_id' => $objectId,
 									'day' => $day,
 									'start_sec' => 0,
 									'end_sec' => 0
@@ -524,8 +558,6 @@ class StatusengineLegacyShell extends AppShell{
 						}
 					}
 				}
-
-				unset($result, $data, $objectResult);
 				break;
 
 			//Contact object
@@ -535,27 +567,21 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->name),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Contact
 				$data = [
 					'Contact' => [
-						'contact_id' => $objectResult['Objects']['object_id'],
+						'contact_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'contact_object_id' => $objectResult['Objects']['object_id'],
+						'contact_object_id' => $objectId,
 						'alias' => $payload->alias,
 						'email_address' => $payload->email,
 						'pager_address' => $payload->pager,
@@ -582,9 +608,8 @@ class StatusengineLegacyShell extends AppShell{
 					$this->ObjectsRepository['Contact']->commit($data['Contact']);
 				} else {
 					$this->Contact->create();
-					$result = $this->Contact->save($data);
+					$this->Contact->save($data);
 				}
-				$contact_id = $objectResult['Objects']['object_id'];
 
 				$i = 0;
 				foreach($payload->address as $address){
@@ -595,7 +620,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Contactaddress' => [
 							'contact_address_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'contact_id' => $contact_id,
+							'contact_id' => $objectId,
 							'address_number' => $i,
 							'address' => $address
 						]
@@ -618,7 +643,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Contactnotificationcommand' => [
 							'contact_notificationcommand_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'contact_id' => $contact_id,
+							'contact_id' => $objectId,
 							'notification_type' => 0,
 							'command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $notifyCommand[0]),
 							'command_args' => $notifyCommand[1]
@@ -638,7 +663,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Contactnotificationcommand' => [
 							'contact_notificationcommand_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'contact_id' => $contact_id,
+							'contact_id' => $objectId,
 							'notification_type' => 1,
 							'command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $notifyCommand[0]),
 							'command_args' => $notifyCommand[1]
@@ -651,10 +676,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->Contactnotificationcommand->save($data);
 					}
 				}
-
-
-				unset($result, $data, $objectResult);
-			break;
+				break;
 
 			//Contactgroup object
 			case OBJECT_CONTACTGROUP:
@@ -663,27 +685,21 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->group_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->group_name),
-						'instance_id' => $this->instance_id,
-					],
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->group_name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->group_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Contactgroup
 				$data = [
 					'Contactgroup' => [
-						'contactgroup_id' => $objectResult['Objects']['object_id'],
+						'contactgroup_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'contactgroup_object_id' => $objectResult['Objects']['object_id'],
+						'contactgroup_object_id' => $objectId,
 						'alias' => $payload->alias,
 					]
 				];
@@ -691,9 +707,8 @@ class StatusengineLegacyShell extends AppShell{
 					$this->ObjectsRepository['Contactgroup']->commit($data['Contactgroup']);
 				} else {
 					$this->Contactgroup->create();
-					$result = $this->Contactgroup->save($data);
+					$this->Contactgroup->save($data);
 				}
-				$contactgroup_id = $objectResult['Objects']['object_id'];
 
 				//associate contactgroups with contacts
 				foreach($payload->contact_members as $ContactName){
@@ -701,7 +716,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Contactgroupmember' => [
 							'contactgroup_member_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'contactgroup_id' => $contactgroup_id,
+							'contactgroup_id' => $objectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $ContactName),
 						]
 					];
@@ -712,8 +727,6 @@ class StatusengineLegacyShell extends AppShell{
 						$this->Contactgroupmember->rawInsert([$data], false);
 					}
 				}
-
-				unset($result, $data, $objectResult);
 				break;
 
 			//Host object
@@ -723,29 +736,23 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->name),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Host
 				$checkCommand = $this->parseCheckCommand($payload->check_command);
 				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
 				$data = [
 					'Host' => [
-						'host_id' => $objectResult['Objects']['object_id'],
+						'host_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'host_object_id' => $objectResult['Objects']['object_id'],
+						'host_object_id' => $objectId,
 						'alias' => $payload->alias,
 						'display_name' => $payload->display_name,
 						'address' => $payload->address,
@@ -808,7 +815,6 @@ class StatusengineLegacyShell extends AppShell{
 				} else {
 					$this->Service->rawInsert([$data], false);
 				}
-				$host_id = $objectResult['Objects']['object_id'];
 
 				foreach($payload->parent_hosts as $parentHost){
 					$this->createParentHosts[$host_id][] = $parentHost;
@@ -819,7 +825,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Hostcontactgroup' => [
 							'host_contentgroup_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'host_id' => $host_id,
+							'host_id' => $objectId,
 							'contactgroup_object_id' => $this->objectIdFromCache(OBJECT_CONTACTGROUP, $contactgroupName)
 						]
 					];
@@ -836,7 +842,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Hostcontact' => [
 							'host_contact_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'host_id' => $host_id,
+							'host_id' => $objectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName)
 						]
 					];
@@ -853,7 +859,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Customvariable' => [
 							'customvariable_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'object_id' => $this->objectIdFromCache($payload->object_type, $payload->name),
+							'object_id' => $objectId,
 							'config_type' => $this->config_type,
 							'has_been_modified' => 0,
 							'varname' => $varName,
@@ -867,8 +873,6 @@ class StatusengineLegacyShell extends AppShell{
 						$this->Customvariable->save($data);
 					}
 				}
-
-				unset($data, $result, $objectResult);
 				break;
 
 			case OBJECT_HOSTGROUP:
@@ -877,27 +881,21 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->group_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->group_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->group_name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->group_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Hostgroup
 				$data = [
 					'Hostgroup' => [
-						'hostgroup_id' => $objectResult['Objects']['object_id'],
+						'hostgroup_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'hostgroup_object_id' => $objectResult['Objects']['object_id'],
+						'hostgroup_object_id' => $objectId,
 						'alias' => $payload->alias
 					]
 				];
@@ -906,14 +904,13 @@ class StatusengineLegacyShell extends AppShell{
 				} else {
 					$this->Hostgroup->rawInsert([$data], false);
 				}
-				$hostgroup_id = $objectResult['Objects']['object_id'];
 
 				foreach($payload->members as $hostName){
 					$data = [
 						'Hostgroupmember' => [
 							'hostgroup_member_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'hostgroup_id' => $hostgroup_id,
+							'hostgroup_id' => $objectId,
 							'host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $hostName)
 						]
 					];
@@ -924,7 +921,6 @@ class StatusengineLegacyShell extends AppShell{
 						$this->Hostgroupmember->rawInsert([$data], false);
 					}
 				}
-
 				break;
 
 			//Service object
@@ -1001,21 +997,15 @@ class StatusengineLegacyShell extends AppShell{
 				*/
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => $payload->description,
-						'is_active' => 1,
-						'object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $payload->host_name, $payload->description),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name, $payload->description);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => $payload->description,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Service
-				$objectId = $objectResult['Objects']['object_id'];
 				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
 				$checkCommand = $this->parseCheckCommand($payload->check_command);
 				if($this->objectIdFromCache(OBJECT_COMMAND, $checkCommand[0]) == null){
@@ -1083,12 +1073,11 @@ class StatusengineLegacyShell extends AppShell{
 				} else {
 					$this->Service->rawInsert([$data], false);
 				}
-				$lastInsertId = $objectId;
 				unset($data);
 
 				//Must run if all services are in the database, or we get in trouble!
 				foreach($payload->parent_services as $parentService){
-					$this->createParentServices[$lastInsertId][] = [
+					$this->createParentServices[$objectId][] = [
 						'host_name' => $payload->host_name,
 						'description' => $payload->description
 					];
@@ -1100,7 +1089,7 @@ class StatusengineLegacyShell extends AppShell{
 							'Servicecontactgroup' => [
 								'service_contactgroup_id' => NULL,
 								'instance_id' => $this->instance_id,
-								'service_id' => $lastInsertId,
+								'service_id' => $objectId,
 								'contactgroup_object_id' => $this->objectIdFromCache(OBJECT_CONTACTGROUP, $contactgroupName)
 							]
 						];
@@ -1118,7 +1107,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Servicecontact' => [
 							'service_content_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'service_id' => $lastInsertId,
+							'service_id' => $objectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName)
 						]
 					];
@@ -1149,8 +1138,6 @@ class StatusengineLegacyShell extends AppShell{
 						$this->Customvariable->save($data);
 					}
 				}
-
-				unset($data, $result, $objectId, $objectResult);
 				break;
 
 			case OBJECT_SERVICEGROUP:
@@ -1159,27 +1146,21 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->group_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->group_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->group_name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->group_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Servicegroup
 				$data = [
 					'Servicegroup' => [
-						'servicegroup_id' => $objectResult['Objects']['object_id'],
+						'servicegroup_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'servicegroup_object_id' => $objectResult['Objects']['object_id'],
+						'servicegroup_object_id' => $objectId,
 						'alias' => $payload->alias
 					]
 				];
@@ -1189,7 +1170,6 @@ class StatusengineLegacyShell extends AppShell{
 					$this->Servicegroup->create();
 					$result = $this->Servicegroup->save($data);
 				}
-				$servicegroup_id = $objectResult['Objects']['object_id'];
 
 				foreach($payload->members as $ServiceArray){
 					$data = [
@@ -1197,7 +1177,7 @@ class StatusengineLegacyShell extends AppShell{
 							'servicegroup_member_id' => NULL,
 							'instance_id' => $this->instance_id,
 							'servicegroup_id' => $result['Servicegroup']['servicegroup_id'],
-							'service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $ServiceArray->host_name, $ServiceArray->service_description)
+							'service_object_id' => $objectId,
 						]
 					];
 					if ($this->useBulkQueries === true) {
@@ -1207,8 +1187,6 @@ class StatusengineLegacyShell extends AppShell{
 						$this->Servicegroupmember->rawInsert([$data], false);
 					}
 				}
-
-				unset($data, $result, $objectResult);
 				break;
 
 			case OBJECT_HOSTESCALATION:
@@ -1217,24 +1195,18 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->host_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Hostescalation
 				$data = [
 					'Hostescalation' => [
-						'hostescalation_id' => $objectResult['Objects']['object_id'],
+						'hostescalation_id' => $this->fakeObjectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $payload->host_name),
@@ -1253,14 +1225,13 @@ class StatusengineLegacyShell extends AppShell{
 					$this->Hostescalation->create();
 					$result = $this->Hostescalation->save($data);
 				}
-				$hostescalation_id = $objectResult['Objects']['object_id'];
 
 				foreach($payload->contacts as $contactName){
 					$data = [
 						'Hostescalationcontacts' => [
 							'hostescalation_contact_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'hostescalation_id' => $hostescalation_id,
+							'hostescalation_id' => $this->fakeObjectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName),
 						]
 					];
@@ -1277,7 +1248,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Hostescalationcontactgroup' => [
 							'hostescalation_contactgroup_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'hostescalation_id' => $hostescalation_id,
+							'hostescalation_id' => $this->fakeObjectId,
 							'contactgroup_object_id' => $this->objectIdFromCache(OBJECT_CONTACTGROUP, $groupName),
 						]
 					];
@@ -1288,7 +1259,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->Hostescalationcontacts->save($data);
 					}
 				}
-				unset($data, $result, $objectResult);
+				$this->fakeObjectId++;
 				break;
 
 			case OBJECT_SERVICEESCALATION:
@@ -1297,24 +1268,18 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => $payload->description,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->host_name, $payload->description),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => $payload->description,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Serviceescalation
 				$data = [
 					'Serviceescalation' => [
-						'serviceescalation_id' => $objectResult['Objects']['object_id'],
+						'serviceescalation_id' => $this->fakeObjectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $payload->host_name, $payload->description),
@@ -1334,14 +1299,13 @@ class StatusengineLegacyShell extends AppShell{
 					$this->Serviceescalation->create();
 					$result = $this->Serviceescalation->save($data);
 				}
-				$serviceescalation_id = $objectResult['Objects']['object_id'];
 
 				foreach($payload->contacts as $contactName){
 					$data = [
 						'Serviceescalationcontact' => [
 							'serviceescalation_contact_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'serviceescalation_id' => $serviceescalation_id,
+							'serviceescalation_id' => $this->fakeObjectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName),
 						]
 					];
@@ -1358,7 +1322,7 @@ class StatusengineLegacyShell extends AppShell{
 						'Serviceescalationcontactgroup' => [
 							'serviceescalation_contactgroup_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'serviceescalation_id' => $serviceescalation_id,
+							'serviceescalation_id' => $this->fakeObjectId,
 							'contactgroup_object_id' => $this->objectIdFromCache(OBJECT_CONTACTGROUP, $groupName),
 						]
 					];
@@ -1369,7 +1333,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->Serviceescalationcontactgroup->save($data);
 					}
 				}
-				unset($data, $result, $objectResult);
+				$this->fakeObjectId++;
 				break;
 
 			case OBJECT_HOSTDEPENDENCY:
@@ -1378,24 +1342,18 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->host_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Hostdependency
 				$data = [
 					'Hostdependency' => [
-						'hostdependency_id' => NULL,
+						'hostdependency_id' => $this->fakeObjectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $payload->host_name),
@@ -1414,8 +1372,7 @@ class StatusengineLegacyShell extends AppShell{
 					$this->Hostdependency->create();
 					$this->Hostdependency->save($data);
 				}
-
-				unset($data, $result, $objectResult);
+				$this->fakeObjectId++;
 				break;
 
 			case OBJECT_SERVICEDEPENDENCY:
@@ -1424,24 +1381,18 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				// Add Object
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => $payload->service_description,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->host_name, $payload->service_description),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name, $payload->service_description);
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => $payload->service_description,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
 				// Add Servicedependency
 				$data = [
 					'Servicedependency' => [
-						'servicedependency_id' => NULL,
+						'servicedependency_id' => $this->fakeObjectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $payload->host_name, $payload->service_description),
@@ -1461,8 +1412,7 @@ class StatusengineLegacyShell extends AppShell{
 					$this->Servicedependency->create();
 					$this->Servicedependency->save($data);
 				}
-
-				unset($result, $data, $objectResult);
+				$this->fakeObjectId++;
 				break;
 		}
 	}
