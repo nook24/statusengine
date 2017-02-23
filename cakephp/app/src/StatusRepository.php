@@ -152,6 +152,7 @@ class StatusRepository{
 
 		$values = [];
 		foreach($this->cache as $record){
+			// TODO: fix building of recordValues. values must be in the same order as schema
 			$recordValues = [];
 			foreach($record as $key => $value){
 				$recordValues[] = $this->db->value($value, 'string');
@@ -187,25 +188,25 @@ class StatusRepository{
 			try{
 				$this->db->rawQuery($query);
 				if ($i > 0)
-					CakeLog::info('Solved MySQL Deadlock (try '.($i+1).'/'.$trys.')');
+					CakeLog::info(sprintf('Solved MySQL Deadlock on %s (try %d/%d)', get_class($this->Model), $i+1, $trys));
 				// we're done, exit here
 				return;
 			} catch(PDOException $e){
 				// deadlock --> retry
 				if($i < $trys && $e->errorInfo[0] == 40001 && $e->errorInfo[1] == 1213) {
 					$sleep = 50000 + rand(0,450000);
-					CakeLog::info('Encountered MySQL Deadlock during transaction. Retry Command in '.floor($sleep/1000).'ms (try '.($i+1).'/'.$trys.')');
+					CakeLog::info('Encountered MySQL Deadlock during transaction on '.get_class($this->Model).'. Retry Command in '.floor($sleep/1000).'ms (try '.($i+1).'/'.$trys.')');
 					usleep($sleep);
 				}
 
 				// too many dealocks
 				elseif($e->errorInfo[0] == 40001 && $e->errorInfo[1] == 1213) {
-					CakeLog::info("Couldn't solve deadlock. Ignore for now to prevent crash: Exception: $e");
+					CakeLog::info("Couldn't solve deadlock for ".get_class($this->Modul).". Ignore for now to prevent crash: Exception: $e");
 				}
 
 				// everything else forward error
 				else {
-					CakeLog::info("QUERY: ".$query);
+					CakeLog::info("SQL ERROR - QUERY: ".$query);
 					throw $e;
 				}
 			}
