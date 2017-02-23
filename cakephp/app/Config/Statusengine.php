@@ -26,6 +26,9 @@ $config = [
 	//The number of the config type you would to dump to the database (just an integer value)
 	'config_type' => 1,
 
+	//Define the way of empty the nagios tables (DELETE FROM or TRUNCATE TABLE)
+	'empty_method' => 'truncate',
+
 	//If you want, Statusengine's servicestatus workers are able to
 	//process performacne data for you and save them to RRD files
 	//so you don't need to install any additional software to
