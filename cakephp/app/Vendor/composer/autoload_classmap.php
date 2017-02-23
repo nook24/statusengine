@@ -8,5 +8,5 @@ $baseDir = dirname($vendorDir);
 return array(
     'MySQLBulk' => $baseDir . '/src/MySQL.php',
     'NebTypes' => $baseDir . '/src/NebTypes.php',
-    'StatusRepository' => $baseDir . '/src/StatusRepository.php',
+    'BulkRepository' => $baseDir . '/src/BulkRepository.php',
 );
