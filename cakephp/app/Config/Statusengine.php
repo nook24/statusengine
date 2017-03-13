@@ -26,7 +26,8 @@ $config = [
 	//The number of the config type you would to dump to the database (just an integer value)
 	'config_type' => 1,
 
-	//Define the way of empty the nagios tables (DELETE FROM or TRUNCATE TABLE)
+	//Define the way of empty the data tables (DELETE FROM or TRUNCATE TABLE)
+	//If innodb_file_per_table is enabled, delete is may be faster than truncate
 	'empty_method' => 'truncate',
 
 	//If you want, Statusengine's servicestatus workers are able to
@@ -45,6 +46,7 @@ $config = [
 	'perfdata_storage' => ['Rrd'],
 	
 	//Use bulk queries for host and servicestatus
+	//And other tables, many thanks to dhoffend
 	'use_bulk_queries_for_status' => false,
 	
 	//Records per bulk operations
