@@ -26,6 +26,9 @@ $config = [
 	//The number of the config type you would to dump to the database (just an integer value)
 	'config_type' => 1,
 
+	//Define the way of empty the nagios tables (DELETE FROM or TRUNCATE TABLE)
+	'empty_method' => 'truncate',
+
 	//If you want, Statusengine's servicestatus workers are able to
 	//process performacne data for you and save them to RRD files
 	//so you don't need to install any additional software to
@@ -44,8 +47,11 @@ $config = [
 	//Use bulk queries for host and servicestatus
 	'use_bulk_queries_for_status' => false,
 	
-	//Records per query
-	'query_limit' => 200,
+	//Records per bulk operations
+	'bulk_query_limit' => 200,
+
+	//Time between forced bulk flushes
+	'bulk_query_time' => 10,
 
 	//Workers Statusengine will fork in worker mode
 	//Check: https://statusengine.org/documentation.php#scaleout-statusengine

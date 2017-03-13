@@ -116,6 +116,20 @@ class StatusengineLegacyShell extends AppShell{
 	];
 
 	/**
+	 * Queues of Status Bulk Operations
+	 *
+	 * @var array
+	 **/
+	protected $BulkRepository = [];
+
+	/**
+	 * Queues of Objects Bulk Operations
+	 *
+	 * @var array
+	 **/
+	protected $ObjectsRepository = [];
+
+	/**
 	 * CakePHP's option parser
 	 *
 	 * Parse the parameters, if the user enter some (example: -w or --help)
@@ -176,11 +190,13 @@ class StatusengineLegacyShell extends AppShell{
 		//If you kill the script while it dumps data, you may be have problems on restart statusengine.
 		//If you killed it on dump, restart statusengine and restart nagios
 		$this->dumpObjects = true;
-
-		$this->fakeLastInsertId = 1;
+		$this->dumpStart = null;
+		$this->dumpIds = [];
 
 		$this->instance_id = Configure::read('instance_id');
 		$this->config_type = Configure::read('config_type');
+
+		$this->fakeObjectId = 1; // maybe instance_id * 1000000 + 1 would be better
 
 		$this->parentPid = getmypid();
 		$this->parser = $this->getOptionParser();
@@ -190,13 +206,21 @@ class StatusengineLegacyShell extends AppShell{
 		$this->processPerfdata = Configure::read('process_perfdata');
 
 		$this->processPerfdataCache = [];
-		
+
 		$this->useBulkQueries = false;
 		$this->useBulkQueries = Configure::read('use_bulk_queries_for_status');
-		
-		$this->queryLimit = 200;
-		$this->queryLimit = Configure::read('query_limit');
-		
+
+		$this->bulkQueryLimit = 200;
+		$this->bulkQueryLimit = Configure::read('bulk_query_limit');
+
+		$this->bulkQueryTime = 10;
+		$this->bulkQueryTime = Configure::read('bulk_query_time');
+
+		$this->bulkLastCheck = time();
+
+		$this->empty_method = 'truncate';
+		$this->empty_method = Configure::read('empty_method');
+
 		if($this->processPerfdata === true){
 			$this->PerfdataBackend->init(Configure::read());
 
@@ -268,6 +292,47 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	/**
+	 * Activate Objects (set is_active to 1) for given list of object Ids
+	 *
+	 * @since 2.0.6
+	 * @author Daniel Hoffend <dh@dotlan.net>
+	 *
+	 * @return void
+	 */
+	public function activateObjects(array $ids){
+		if(!count($ids))
+			return;
+
+		$this->Objects->updateAll(['Objects.is_active' => 1], ['Objects.object_id' => $ids]);
+	}
+
+	/**
+	 * Check if object exists in cache, otherwise create it
+	 *
+	 * @since 2.0.6
+	 * @author Daniel Hoffend <dh@dotlan.net>
+	 *
+	 * @param array $data object attributes
+	 * @return integer objectId (cached or new)
+	 */
+	protected function checkObject(array $data) {
+
+		// get old object id
+		$objectId = $this->objectIdFromCache($data['objecttype_id'], $data['name1'], $data['name2']);
+
+		// create new object if object is not there and cache it
+		if (!$objectId) {
+			$data['object_id'] = null;
+			$objectResult = $this->Objects->replace(['Object' => $data]);
+			$objectId = $objectResult['Objects']['object_id'];
+			$this->addObjectToCache($data['objecttype_id'], $objectId, $data['name1'], $data['name2']);
+		}
+
+		$this->dumpIds[] = $objectId;
+		return $objectId;
+	}
+
+	/**
 	 * Dump all objects to the DB
 	 *
 	 * If there are entries in gearmands Q objects, this function will process them
@@ -283,6 +348,14 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
+		// check every second if there's something left to push
+		if($this->useBulkQueries && $this->bulkLastCheck < time()) {
+			foreach ($this->ObjectsRepository AS $repo) {
+				$repo->pushIfRequired();
+			}
+			$this->bulkLastCheck = time();
+		}
+
 		$payload = json_decode($job->workload());
 		$this->Objects->create();
 		switch($payload->object_type){
@@ -292,9 +365,9 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				$this->dumpObjects = true;
-				$this->fakeLastInsertId = 1;
-
 				$this->GraphiteBackend->clearCache();
+				$this->dumpStart = time();
+				$this->dumpIds = [];
 
 				CakeLog::info('Start dumping objects');
 				$this->disableAll();
@@ -340,7 +413,17 @@ class StatusengineLegacyShell extends AppShell{
 					'Configvariable'
 				];
 				foreach($truncate as $Model){
-					$this->{$Model}->truncate();
+					if (strtolower($this->empty_method) == 'delete') {
+						CakeLog::debug('Delete from table for '.$Model);
+						$this->{$Model}->getDataSource()->rawQuery(sprintf(
+							'DELETE FROM %s%s',
+							$this->{$Model}->tablePrefix,
+							$this->{$Model}->table
+						));
+					} else {
+						CakeLog::debug('Truncate table for '.$Model);
+						$this->{$Model}->truncate();
+					}
 				}
 
 				$this->clearObjectsCache();
@@ -351,9 +434,22 @@ class StatusengineLegacyShell extends AppShell{
 
 			case FINISH_OBJECT_DUMP:
 				CakeLog::info('Finished dumping objects');
-				
+
+				// flush all objects queues
+				if ($this->useBulkQueries) {
+					CakeLog::info('Force flushing all bulk queues');
+					foreach ($this->ObjectsRepository AS $repo) {
+						$repo->push();
+					}
+				}
+
 				$this->saveParentHosts();
 				$this->saveParentServices();
+
+				// activate objects
+				$this->activateObjects($this->dumpIds);
+				$this->dumpIds = [];
+
 				//We are done with object dumping and can write parent hosts and services to DB
 
 				CakeLog::info('Start dumping core config '.Configure::read('coreconfig').' to database');
@@ -369,6 +465,7 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				$this->dumpObjects = false;
+				CakeLog::info(sprintf('Objectdump finished in %d seconds', time() - $this->dumpStart));
 				break;
 
 			//Command object
@@ -376,101 +473,104 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->dumpObjects === false){
 					break;
 				}
-				$this->Command->create();
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->command_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->command_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
 
-				$objectResult = $this->Objects->replace($data);
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->command_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
+				// Save Command
 				$data = [
 					'Command' => [
+						'command_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'object_id' => $objectResult['Objects']['object_id'],
+						'object_id' => $objectId,
 						'command_line' => $payload->command_line
 					]
 				];
-
-				$this->Command->rawInsert([$data], false);
-				//Add the object to objectCache
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->command_name);
-
-				unset($result, $data, $objectResult);
-			break;
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Command']->commit($data['Command']);
+				} else {
+					$this->Command->rawInsert([$data], false);
+				}
+				break;
 
 			//Timeperiod object
 			case OBJECT_TIMEPERIOD:
 				if($this->dumpObjects === false){
 					break;
 				}
-				$this->Timeperiod->create();
-				$timeperiodObjectId = $this->objectIdFromCache($payload->object_type, $payload->name);
 
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $timeperiodObjectId,
-						'instance_id' => $this->instance_id,
-					],
-				];
-				$objectResult = $this->Objects->replace($data);
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
+				// Add Timeperiod
 				$data = [
 					'Timeperiod' => [
+						'timeperiod' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'timeperiod_object_id' => $objectResult['Objects']['object_id'],
+						'timeperiod_object_id' => $objectId,
 						'alias' => $payload->alias,
 					]
 				];
-
-				$result = $this->Timeperiod->save($data);
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Timeperiod']->commit($data['Timeperiod']);
+				} else {
+					$this->Timeperiod->create();
+					$this->Timeperiod->save($data);
+				}
 
 				foreach($payload->timeranges as $day => $timerangesPerDay){
 					foreach($timerangesPerDay as $timerange){
-						$this->Timerange->create();
 						if(isset($timerange->start) && isset($timerange->end)){
 							$data = [
 								'Timerange' => [
+									'timeperiod_timerange_id' => NULL,
 									'instance_id' => $this->instance_id,
-									'timeperiod_id' => $result['Timeperiod']['timeperiod_id'],
+									'timeperiod_id' => $objectId,
+									'day' => $day,
 									'start_sec' => $timerange->start,
-									'end_sec' => $timerange->end,
-									'day' => $day
+									'end_sec' => $timerange->end
 								]
 							];
-							$this->Timerange->save($data);
+							if ($this->useBulkQueries === true) {
+								$this->ObjectsRepository['Timerange']->commit($data['Timerange']);
+							} else {
+								$this->Timerange->create();
+								$this->Timerange->save($data);
+							}
 						}else{
 							$data = [
 								'Timerange' => [
+									'timeperiod_timerange_id' => NULL,
 									'instance_id' => $this->instance_id,
-									'timeperiod_id' => $result['Timeperiod']['timeperiod_id'],
+									'timeperiod_id' => $objectId,
+									'day' => $day,
 									'start_sec' => 0,
-									'end_sec' => 0,
-									'day' => $day
+									'end_sec' => 0
 								]
 							];
-							$this->Timerange->save($data);
+							if ($this->useBulkQueries === true) {
+								$this->ObjectsRepository['Timerange']->commit($data['Timerange']);
+							} else {
+								$this->Timerange->create();
+								$this->Timerange->save($data);
+							}
 						}
 					}
 				}
-
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->name);
-
-				unset($result, $data, $objectResult);
 				break;
 
 			//Contact object
@@ -478,24 +578,23 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->dumpObjects === false){
 					break;
 				}
-				$this->Contact->create();
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->name),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
+
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
+
+				// Add Contact
 				$data = [
 					'Contact' => [
+						'contact_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'contact_object_id' => $objectResult['Objects']['object_id'],
+						'contact_object_id' => $objectId,
 						'alias' => $payload->alias,
 						'email_address' => $payload->email,
 						'pager_address' => $payload->pager,
@@ -518,113 +617,129 @@ class StatusengineLegacyShell extends AppShell{
 						'minimum_importance' => $payload->minimum_value,
 					]
 				];
-
-				$result = $this->Contact->save($data);
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Contact']->commit($data['Contact']);
+				} else {
+					$this->Contact->create();
+					$this->Contact->save($data);
+				}
 
 				$i = 0;
 				foreach($payload->address as $address){
 					if($address === null){
 						continue;
 					}
-					$this->Contactaddress->create();
-					$this->Contactaddress->save([
+					$data = [
 						'Contactaddress' => [
+							'contact_address_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'contact_id' => $result['Contact']['contact_id'],
+							'contact_id' => $objectId,
 							'address_number' => $i,
 							'address' => $address
 						]
-					]);
+					];
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Contactaddress']->commit($data['Contactaddress']);
+					} else {
+						$this->Contactaddress->create();
+						$this->Contactaddress->save($data);
+					}
 					$i++;
 				}
 
 				unset($i);
 
-				//Add the object to objectCache
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->name);
-
 				//Add Contactnotificationcommand record
 				foreach($payload->host_commands as $command){
-					$this->Contactnotificationcommand->create();
 					$notifyCommand = $this->parseCheckCommand($command->command_name);
 					$data = [
 						'Contactnotificationcommand' => [
+							'contact_notificationcommand_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'contact_id' => $result['Contact']['contact_id'],
+							'contact_id' => $objectId,
 							'notification_type' => 0,
 							'command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $notifyCommand[0]),
 							'command_args' => $notifyCommand[1]
 						]
 					];
-					$this->Contactnotificationcommand->save($data);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Contactnotificationcommand']->commit($data['Contactnotificationcommand']);
+					} else {
+						$this->Contactnotificationcommand->create();
+						$this->Contactnotificationcommand->save($data);
+					}
 				}
 
 				foreach($payload->service_commands as $command){
-					$this->Contactnotificationcommand->create();
 					$notifyCommand = $this->parseCheckCommand($command->command_name);
 					$data = [
 						'Contactnotificationcommand' => [
+							'contact_notificationcommand_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'contact_id' => $result['Contact']['contact_id'],
+							'contact_id' => $objectId,
 							'notification_type' => 1,
 							'command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $notifyCommand[0]),
 							'command_args' => $notifyCommand[1]
 						]
 					];
-					$this->Contactnotificationcommand->save($data);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Contactnotificationcommand']->commit($data['Contactnotificationcommand']);
+					} else {
+						$this->Contactnotificationcommand->create();
+						$this->Contactnotificationcommand->save($data);
+					}
 				}
-
-
-				unset($result, $data, $objectResult);
-			break;
+				break;
 
 			//Contactgroup object
 			case OBJECT_CONTACTGROUP:
 				if($this->dumpObjects === false){
 					break;
 				}
-				$this->Contactgroup->create();
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->group_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->group_name),
-						'instance_id' => $this->instance_id,
-					],
-				];
 
-				$objectResult = $this->Objects->replace($data);
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->group_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
+				// Add Contactgroup
 				$data = [
 					'Contactgroup' => [
+						'contactgroup_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'contactgroup_object_id' => $objectResult['Objects']['object_id'],
+						'contactgroup_object_id' => $objectId,
 						'alias' => $payload->alias,
 					]
 				];
-
-				$result = $this->Contactgroup->save($data);
-				//Add the object to objectCache
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->group_name);
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Contactgroup']->commit($data['Contactgroup']);
+				} else {
+					$this->Contactgroup->create();
+					$this->Contactgroup->save($data);
+				}
 
 				//associate contactgroups with contacts
 				foreach($payload->contact_members as $ContactName){
-					$this->Contactgroupmember->create();
 					$data = [
 						'Contactgroupmember' => [
+							'contactgroup_member_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'contactgroup_id' => $result['Contactgroup']['contactgroup_id'],
+							'contactgroup_id' => $objectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $ContactName),
 						]
 					];
-					$this->Contactgroupmember->rawInsert([$data], false);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Contactgroupmember']->commit($data['Contactgroupmember']);
+					} else {
+						$this->Contactgroupmember->create();
+						$this->Contactgroupmember->rawInsert([$data], false);
+					}
 				}
-
-				unset($result, $data, $objectResult);
 				break;
 
 			//Host object
@@ -632,31 +747,25 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->dumpObjects === false){
 					break;
 				}
-				$this->Host->create();
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->name),
-						'instance_id' => $this->instance_id,
-					]
-				];
 
-				$objectResult = $this->Objects->replace($data);
-				//Add the object to objectCache
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->name);
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
+				// Add Host
 				$checkCommand = $this->parseCheckCommand($payload->check_command);
 				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
-
 				$data = [
 					'Host' => [
+						'host_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'host_object_id' => $objectResult['Objects']['object_id'],
+						'host_object_id' => $objectId,
 						'alias' => $payload->alias,
 						'display_name' => $payload->display_name,
 						'address' => $payload->address,
@@ -714,101 +823,117 @@ class StatusengineLegacyShell extends AppShell{
 						'importance' => $payload->hourly_value
 					]
 				];
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Host']->commit($data['Host']);
+				} else {
+					$this->Service->rawInsert([$data], false);
+				}
 
-				$result = $this->Host->save($data);
-				//$lastInsertId = $this->Host->rawSave([$data]);
 				foreach($payload->parent_hosts as $parentHost){
-					$this->createParentHosts[$result['Host']['host_id']][] = $parentHost;
+					$this->createParentHosts[$objectId][] = $parentHost;
 				}
 
 				foreach($payload->contactgroups as $contactgroupName){
-					$this->Hostcontactgroup->create();
 					$data = [
 						'Hostcontactgroup' => [
+							'host_contentgroup_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'host_id' => $result['Host']['host_id'],
+							'host_id' => $objectId,
 							'contactgroup_object_id' => $this->objectIdFromCache(OBJECT_CONTACTGROUP, $contactgroupName)
 						]
 					];
-					$this->Hostcontactgroup->save($data);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Hostcontactgroup']->commit($data['Hostcontactgroup']);
+					} else {
+						$this->Hostcontactgroup->create();
+						$this->Hostcontactgroup->save($data);
+					}
 				}
 
 				foreach($payload->contacts as $contactName){
-					$this->Hostcontact->create();
 					$data = [
 						'Hostcontact' => [
+							'host_contact_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'host_id' => $result['Host']['host_id'],
+							'host_id' => $objectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName)
 						]
 					];
-					$this->Hostcontact->rawInsert([$data], false);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Hostcontact']->commit($data['Hostcontact']);
+					} else {
+						$this->Hostcontact->create();
+						$this->Hostcontact->rawInsert([$data], false);
+					}
 				}
 
 				foreach($payload->custom_variables as $varName => $varValue){
-					$this->Customvariable->create();
 					$data = [
 						'Customvariable' => [
+							'customvariable_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'object_id' => $this->objectIdFromCache($payload->object_type, $payload->name),
+							'object_id' => $objectId,
 							'config_type' => $this->config_type,
 							'has_been_modified' => 0,
 							'varname' => $varName,
 							'varvalue' => $varValue
 						]
 					];
-					$this->Customvariable->save($data);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Customvariable']->commit($data['Customvariable']);
+					} else {
+						$this->Customvariable->create();
+						$this->Customvariable->save($data);
+					}
 				}
-
-				unset($data, $result, $objectResult);
 				break;
 
 			case OBJECT_HOSTGROUP:
 				if($this->dumpObjects === false){
 					break;
 				}
-				$this->Hostgroup->create();
 
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->group_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->group_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->group_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
-				$objectResult = $this->Objects->replace($data);
-
+				// Add Hostgroup
 				$data = [
 					'Hostgroup' => [
+						'hostgroup_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'hostgroup_object_id' => $objectResult['Objects']['object_id'],
+						'hostgroup_object_id' => $objectId,
 						'alias' => $payload->alias
 					]
 				];
-
-				$result = $this->Hostgroup->save($data);
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Hostgroup']->commit($data['Hostgroup']);
+				} else {
+					$this->Hostgroup->rawInsert([$data], false);
+				}
 
 				foreach($payload->members as $hostName){
-					$this->Hostgroupmember->create();
 					$data = [
 						'Hostgroupmember' => [
+							'hostgroup_member_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'hostgroup_id' => $result['Hostgroup']['hostgroup_id'],
+							'hostgroup_id' => $objectId,
 							'host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $hostName)
 						]
 					];
-					$this->Hostgroupmember->rawInsert([$data], false);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Hostgroupmember']->commit($data['Hostgroupmember']);
+					} else {
+						//$this->Hostgroupmember->create();
+						$this->Hostgroupmember->rawInsert([$data], false);
+					}
 				}
-
-				//Add the object to objectCache
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->group_name);
-
 				break;
 
 			//Service object
@@ -816,9 +941,6 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->dumpObjects === false){
 					break;
 				}
-				//$this->Service->create();
-
-				$objectId = $this->objectIdFromCache(OBJECT_SERVICE, $payload->host_name, $payload->description);
 
 				/*
 				 * NOTICE
@@ -887,33 +1009,24 @@ class StatusengineLegacyShell extends AppShell{
 				//$objectId = $result['Objects']['object_id'];
 				*/
 
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => $payload->description,
-						'is_active' => 1,
-						'object_id' => $objectId,
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				$objectId = $objectResult['Objects']['object_id'];
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => $payload->description,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
-				//Add the object to objectCache
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name, $payload->description);
-
+				// Add Service
+				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
 				$checkCommand = $this->parseCheckCommand($payload->check_command);
 				if($this->objectIdFromCache(OBJECT_COMMAND, $checkCommand[0]) == null){
 					debug($checkCommand);
 				}
-
-				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
-
-
 				$data = [
 					'Service' => [
-						'service_id' => $this->fakeLastInsertId,
+						'service_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $payload->host_name),
@@ -968,61 +1081,61 @@ class StatusengineLegacyShell extends AppShell{
 						'importance' => $payload->hourly_value
 					]
 				];
-				$result = $this->Service->rawSave([$data], false);
-				$lastInsertId = null;
-				//if(isset($result['Service']['service_id'])){
-				//	$lastInsertId = $result['Service']['service_id'];
-				//}
-
-				$lastInsertId = $this->fakeLastInsertId;
-
-				if($lastInsertId == null){
-					$this->fakeLastInsertId++;
-					continue;
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Service']->commit($data['Service']);
+				} else {
+					$this->Service->rawInsert([$data], false);
 				}
-
-				//$lastInsertId = $this->Service->rawInsert([$data]);
 				unset($data);
 
 				//Must run if all services are in the database, or we get in trouble!
 				foreach($payload->parent_services as $parentService){
-					$this->createParentServices[$lastInsertId][] = [
+					$this->createParentServices[$objectId][] = [
 						'host_name' => $payload->host_name,
 						'description' => $payload->description
-
 					];
 				}
 
 				if(!empty($payload->contactgroups)){
 					foreach($payload->contactgroups as $contactgroupName){
-						$this->Servicecontactgroup->create();
 						$data = [
 							'Servicecontactgroup' => [
+								'service_contactgroup_id' => NULL,
 								'instance_id' => $this->instance_id,
-								'service_id' => $lastInsertId,
+								'service_id' => $objectId,
 								'contactgroup_object_id' => $this->objectIdFromCache(OBJECT_CONTACTGROUP, $contactgroupName)
 							]
 						];
-						$this->Servicecontactgroup->save($data);
+						if ($this->useBulkQueries === true) {
+							$this->ObjectsRepository['Servicecontactgroup']->commit($data['Servicecontactgroup']);
+						} else {
+							$this->Servicecontactgroup->create();
+							$this->Servicecontactgroup->save($data);
+						}
 					}
 				}
 
 				foreach($payload->contacts as $contactName){
-					$this->Servicecontact->create();
 					$data = [
 						'Servicecontact' => [
+							'service_content_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'service_id' => $lastInsertId,
+							'service_id' => $objectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName)
 						]
 					];
-					$this->Servicecontact->rawInsert([$data], false);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Servicecontact']->commit($data['Servicecontact']);
+					} else {
+						$this->Servicecontact->create();
+						$this->Servicecontact->save([$data], false);
+					}
 				}
 
 				foreach($payload->custom_variables as $varName => $varValue){
-					$this->Customvariable->create();
 					$data = [
 						'Customvariable' => [
+							'customvariable_id' => NULL,
 							'instance_id' => $this->instance_id,
 							'object_id' => $objectId,
 							'config_type' => $this->config_type,
@@ -1031,83 +1144,82 @@ class StatusengineLegacyShell extends AppShell{
 							'varvalue' => $varValue
 						]
 					];
-					$this->Customvariable->save($data);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Customvariable']->commit($data['Customvariable']);
+					} else {
+						$this->Customvariable->create();
+						$this->Customvariable->save($data);
+					}
 				}
-
-				unset($data, $result, $objectId, $objectResult);
-				$this->fakeLastInsertId++;
 				break;
 
 			case OBJECT_SERVICEGROUP:
 				if($this->dumpObjects === false){
 					break;
 				}
-				$this->Servicegroup->create();
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->group_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->group_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
 
-				$objectResult = $this->Objects->replace($data);
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->group_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
+				// Add Servicegroup
 				$data = [
 					'Servicegroup' => [
+						'servicegroup_id' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'servicegroup_object_id' => $objectResult['Objects']['object_id'],
+						'servicegroup_object_id' => $objectId,
 						'alias' => $payload->alias
 					]
 				];
-
-				$result = $this->Servicegroup->save($data);
-
-				foreach($payload->members as $ServiceArray){
-					$this->Servicegroupmember->create();
-					$data = [
-						'Servicegroupmember' => [
-							'instance_id' => $this->instance_id,
-							'servicegroup_id' => $result['Servicegroup']['servicegroup_id'],
-							'service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $ServiceArray->host_name, $ServiceArray->service_description)
-						]
-					];
-					$this->Servicegroupmember->rawInsert([$data], false);
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Servicegroup']->commit($data['Servicegroup']);
+				} else {
+					$this->Servicegroup->create();
+					$result = $this->Servicegroup->save($data);
 				}
 
-				//Add the object to objectCache
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->group_name);
-				unset($data, $result, $objectResult);
+				foreach($payload->members as $ServiceArray){
+					$data = [
+						'Servicegroupmember' => [
+							'servicegroup_member_id' => NULL,
+							'instance_id' => $this->instance_id,
+							'servicegroup_id' => $objectId,
+							'service_object_id' => $objectId,
+						]
+					];
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Servicegroupmember']->commit($data['Servicegroupmember']);
+					} else {
+						$this->Servicegroupmember->create();
+						$this->Servicegroupmember->rawInsert([$data], false);
+					}
+				}
 				break;
 
 			case OBJECT_HOSTESCALATION:
 				if($this->dumpObjects === false){
 					break;
 				}
-				//$this->Hostescalation->create();
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->host_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				//Add the object to objectCache
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name);
 
-				$this->Hostescalation->create();
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
+
+				// Add Hostescalation
 				$data = [
 					'Hostescalation' => [
+						'hostescalation_id' => $this->fakeObjectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $payload->host_name),
@@ -1120,56 +1232,67 @@ class StatusengineLegacyShell extends AppShell{
 						'escalate_on_unreachable' => $payload->escalate_on_unreachable,
 					]
 				];
-				$result = $this->Hostescalation->save($data);
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Hostescalation']->commit($data['Hostescalation']);
+				} else {
+					$this->Hostescalation->create();
+					$result = $this->Hostescalation->save($data);
+				}
 
 				foreach($payload->contacts as $contactName){
-					$this->Hostescalationcontacts->create();
 					$data = [
 						'Hostescalationcontacts' => [
+							'hostescalation_contact_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'hostescalation_id' => $result['Hostescalation']['hostescalation_id'],
+							'hostescalation_id' => $this->fakeObjectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName),
 						]
 					];
-					$this->Hostescalationcontacts->save($data);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Hostescalationcontacts']->commit($data['Hostescalationcontacts']);
+					} else {
+						$this->Hostescalationcontacts->create();
+						$this->Hostescalationcontacts->save($data);
+					}
 				}
 
 				foreach($payload->contactgroups as $groupName){
-					$this->Hostescalationcontactgroup->create();
 					$data = [
 						'Hostescalationcontactgroup' => [
+							'hostescalation_contactgroup_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'hostescalation_id' => $result['Hostescalation']['hostescalation_id'],
+							'hostescalation_id' => $this->fakeObjectId,
 							'contactgroup_object_id' => $this->objectIdFromCache(OBJECT_CONTACTGROUP, $groupName),
 						]
 					];
-					$this->Hostescalationcontactgroup->save($data);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Hostescalationcontactgroup']->commit($data['Hostescalationcontactgroup']);
+					} else {
+						$this->Hostescalationcontactgroup->create();
+						$this->Hostescalationcontacts->save($data);
+					}
 				}
-				unset($data, $result, $objectResult);
+				$this->fakeObjectId++;
 				break;
 
 			case OBJECT_SERVICEESCALATION:
 				if($this->dumpObjects === false){
 					break;
 				}
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => $payload->description,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->host_name, $payload->description),
-						'instance_id' => $this->instance_id,
-					]
-				];
-				$objectResult = $this->Objects->replace($data);
-				//Add the object to objectCache
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name);
 
-				$this->Serviceescalation->create();
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => $payload->description,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
+
+				// Add Serviceescalation
 				$data = [
 					'Serviceescalation' => [
+						'serviceescalation_id' => $this->fakeObjectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $payload->host_name, $payload->description),
@@ -1183,56 +1306,67 @@ class StatusengineLegacyShell extends AppShell{
 						'escalate_on_critical' => $payload->escalate_on_critical,
 					]
 				];
-
-				$result = $this->Serviceescalation->save($data);
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Serviceescalation']->commit($data['Serviceescalation']);
+				} else {
+					$this->Serviceescalation->create();
+					$result = $this->Serviceescalation->save($data);
+				}
 
 				foreach($payload->contacts as $contactName){
-					$this->Serviceescalationcontact->create();
 					$data = [
 						'Serviceescalationcontact' => [
+							'serviceescalation_contact_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'serviceescalation_id' => $result['Serviceescalation']['serviceescalation_id'],
+							'serviceescalation_id' => $this->fakeObjectId,
 							'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $contactName),
 						]
 					];
-					$this->Serviceescalationcontact->save($data);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Serviceescalationcontact']->commit($data['Serviceescalationcontact']);
+					} else {
+						$this->Serviceescalationcontact->create();
+						$this->Serviceescalationcontact->save($data);
+					}
 				}
 
 				foreach($payload->contactgroups as $groupName){
-					$this->Serviceescalationcontactgroup->create();
 					$data = [
 						'Serviceescalationcontactgroup' => [
+							'serviceescalation_contactgroup_id' => NULL,
 							'instance_id' => $this->instance_id,
-							'serviceescalation_id' => $result['Serviceescalation']['serviceescalation_id'],
+							'serviceescalation_id' => $this->fakeObjectId,
 							'contactgroup_object_id' => $this->objectIdFromCache(OBJECT_CONTACTGROUP, $groupName),
 						]
 					];
-					$this->Serviceescalationcontactgroup->save($data);
+					if ($this->useBulkQueries === true) {
+						$this->ObjectsRepository['Serviceescalationcontactgroup']->commit($data['Serviceescalationcontactgroup']);
+					} else {
+						$this->Serviceescalationcontactgroup->create();
+						$this->Serviceescalationcontactgroup->save($data);
+					}
 				}
-				unset($data, $result, $objectResult);
+				$this->fakeObjectId++;
 				break;
 
 			case OBJECT_HOSTDEPENDENCY:
 				if($this->dumpObjects === false){
 					break;
 				}
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => null,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->host_name),
-						'instance_id' => $this->instance_id,
-					]
-				];
 
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name);
-				$this->Hostdependency->create();
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => null,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
+
+				// Add Hostdependency
 				$data = [
 					'Hostdependency' => [
+						'hostdependency_id' => $this->fakeObjectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $payload->host_name),
@@ -1245,34 +1379,33 @@ class StatusengineLegacyShell extends AppShell{
 						'fail_on_unreachable' => $payload->fail_on_unreachable,
 					]
 				];
-
-				$this->Hostdependency->save($data);
-
-				unset($data, $result, $objectResult);
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Hostdependency']->commit($data['Hostdependency']);
+				} else {
+					$this->Hostdependency->create();
+					$this->Hostdependency->save($data);
+				}
+				$this->fakeObjectId++;
 				break;
 
 			case OBJECT_SERVICEDEPENDENCY:
 				if($this->dumpObjects === false){
 					break;
 				}
-				$data = [
-					'Objects' => [
-						'objecttype_id' => $payload->object_type,
-						'name1' => $payload->host_name,
-						'name2' => $payload->service_description,
-						'is_active' => 1,
-						//Update record, if exists
-						'object_id' => $this->objectIdFromCache($payload->object_type, $payload->host_name, $payload->service_description),
-						'instance_id' => $this->instance_id,
-					]
-				];
 
-				$objectResult = $this->Objects->replace($data);
-				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->host_name, $payload->service_description);
+				// Add Object
+				$objectId = $this->checkObject([
+					'objecttype_id' => $payload->object_type,
+					'name1' => $payload->host_name,
+					'name2' => $payload->service_description,
+					'is_active' => 1,
+					'instance_id' => $this->instance_id,
+				]);
 
-				$this->Servicedependency->create();
+				// Add Servicedependency
 				$data = [
 					'Servicedependency' => [
+						'servicedependency_id' => $this->fakeObjectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
 						'service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $payload->host_name, $payload->service_description),
@@ -1286,8 +1419,13 @@ class StatusengineLegacyShell extends AppShell{
 						'fail_on_critical' => $payload->fail_on_critical
 					]
 				];
-				$this->Servicedependency->save($data);
-				unset($result, $data, $objectResult);
+				if ($this->useBulkQueries === true) {
+					$this->ObjectsRepository['Servicedependency']->commit($data['Servicedependency']);
+				} else {
+					$this->Servicedependency->create();
+					$this->Servicedependency->save($data);
+				}
+				$this->fakeObjectId++;
 				break;
 		}
 	}
@@ -1380,7 +1518,7 @@ class StatusengineLegacyShell extends AppShell{
 		];
 
 		if($this->useBulkQueries === true){
-			$this->StatusRepository['Hoststatus']->commit($data['Hoststatus']);
+			$this->BulkRepository['Hoststatus']->commit($data['Hoststatus']);
 			return;
 		}
 		$this->Hoststatus->saveHoststatus($data, false);
@@ -1473,7 +1611,7 @@ class StatusengineLegacyShell extends AppShell{
 		];
 
 		if($this->useBulkQueries === true){
-			$this->StatusRepository['Servicestatus']->commit($data['Servicestatus']);
+			$this->BulkRepository['Servicestatus']->commit($data['Servicestatus']);
 			return;
 		}
 		$this->Servicestatus->saveServicestatus($data, false);
@@ -1531,7 +1669,7 @@ class StatusengineLegacyShell extends AppShell{
 		];
 
 		if($this->useBulkQueries === true){
-			$this->StatusRepository['Servicecheck']->commit($data['Servicecheck']);
+			$this->BulkRepository['Servicecheck']->commit($data['Servicecheck']);
 		}else{
 			$this->Servicecheck->rawInsert([$data], false);
 		}
@@ -1632,7 +1770,7 @@ class StatusengineLegacyShell extends AppShell{
 		];
 
 		if($this->useBulkQueries === true){
-			$this->StatusRepository['Hostcheck']->commit($data['Hostcheck']);
+			$this->BulkRepository['Hostcheck']->commit($data['Hostcheck']);
 			return;
 		}
 
@@ -1687,6 +1825,7 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Logentry->create();
 		$data = [
 			'Logentry' => [
+				'logentry_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'logentry_time' => date('Y-m-d H:i:s', $payload->timestamp),
 				'entry_time' => date('Y-m-d H:i:s', $payload->logentry->entry_time),
@@ -1698,6 +1837,10 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
+		if($this->useBulkQueries === true){
+			$this->BulkRepository['Logentry']->commit($data['Logentry']);
+			return;
+		}
 		$this->Logentry->rawInsert([$data], false);
 	}
 
@@ -1754,7 +1897,7 @@ class StatusengineLegacyShell extends AppShell{
 			foreach($comments as $comment){
 				$this->Comment->delete($comment['Comment']['comment_id']);
 			}
-			
+
 			//Update comment history
 			$data = [
 				'Commenthistory' => [
@@ -1800,9 +1943,9 @@ class StatusengineLegacyShell extends AppShell{
 					'expiration_time' => '1970-01-01 00:00:00'
 				]
 			];
-			
+
 			$this->Comment->saveOnDuplicate($data);
-			
+
 			//Save to comment history
 			$data = [
 				'Commenthistory' => [
@@ -1844,6 +1987,10 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
+		if($this->useBulkQueries === true){
+			$this->BulkRepository['Externalcommand']->commit($data['Externalcommand']);
+			return;
+		}
 		$this->Externalcommand->rawInsert([$data], false);
 	}
 
@@ -2404,6 +2551,36 @@ class StatusengineLegacyShell extends AppShell{
 	public function gearmanConnect(){
 		$this->worker = new GearmanWorker();
 
+		// Prepare Bulk Repository for Objects Operations
+		$this->ObjectsRepository = [];
+		$this->ObjectsRepository['Command'] = new BulkRepository($this->Command, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Timeperiod'] = new BulkRepository($this->Timeperiod, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Timerange'] = new BulkRepository($this->Timerange, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Contact'] = new BulkRepository($this->Contact, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Contactaddress'] = new BulkRepository($this->Contactaddress, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Contactnotificationcommand'] = new BulkRepository($this->Contactnotificationcommand, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Contactgroup'] = new BulkRepository($this->Contactgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Contactgroupmember'] = new BulkRepository($this->Contactgroupmember, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostcontactgroup'] = new BulkRepository($this->Hostcontactgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostcontact'] = new BulkRepository($this->Hostcontact, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Host'] = new BulkRepository($this->Host, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostgroup'] = new BulkRepository($this->Hostgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Customvariable'] = new BulkRepository($this->Customvariable, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostgroupmember'] = new BulkRepository($this->Hostgroupmember, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Servicecontactgroup'] = new BulkRepository($this->Servicecontactgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Servicecontact'] = new BulkRepository($this->Servicecontact, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Service'] = new BulkRepository($this->Service, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Servicegroupmember'] = new BulkRepository($this->Servicegroupmember, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Servicegroup'] = new BulkRepository($this->Servicegroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostescalation'] = new BulkRepository($this->Hostescalation, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Serviceescalation'] = new BulkRepository($this->Serviceescalation, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostescalationcontacts'] = new BulkRepository($this->Hostescalationcontacts, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostescalationcontactgroup'] = new BulkRepository($this->Hostescalationcontactgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Serviceescalationcontact'] = new BulkRepository($this->Serviceescalationcontact, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Serviceescalationcontactgroup'] = new BulkRepository($this->Serviceescalationcontactgroup, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Hostdependency'] = new BulkRepository($this->Hostdependency, $this->bulkQueryLimit, $this->bulkQueryTime);
+		$this->ObjectsRepository['Servicedependency'] = new BulkRepository($this->Servicedependency, $this->bulkQueryLimit, $this->bulkQueryTime);
+
 		/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
 		 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 		 */
@@ -2608,22 +2785,36 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	public function saveParentHosts(){
+		if ($this->useBulkQueries) {
+			$bulk = new BulkRepository($this->Parenthost, $this->bulkQueryLimit, $this->bulkQueryTime);
+		}
 		foreach($this->createParentHosts as $host_id => $hostNamesAsArray){
 			foreach($hostNamesAsArray as $hostName){
 				$this->Parenthost->create();
 				$data = [
 					'Parenthost' => [
+						'host_parenthost_id' => NULL,
 						'instance_id' => $this->instance_id,
 						'host_id' => $host_id,
 						'parent_host_object_id' => $this->objectIdFromCache(OBJECT_HOST, $hostName)
 					]
 				];
-				$this->Parenthost->save($data);
+				if ($this->useBulkQueries === true) {
+					$bulk->commit($data['Parenthost']);
+				} else {
+					$this->Parenthost->save($data);
+				}
 			}
+		}
+		if ($this->useBulkQueries) {
+			$bulk->push();
 		}
 	}
 
 	public function saveParentServices(){
+		if ($this->useBulkQueries) {
+			$bulk = new BulkRepository($this->Parenthost, $this->bulkQueryLimit, $this->bulkQueryTime);
+		}
 		//CakeLog::debug(var_export($this->createParentServices, true));
 		foreach($this->createParentServices as $service_id => $servicesArray){
 			foreach($servicesArray as $serviceArray){
@@ -2635,8 +2826,15 @@ class StatusengineLegacyShell extends AppShell{
 						'parent_service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $serviceArray['host_name'], $serviceArray['description'])
 					]
 				];
-				$this->Parentservice->save($data);
+				if ($this->useBulkQueries === true) {
+					$bulk->commit($data['Parentservice']);
+				} else {
+					$this->Parentservice->save($data);
+				}
 			}
+		}
+		if ($this->useBulkQueries) {
+			$bulk->push();
 		}
 	}
 
@@ -2756,10 +2954,10 @@ class StatusengineLegacyShell extends AppShell{
 		while(true){
 			pcntl_signal_dispatch();
 			$this->worker->work();
+
 			if($this->worker->returnCode() == GEARMAN_SUCCESS){
 				continue;
 			}
-
 
 			if(!@$this->worker->wait()){
 				if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
@@ -2782,8 +2980,8 @@ class StatusengineLegacyShell extends AppShell{
 	public function waitForInstructions(){
 		CakeLog::info('Ok, i will wait for instructions');
 		if($this->bindQueues === true){
-			$this->StatusRepository = [];
-			
+			$this->BulkRepository = [];
+
 			$this->worker = new GearmanWorker();
 
 			/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
@@ -2798,21 +2996,29 @@ class StatusengineLegacyShell extends AppShell{
 				$this->worker->addFunction($queueName, [$this, $functionName]);
 			}
 			$this->bindQueues = false;
-			
+
 			if(isset($this->queues['statusngin_servicechecks']) && $this->useBulkQueries){
-				$this->StatusRepository['Servicecheck'] = new StatusRepository($this->Servicecheck, $this->queryLimit);
+				$this->BulkRepository['Servicecheck'] = new BulkRepository($this->Servicecheck, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
-			
+
 			if(isset($this->queues['statusngin_hostchecks']) && $this->useBulkQueries){
-				$this->StatusRepository['Hostcheck'] = new StatusRepository($this->Hostcheck, $this->queryLimit);
+				$this->BulkRepository['Hostcheck'] = new BulkRepository($this->Hostcheck, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
-			
+
 			if(isset($this->queues['statusngin_servicestatus']) && $this->useBulkQueries){
-				$this->StatusRepository['Servicestatus'] = new StatusRepository($this->Servicestatus, $this->queryLimit);
+				$this->BulkRepository['Servicestatus'] = new BulkRepository($this->Servicestatus, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
-			
+
 			if(isset($this->queues['statusngin_hoststatus']) && $this->useBulkQueries){
-				$this->StatusRepository['Hoststatus'] = new StatusRepository($this->Hoststatus, $this->queryLimit);
+				$this->BulkRepository['Hoststatus'] = new BulkRepository($this->Hoststatus, $this->bulkQueryLimit, $this->bulkQueryTime);
+			}
+
+			if(isset($this->queues['statusngin_externalcommands']) && $this->useBulkQueries){
+				$this->BulkRepository['Externalcommand'] = new BulkRepository($this->Externalcommand, $this->bulkQueryLimit, $this->bulkQueryTime);
+			}
+
+			if(isset($this->queues['statusngin_logentries']) && $this->useBulkQueries){
+				$this->BulkRepository['Logentry'] = new BulkRepository($this->Logentry, $this->bulkQueryLimit, $this->bulkQueryTime);
 			}
 		}
 		while(true){
@@ -2829,7 +3035,7 @@ class StatusengineLegacyShell extends AppShell{
 					if(isset($this->queues['statusngin_servicechecks'])){
 						CakeLog::info('Build up new process perfdata cache');
 						$this->buildProcessPerfdataCache();
-						
+
 						$this->cacheHostNamesForGraphiteIfRequried();
 						$this->cacheServiceNamesForGraphiteIfRequried();
 					}
@@ -2838,8 +3044,8 @@ class StatusengineLegacyShell extends AppShell{
 				CakeLog::info('I will continue my work');
 				$this->childWork();
 			}
-			
-			
+
+
 			pcntl_signal_dispatch();
 			//Check if the parent process still exists
 			if($this->parentPid != posix_getppid()){
@@ -2874,21 +3080,13 @@ class StatusengineLegacyShell extends AppShell{
 					CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
 					exit(3);
 				}
-				
-				if(isset($this->queues['statusngin_servicechecks']) && $this->useBulkQueries){
-					$this->StatusRepository['Servicecheck']->pushIfRequired();
-				}
-			
-				if(isset($this->queues['statusngin_hostchecks']) && $this->useBulkQueries){
-					$this->StatusRepository['Hostcheck']->pushIfRequired();
-				}
-			
-				if(isset($this->queues['statusngin_servicestatus']) && $this->useBulkQueries){
-					$this->StatusRepository['Servicestatus']->pushIfRequired();
-				}
-			
-				if(isset($this->queues['statusngin_hoststatus']) && $this->useBulkQueries){
-					$this->StatusRepository['Hoststatus']->pushIfRequired();
+
+				// check every second if there's something left to push
+				if($this->useBulkQueries && $this->bulkLastCheck < time()) {
+					foreach ($this->BulkRepository AS $repo) {
+						$repo->pushIfRequired();
+					}
+					$this->bulkLastCheck = time();
 				}
 			}
 		}
@@ -2910,6 +3108,14 @@ class StatusengineLegacyShell extends AppShell{
 
 			case SIGUSR2:
 				//Tell the worker to stop its work
+
+				// flush all bulk queues
+				if ($this->useBulkQueries) {
+					CakeLog::info('Force flushing all bulk queues');
+					foreach ($this->BulkRepository AS $repo) {
+						$repo->push();
+					}
+				}
 				$this->work = false;
 				break;
 		}
