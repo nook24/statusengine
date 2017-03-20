@@ -197,21 +197,27 @@ class LegacyAppModel extends AppModel{
 	* @author Ceeram
 	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
 	*/
-	public function rawInsert($data, $returnLastInserId = true){
+	public function rawInsert($data, $returnLastInserId = true, $removePrimaryKey = true){
 		$this->saveTemplate = 'SET NAMES utf8; INSERT INTO `%s` (%s) VALUES %s ;';
 		if(empty($data)) {
 			return true;
 		}
 
 		$data = Set::extract('{n}.' . $this->alias, $data);
+
 		$duplicate_data = [];
 		$schema = $this->schema();
-		unset($schema[$this->primaryKey]);
+		if($removePrimaryKey){
+			unset($schema[$this->primaryKey]);
+		}
 		$keyData = '`' . implode('`, `', array_keys($schema)) . '`';
 
 		$db = $this->getDataSource();
 		foreach($data as $k => $row) {
 			foreach ($row as $field => $value) {
+				if($this->primaryKey == $field){
+					continue;
+				}
 				$row[$field] = $db->value($value, $field);
 			}
 

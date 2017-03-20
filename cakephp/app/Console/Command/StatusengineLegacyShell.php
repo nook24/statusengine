@@ -318,14 +318,14 @@ class StatusengineLegacyShell extends AppShell{
 	protected function checkObject(array $data) {
 
 		// get old object id
-		$objectId = $this->objectIdFromCache($data['objecttype_id'], $data['name1'], $data['name2']);
+		$objectId = $this->objectIdFromCache($data['Objects']['objecttype_id'], $data['Objects']['name1'], $data['Objects']['name2']);
 
 		// create new object if object is not there and cache it
 		if (!$objectId) {
-			$data['object_id'] = null;
-			$objectResult = $this->Objects->replace(['Object' => $data]);
+			$data['Objects']['object_id'] = null;
+			$objectResult = $this->Objects->replace($data);
 			$objectId = $objectResult['Objects']['object_id'];
-			$this->addObjectToCache($data['objecttype_id'], $objectId, $data['name1'], $data['name2']);
+			$this->addObjectToCache($data['Objects']['objecttype_id'], $objectId, $data['Objects']['name1'], $data['Objects']['name2']);
 		}
 
 		$this->dumpIds[] = $objectId;
@@ -476,11 +476,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->command_name,
-					'name2' => null,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->command_name,
+						'name2' => null,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Save Command
@@ -496,7 +498,7 @@ class StatusengineLegacyShell extends AppShell{
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Command']->commit($data['Command']);
 				} else {
-					$this->Command->rawInsert([$data], false);
+					$this->Command->rawInsert([$data], false, false);
 				}
 				break;
 
@@ -508,11 +510,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->name,
-					'name2' => null,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->name,
+						'name2' => null,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Timeperiod
@@ -581,11 +585,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->name,
-					'name2' => null,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->name,
+						'name2' => null,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Contact
@@ -699,11 +705,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->group_name,
-					'name2' => null,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->group_name,
+						'name2' => null,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Contactgroup
@@ -737,7 +745,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->ObjectsRepository['Contactgroupmember']->commit($data['Contactgroupmember']);
 					} else {
 						$this->Contactgroupmember->create();
-						$this->Contactgroupmember->rawInsert([$data], false);
+						$this->Contactgroupmember->rawInsert([$data], false, false);
 					}
 				}
 				break;
@@ -750,11 +758,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->name,
-					'name2' => null,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->name,
+						'name2' => null,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Host
@@ -826,7 +836,7 @@ class StatusengineLegacyShell extends AppShell{
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Host']->commit($data['Host']);
 				} else {
-					$this->Service->rawInsert([$data], false);
+					$this->Host->rawInsert([$data], false, false);
 				}
 
 				foreach($payload->parent_hosts as $parentHost){
@@ -863,7 +873,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->ObjectsRepository['Hostcontact']->commit($data['Hostcontact']);
 					} else {
 						$this->Hostcontact->create();
-						$this->Hostcontact->rawInsert([$data], false);
+						$this->Hostcontact->rawInsert([$data], false, false);
 					}
 				}
 
@@ -895,11 +905,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->group_name,
-					'name2' => null,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->group_name,
+						'name2' => null,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Hostgroup
@@ -915,7 +927,7 @@ class StatusengineLegacyShell extends AppShell{
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Hostgroup']->commit($data['Hostgroup']);
 				} else {
-					$this->Hostgroup->rawInsert([$data], false);
+					$this->Hostgroup->rawInsert([$data], false, false);
 				}
 
 				foreach($payload->members as $hostName){
@@ -931,7 +943,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->ObjectsRepository['Hostgroupmember']->commit($data['Hostgroupmember']);
 					} else {
 						//$this->Hostgroupmember->create();
-						$this->Hostgroupmember->rawInsert([$data], false);
+						$this->Hostgroupmember->rawInsert([$data], false, false);
 					}
 				}
 				break;
@@ -1011,11 +1023,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->host_name,
-					'name2' => $payload->description,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->host_name,
+						'name2' => $payload->description,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Service
@@ -1084,7 +1098,7 @@ class StatusengineLegacyShell extends AppShell{
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Service']->commit($data['Service']);
 				} else {
-					$this->Service->rawInsert([$data], false);
+					$this->Service->rawInsert([$data], false, false);
 				}
 				unset($data);
 
@@ -1160,11 +1174,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->group_name,
-					'name2' => null,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->group_name,
+						'name2' => null,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Servicegroup
@@ -1197,7 +1213,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->ObjectsRepository['Servicegroupmember']->commit($data['Servicegroupmember']);
 					} else {
 						$this->Servicegroupmember->create();
-						$this->Servicegroupmember->rawInsert([$data], false);
+						$this->Servicegroupmember->rawInsert([$data], false, false);
 					}
 				}
 				break;
@@ -1209,11 +1225,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->host_name,
-					'name2' => null,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->host_name,
+						'name2' => null,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Hostescalation
@@ -1282,11 +1300,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->host_name,
-					'name2' => $payload->description,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->host_name,
+						'name2' => $payload->description,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Serviceescalation
@@ -1356,11 +1376,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->host_name,
-					'name2' => null,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->host_name,
+						'name2' => null,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Hostdependency
@@ -1395,11 +1417,13 @@ class StatusengineLegacyShell extends AppShell{
 
 				// Add Object
 				$objectId = $this->checkObject([
-					'objecttype_id' => $payload->object_type,
-					'name1' => $payload->host_name,
-					'name2' => $payload->service_description,
-					'is_active' => 1,
-					'instance_id' => $this->instance_id,
+					'Objects' => [
+						'objecttype_id' => $payload->object_type,
+						'name1' => $payload->host_name,
+						'name2' => $payload->service_description,
+						'is_active' => 1,
+						'instance_id' => $this->instance_id,
+					]
 				]);
 
 				// Add Servicedependency
@@ -1671,7 +1695,7 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->useBulkQueries === true){
 			$this->BulkRepository['Servicecheck']->commit($data['Servicecheck']);
 		}else{
-			$this->Servicecheck->rawInsert([$data], false);
+			$this->Servicecheck->rawInsert([$data], false, false);
 		}
 
 		if($this->processPerfdata === true && $payload->servicecheck->perf_data !== null){
@@ -1774,7 +1798,7 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		$this->Hostcheck->rawInsert([$data], false);
+		$this->Hostcheck->rawInsert([$data], false, false);
 	}
 
 	public function processStatechanges($job){
@@ -1814,7 +1838,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
-		$this->Statehistory->rawInsert([$data], false);
+		$this->Statehistory->rawInsert([$data], false, false);
 	}
 
 	public function processLogentries($job){
@@ -1825,7 +1849,6 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Logentry->create();
 		$data = [
 			'Logentry' => [
-				'logentry_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'logentry_time' => date('Y-m-d H:i:s', $payload->timestamp),
 				'entry_time' => date('Y-m-d H:i:s', $payload->logentry->entry_time),
