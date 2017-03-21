@@ -498,7 +498,7 @@ class StatusengineLegacyShell extends AppShell{
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Command']->commit($data['Command']);
 				} else {
-					$this->Command->rawInsert([$data], false, false);
+					$this->Command->rawInsert([$data], false);
 				}
 				break;
 
@@ -745,7 +745,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->ObjectsRepository['Contactgroupmember']->commit($data['Contactgroupmember']);
 					} else {
 						$this->Contactgroupmember->create();
-						$this->Contactgroupmember->rawInsert([$data], false, false);
+						$this->Contactgroupmember->rawInsert([$data], false);
 					}
 				}
 				break;
@@ -836,7 +836,7 @@ class StatusengineLegacyShell extends AppShell{
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Host']->commit($data['Host']);
 				} else {
-					$this->Host->rawInsert([$data], false, false);
+					$this->Host->rawInsert([$data], false);
 				}
 
 				foreach($payload->parent_hosts as $parentHost){
@@ -873,7 +873,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->ObjectsRepository['Hostcontact']->commit($data['Hostcontact']);
 					} else {
 						$this->Hostcontact->create();
-						$this->Hostcontact->rawInsert([$data], false, false);
+						$this->Hostcontact->rawInsert([$data], false);
 					}
 				}
 
@@ -927,7 +927,7 @@ class StatusengineLegacyShell extends AppShell{
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Hostgroup']->commit($data['Hostgroup']);
 				} else {
-					$this->Hostgroup->rawInsert([$data], false, false);
+					$this->Hostgroup->rawInsert([$data], false);
 				}
 
 				foreach($payload->members as $hostName){
@@ -943,7 +943,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->ObjectsRepository['Hostgroupmember']->commit($data['Hostgroupmember']);
 					} else {
 						//$this->Hostgroupmember->create();
-						$this->Hostgroupmember->rawInsert([$data], false, false);
+						$this->Hostgroupmember->rawInsert([$data], false);
 					}
 				}
 				break;
@@ -1098,7 +1098,7 @@ class StatusengineLegacyShell extends AppShell{
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Service']->commit($data['Service']);
 				} else {
-					$this->Service->rawInsert([$data], false, false);
+					$this->Service->rawInsert([$data], false);
 				}
 				unset($data);
 
@@ -1142,7 +1142,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->ObjectsRepository['Servicecontact']->commit($data['Servicecontact']);
 					} else {
 						$this->Servicecontact->create();
-						$this->Servicecontact->save([$data], false);
+						$this->Servicecontact->save($data, false);
 					}
 				}
 
@@ -1213,7 +1213,7 @@ class StatusengineLegacyShell extends AppShell{
 						$this->ObjectsRepository['Servicegroupmember']->commit($data['Servicegroupmember']);
 					} else {
 						$this->Servicegroupmember->create();
-						$this->Servicegroupmember->rawInsert([$data], false, false);
+						$this->Servicegroupmember->rawInsert([$data], false);
 					}
 				}
 				break;
@@ -1695,7 +1695,7 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->useBulkQueries === true){
 			$this->BulkRepository['Servicecheck']->commit($data['Servicecheck']);
 		}else{
-			$this->Servicecheck->rawInsert([$data], false, false);
+			$this->Servicecheck->rawInsert([$data], false);
 		}
 
 		if($this->processPerfdata === true && $payload->servicecheck->perf_data !== null){
@@ -1798,7 +1798,7 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		$this->Hostcheck->rawInsert([$data], false, false);
+		$this->Hostcheck->rawInsert([$data], false);
 	}
 
 	public function processStatechanges($job){
@@ -1838,7 +1838,7 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
-		$this->Statehistory->rawInsert([$data], false, false);
+		$this->Statehistory->rawInsert([$data], false);
 	}
 
 	public function processLogentries($job){

@@ -197,7 +197,7 @@ class LegacyAppModel extends AppModel{
 	* @author Ceeram
 	* @license MIT License (http://www.opensource.org/licenses/mit-license.php)
 	*/
-	public function rawInsert($data, $returnLastInserId = true, $removePrimaryKey = true){
+	public function rawInsert($data, $returnLastInserId = true){
 		$this->saveTemplate = 'SET NAMES utf8; INSERT INTO `%s` (%s) VALUES %s ;';
 		if(empty($data)) {
 			return true;
@@ -207,17 +207,11 @@ class LegacyAppModel extends AppModel{
 
 		$duplicate_data = [];
 		$schema = $this->schema();
-		if($removePrimaryKey){
-			unset($schema[$this->primaryKey]);
-		}
 		$keyData = '`' . implode('`, `', array_keys($schema)) . '`';
 
 		$db = $this->getDataSource();
 		foreach($data as $k => $row) {
 			foreach ($row as $field => $value) {
-				if($this->primaryKey == $field){
-					continue;
-				}
 				$row[$field] = $db->value($value, $field);
 			}
 
@@ -275,7 +269,6 @@ class LegacyAppModel extends AppModel{
 			$this->query($data);
 		}catch(Exception $e){
 			$error = $e->getMessage();
-			print_r($error.PHP_EOL);
 			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
 				if($recursive === false){
 					$this->getDatasource()->reconnect();

@@ -47,7 +47,7 @@ $config = [
 	
 	//Use bulk queries for host and servicestatus
 	//And other tables, many thanks to dhoffend
-	'use_bulk_queries_for_status' => true,
+	'use_bulk_queries_for_status' => false,
 	
 	//Records per bulk operations
 	'bulk_query_limit' => 200,
