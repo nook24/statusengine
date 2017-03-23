@@ -1667,6 +1667,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		$data = [
 			'Servicecheck' => [
+				'servicecheck_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'service_object_id' => $service_object_id,
 				'check_type' => $payload->servicecheck->check_type,
@@ -1767,6 +1768,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		$data = [
 			'Hostcheck' => [
+				'hostcheck_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'host_object_id' => $host_object_id,
 				'check_type' => $payload->hostcheck->check_type,
@@ -1822,6 +1824,7 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Statehistory->create();
 		$data = [
 			'Statehistory' => [
+				'statehistory_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'state_time' => date('Y-m-d H:i:s', $payload->timestamp),
 				'state_time_usec' => $payload->timestamp,
@@ -1849,6 +1852,7 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Logentry->create();
 		$data = [
 			'Logentry' => [
+				'logentry_id' => null,
 				'instance_id' => $this->instance_id,
 				'logentry_time' => date('Y-m-d H:i:s', $payload->timestamp),
 				'entry_time' => date('Y-m-d H:i:s', $payload->logentry->entry_time),
@@ -1875,6 +1879,7 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Systemcommand->create();
 		$data = [
 			'Systemcommand' => [
+				'systemcommand_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'start_time' => date('Y-m-d H:i:s', $payload->systemcommand->start_time),
 				'start_time_usec' => $payload->systemcommand->start_time,
@@ -2002,6 +2007,7 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Externalcommand->create();
 		$data = [
 			'Externalcommand' => [
+				'externalcommand_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'entry_time' => date('Y-m-d H:i:s', $payload->externalcommand->entry_time),
 				'command_type' => $payload->externalcommand->command_type,
@@ -2038,6 +2044,7 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Acknowledgement->create();
 		$data = [
 			'Acknowledgement' => [
+				'acknowledgement_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'entry_time' => date('Y-m-d H:i:s', $payload->timestamp),
 				'entry_time_usec' => $payload->timestamp,
@@ -2070,6 +2077,7 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Flapping->create();
 		$data = [
 			'Flapping' => [
+				'flappinghistory_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'event_time' => date('Y-m-d H:i:s', $payload->timestamp),
 				'event_time_usec' => $payload->timestamp,
@@ -2301,6 +2309,7 @@ class StatusengineLegacyShell extends AppShell{
 		//$this->Processdata->create();
 		$data = [
 			'Processdata' => [
+				'processevent_id' => 1,
 				'instance_id' => $this->instance_id,
 				'event_type' => $payload->type,
 				'event_time' => date('Y-m-d H:i:s', $payload->timestamp),
@@ -2459,6 +2468,7 @@ class StatusengineLegacyShell extends AppShell{
 			$this->Contactnotification->create();
 			$data = [
 				'Contactnotification' => [
+					'contactnotification_id' => NULL,
 					'instance_id' => $this->instance_id,
 					'notification_id' => $notification['Notification']['notification_id'],
 					'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $payload->contactnotificationdata->contact_name),
@@ -2844,6 +2854,7 @@ class StatusengineLegacyShell extends AppShell{
 				$this->Parentservice->create();
 				$data = [
 					'Parentservice' => [
+						'service_parentservice_id' => NULL,
 						'instance_id' => $this->instance_id,
 						'service_id' => $service_id,
 						'parent_service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $serviceArray['host_name'], $serviceArray['description'])
@@ -2987,6 +2998,14 @@ class StatusengineLegacyShell extends AppShell{
 					//Lost connection - lets wait a bit
 					sleep(1);
 				}
+				// check every second if there's something left to push
+				if($this->useBulkQueries && $this->bulkLastCheck < time()) {
+					foreach ($this->BulkRepository as $name => $repo) {
+						debug('forkWorker: '.$name);
+						$repo->pushIfRequired();
+					}
+					$this->bulkLastCheck = time();
+				}
 			}
 		}
 	}
@@ -3103,10 +3122,11 @@ class StatusengineLegacyShell extends AppShell{
 					CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
 					exit(3);
 				}
-
+				
 				// check every second if there's something left to push
 				if($this->useBulkQueries && $this->bulkLastCheck < time()) {
-					foreach ($this->BulkRepository AS $repo) {
+					foreach ($this->BulkRepository as $name => $repo) {
+						debug('childWork: '.$name);
 						$repo->pushIfRequired();
 					}
 					$this->bulkLastCheck = time();
@@ -3135,7 +3155,8 @@ class StatusengineLegacyShell extends AppShell{
 				// flush all bulk queues
 				if ($this->useBulkQueries) {
 					CakeLog::info('Force flushing all bulk queues');
-					foreach ($this->BulkRepository AS $repo) {
+					foreach ($this->BulkRepository as $name => $repo) {
+						debug('childSignalHandler: '.$name);
 						$repo->push();
 					}
 				}
