@@ -507,75 +507,66 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->dumpObjects === false){
 					break;
 				}
+				$this->Timeperiod->create();
+				$timeperiodObjectId = $this->objectIdFromCache($payload->object_type, $payload->name);
 
-				// Add Object
-				$objectId = $this->checkObject([
+				$data = [
 					'Objects' => [
 						'objecttype_id' => $payload->object_type,
 						'name1' => $payload->name,
 						'name2' => null,
 						'is_active' => 1,
+						//Update record, if exists
+						'object_id' => $timeperiodObjectId,
 						'instance_id' => $this->instance_id,
-					]
-				]);
+					],
+				];
+				$objectResult = $this->Objects->replace($data);
 
-				// Add Timeperiod
 				$data = [
 					'Timeperiod' => [
-						'timeperiod' => $objectId,
 						'instance_id' => $this->instance_id,
 						'config_type' => $this->config_type,
-						'timeperiod_object_id' => $objectId,
+						'timeperiod_object_id' => $objectResult['Objects']['object_id'],
 						'alias' => $payload->alias,
 					]
 				];
-				if ($this->useBulkQueries === true) {
-					$this->ObjectsRepository['Timeperiod']->commit($data['Timeperiod']);
-				} else {
-					$this->Timeperiod->create();
-					$this->Timeperiod->save($data);
-				}
+
+				$result = $this->Timeperiod->save($data);
 
 				foreach($payload->timeranges as $day => $timerangesPerDay){
 					foreach($timerangesPerDay as $timerange){
+						$this->Timerange->create();
 						if(isset($timerange->start) && isset($timerange->end)){
 							$data = [
 								'Timerange' => [
-									'timeperiod_timerange_id' => NULL,
 									'instance_id' => $this->instance_id,
-									'timeperiod_id' => $objectId,
-									'day' => $day,
+									'timeperiod_id' => $result['Timeperiod']['timeperiod_id'],
 									'start_sec' => $timerange->start,
-									'end_sec' => $timerange->end
+									'end_sec' => $timerange->end,
+									'day' => $day
 								]
 							];
-							if ($this->useBulkQueries === true) {
-								$this->ObjectsRepository['Timerange']->commit($data['Timerange']);
-							} else {
-								$this->Timerange->create();
-								$this->Timerange->save($data);
-							}
+							$this->Timerange->save($data);
 						}else{
 							$data = [
 								'Timerange' => [
-									'timeperiod_timerange_id' => NULL,
 									'instance_id' => $this->instance_id,
-									'timeperiod_id' => $objectId,
-									'day' => $day,
+									'timeperiod_id' => $result['Timeperiod']['timeperiod_id'],
 									'start_sec' => 0,
-									'end_sec' => 0
+									'end_sec' => 0,
+									'day' => $day
 								]
 							];
-							if ($this->useBulkQueries === true) {
-								$this->ObjectsRepository['Timerange']->commit($data['Timerange']);
-							} else {
-								$this->Timerange->create();
-								$this->Timerange->save($data);
-							}
+							$this->Timerange->save($data);
 						}
 					}
 				}
-				break;
+
+				$this->addObjectToCache($payload->object_type, $objectResult['Objects']['object_id'], $payload->name);
+
+				unset($result, $data, $objectResult);
+			break;
 
 			//Contact object
 			case OBJECT_CONTACT:
@@ -2587,7 +2578,6 @@ class StatusengineLegacyShell extends AppShell{
 		// Prepare Bulk Repository for Objects Operations
 		$this->ObjectsRepository = [];
 		$this->ObjectsRepository['Command'] = new BulkRepository($this->Command, $this->bulkQueryLimit, $this->bulkQueryTime);
-		$this->ObjectsRepository['Timeperiod'] = new BulkRepository($this->Timeperiod, $this->bulkQueryLimit, $this->bulkQueryTime);
 		$this->ObjectsRepository['Timerange'] = new BulkRepository($this->Timerange, $this->bulkQueryLimit, $this->bulkQueryTime);
 		$this->ObjectsRepository['Contact'] = new BulkRepository($this->Contact, $this->bulkQueryLimit, $this->bulkQueryTime);
 		$this->ObjectsRepository['Contactaddress'] = new BulkRepository($this->Contactaddress, $this->bulkQueryLimit, $this->bulkQueryTime);
