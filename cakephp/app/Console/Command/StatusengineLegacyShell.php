@@ -1022,6 +1022,8 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				]);
+					
+					debug($objectId);
 
 				// Add Service
 				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
@@ -1086,6 +1088,7 @@ class StatusengineLegacyShell extends AppShell{
 						'importance' => $payload->hourly_value
 					]
 				];
+				
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Service']->commit($data['Service']);
 				} else {
@@ -1658,7 +1661,6 @@ class StatusengineLegacyShell extends AppShell{
 
 		$data = [
 			'Servicecheck' => [
-				'servicecheck_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'service_object_id' => $service_object_id,
 				'check_type' => $payload->servicecheck->check_type,
@@ -1687,6 +1689,7 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->useBulkQueries === true){
 			$this->BulkRepository['Servicecheck']->commit($data['Servicecheck']);
 		}else{
+			$data['Servicecheck']['servicecheck_id'] = NULL;
 			$this->Servicecheck->rawInsert([$data], false);
 		}
 
@@ -1759,7 +1762,6 @@ class StatusengineLegacyShell extends AppShell{
 
 		$data = [
 			'Hostcheck' => [
-				'hostcheck_id' => NULL,
 				'instance_id' => $this->instance_id,
 				'host_object_id' => $host_object_id,
 				'check_type' => $payload->hostcheck->check_type,
@@ -1791,6 +1793,7 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
+		$data['Hostcheck']['hostcheck_id'] = NULL;
 		$this->Hostcheck->rawInsert([$data], false);
 	}
 
@@ -3116,7 +3119,6 @@ class StatusengineLegacyShell extends AppShell{
 				// check every second if there's something left to push
 				if($this->useBulkQueries && $this->bulkLastCheck < time()) {
 					foreach ($this->BulkRepository as $name => $repo) {
-						debug('childWork: '.$name);
 						$repo->pushIfRequired();
 					}
 					$this->bulkLastCheck = time();
