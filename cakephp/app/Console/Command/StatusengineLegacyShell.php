@@ -218,8 +218,12 @@ class StatusengineLegacyShell extends AppShell{
 
 		$this->bulkLastCheck = time();
 
-		$this->empty_method = 'truncate';
-		$this->empty_method = Configure::read('empty_method');
+		$emptyMethods = ['truncate', 'delete'];
+		$emptyMethod = strtolower(Configure::read('empty_method'));
+		if(!in_array($emptyMethod, $emptyMethods)){
+			$emptyMethod = 'truncate';
+		}
+		$this->empty_method = $emptyMethod;
 
 		if($this->processPerfdata === true){
 			$this->PerfdataBackend->init(Configure::read());
@@ -347,6 +351,8 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
+		
+		$this->Objects->getDatasource()->reconnect();
 
 		// check every second if there's something left to push
 		if($this->useBulkQueries && $this->bulkLastCheck < time()) {
@@ -420,12 +426,19 @@ class StatusengineLegacyShell extends AppShell{
 							$this->{$Model}->tablePrefix,
 							$this->{$Model}->table
 						));
+						
+						$this->{$Model}->getDataSource()->rawQuery(sprintf(
+							'ALTER TABLE %s%s AUTO_INCREMENT = 1',
+							$this->{$Model}->tablePrefix,
+							$this->{$Model}->table
+						));
+						
 					} else {
 						CakeLog::debug('Truncate table for '.$Model);
 						$this->{$Model}->truncate();
 					}
 				}
-
+				
 				$this->clearObjectsCache();
 				$this->buildObjectsCache();
 				$this->createParentHosts = [];
@@ -1022,9 +1035,7 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				]);
-					
-					debug($objectId);
-
+				
 				// Add Service
 				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
 				$checkCommand = $this->parseCheckCommand($payload->check_command);
@@ -2991,14 +3002,6 @@ class StatusengineLegacyShell extends AppShell{
 					//Lost connection - lets wait a bit
 					sleep(1);
 				}
-				// check every second if there's something left to push
-				if($this->useBulkQueries && $this->bulkLastCheck < time()) {
-					foreach ($this->BulkRepository as $name => $repo) {
-						debug('forkWorker: '.$name);
-						$repo->pushIfRequired();
-					}
-					$this->bulkLastCheck = time();
-				}
 			}
 		}
 	}
@@ -3148,7 +3151,6 @@ class StatusengineLegacyShell extends AppShell{
 				if ($this->useBulkQueries) {
 					CakeLog::info('Force flushing all bulk queues');
 					foreach ($this->BulkRepository as $name => $repo) {
-						debug('childSignalHandler: '.$name);
 						$repo->push();
 					}
 				}

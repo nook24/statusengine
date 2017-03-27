@@ -28,7 +28,7 @@ $config = [
 
 	//Define the way of empty the data tables (DELETE FROM or TRUNCATE TABLE)
 	//If innodb_file_per_table is enabled, delete is may be faster than truncate
-	'empty_method' => 'truncate',
+	'empty_method' => 'delete',
 
 	//If you want, Statusengine's servicestatus workers are able to
 	//process performacne data for you and save them to RRD files

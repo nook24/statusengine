@@ -92,8 +92,6 @@ class BulkRepository{
 		$this->counter++;
 
 		if($this->isPushRequired()){
-			debug('commit -> push cache');
-			debug($this->cache);
 			$this->push();
 		}
 	}
@@ -188,9 +186,6 @@ class BulkRepository{
 		$trys = 20;
 		for ($i = 0 ; $i < $trys ; $i++) {
 			try{
-				if($this->Model->useTable == 'services'){
-					debug($query);
-				}
 				$this->db->rawQuery($query);
 				if ($i > 0)
 					CakeLog::info(sprintf('Solved MySQL Deadlock on %s (try %d/%d)', get_class($this->Model), $i+1, $trys));
