@@ -218,6 +218,8 @@ class StatusengineLegacyShell extends AppShell{
 
 		$this->bulkLastCheck = time();
 
+		$this->lastDatasourcePing = time();
+
 		$emptyMethods = ['truncate', 'delete'];
 		$emptyMethod = strtolower(Configure::read('empty_method'));
 		if(!in_array($emptyMethod, $emptyMethods)){
@@ -3061,6 +3063,10 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		while(true){
 			if($this->work === true){
+				// Reconnect datasource before we refresh our cache	
+				CakeLog::info('Reconnect database');
+				$this->Objects->getDatasource()->reconnect();
+
 				CakeLog::info('Clear my objects cache');
 				$this->clearObjectsCache();
 
@@ -3125,6 +3131,17 @@ class StatusengineLegacyShell extends AppShell{
 						$repo->pushIfRequired();
 					}
 					$this->bulkLastCheck = time();
+				}
+
+				// ping datasource every now and then to keep the pdo connection alive
+				// simulate mysql_ping()
+				if($this->lastDatasourcePing + 60 < time()) {
+					try {
+						$this->Objects->getDatasource()->execute('SELECT 1');
+					} catch(PDOException $e) {
+						$this->Objects->getDatasource()->reconnect();
+					}
+					$this->lastDatasourcePing = time();
 				}
 			}
 		}
