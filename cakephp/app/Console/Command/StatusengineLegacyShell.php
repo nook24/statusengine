@@ -303,13 +303,49 @@ class StatusengineLegacyShell extends AppShell{
 	 * @since 2.0.6
 	 * @author Daniel Hoffend <dh@dotlan.net>
 	 *
+	 * @param array Array with Ids to enable
 	 * @return void
 	 */
-	public function activateObjects(array $ids){
-		if(!count($ids))
+	public function activateObjects($ids){
+		if(empty($ids)){
 			return;
+		}
 
 		$this->Objects->updateAll(['Objects.is_active' => 1], ['Objects.object_id' => $ids]);
+	}
+	
+	/**
+	 * Delete host status records for given list of object Ids
+	 *
+	 * @since 2.0.6
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param array Array with Ids to remove
+	 * @return void
+	 */
+	public function removeDeprecatedHoststatusRecords($ids){
+		if(empty($ids)){
+			return;
+		}
+
+		$this->Hoststatus->deleteAll(['Hoststatus.host_object_id NOT' => $ids], false);
+	}
+	
+	/**
+	 * Delete service status records for given list of object Ids
+	 *
+	 * @since 2.0.6
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param array Array with Ids to remove
+	 * @return void
+	 */
+	public function removeDeprecatedServicestatusRecords($ids){
+		if(empty($ids)){
+			return;
+		}
+
+		$this->Servicestatus->deleteAll(['Servicestatus.service_object_id NOT' => $ids], false);
 	}
 
 	/**
@@ -509,7 +545,14 @@ class StatusengineLegacyShell extends AppShell{
 				$this->saveParentServices();
 
 				// activate objects
+				CakeLog::info('Enable objects');
 				$this->activateObjects($this->dumpIds);
+				
+				//Remove deprecated status records
+				CakeLog::info('Delete deprecated status records');
+				$this->removeDeprecatedHoststatusRecords($this->dumpIds);
+				$this->removeDeprecatedServicestatusRecords($this->dumpIds);
+				
 				$this->dumpIds = [];
 
 				//We are done with object dumping and can write parent hosts and services to DB
@@ -2443,7 +2486,7 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		if($payload->type != 601){
+		if($payload->type != NEBTYPE_NOTIFICATION_END){
 			//I guess everything else is trash, contacts_notified = 0 start_time = 0 and stuff like this :/
 			return;
 		}
@@ -2569,7 +2612,7 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		if($payload->type != 603){
+		if($payload->type != NEBTYPE_CONTACTNOTIFICATION_END){
 			//I guess everyting else is trash ?
 			return;
 		}
@@ -2619,7 +2662,7 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		if($payload->type !== 605){
+		if($payload->type !== NEBTYPE_CONTACTNOTIFICATIONMETHOD_END){
 			return;
 		}
 

@@ -28,7 +28,7 @@ $config = [
 
 	//Define the way of empty the data tables (DELETE FROM or TRUNCATE TABLE)
 	//If innodb_file_per_table is enabled, delete is may be faster than truncate
-	'empty_method' => 'delete',
+	'empty_method' => 'TRUNCATE',
 
 	//If you want, Statusengine's servicestatus workers are able to
 	//process performacne data for you and save them to RRD files
@@ -47,10 +47,10 @@ $config = [
 	
 	//Use bulk queries for host and servicestatus
 	//And other tables, many thanks to dhoffend
-	'use_bulk_queries_for_status' => true,
+	'use_bulk_queries_for_status' => false,
 	
 	//Records per bulk operations
-	'bulk_query_limit' => 200,
+	'bulk_query_limit' => 500,
 
 	//Time between forced bulk flushes
 	'bulk_query_time' => 10,
