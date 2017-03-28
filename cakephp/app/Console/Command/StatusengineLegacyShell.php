@@ -2378,7 +2378,7 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		$payload = json_decode($job->workload());
 
-		if($payload->type != 601){
+		if($payload->type != NEBTYPE_NOTIFICATION_END){
 			//I guess everything else is trash, contacts_notified = 0 start_time = 0 and stuff like this :/
 			return;
 		}
@@ -2497,7 +2497,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		$payload = json_decode($job->workload());
 
-		if($payload->type != 603){
+		if($payload->type != NEBTYPE_CONTACTNOTIFICATION_END){
 			//I guess everyting else is trash ?
 			return;
 		}
@@ -2537,7 +2537,7 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		$payload = json_decode($job->workload());
 
-		if($payload->type !== 605){
+		if($payload->type !== NEBTYPE_CONTACTNOTIFICATIONMETHOD_END){
 			return;
 		}
 
