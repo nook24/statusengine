@@ -50,7 +50,7 @@ $config = [
 	'use_bulk_queries_for_status' => true,
 	
 	//Records per bulk operations
-	'bulk_query_limit' => 200,
+	'bulk_query_limit' => 500,
 
 	//Time between forced bulk flushes
 	'bulk_query_time' => 10,

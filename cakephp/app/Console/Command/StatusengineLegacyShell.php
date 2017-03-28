@@ -301,13 +301,49 @@ class StatusengineLegacyShell extends AppShell{
 	 * @since 2.0.6
 	 * @author Daniel Hoffend <dh@dotlan.net>
 	 *
+	 * @param array Array with Ids to enable
 	 * @return void
 	 */
-	public function activateObjects(array $ids){
-		if(!count($ids))
+	public function activateObjects($ids){
+		if(empty($ids)){
 			return;
+		}
 
 		$this->Objects->updateAll(['Objects.is_active' => 1], ['Objects.object_id' => $ids]);
+	}
+	
+	/**
+	 * Delete host status records for given list of object Ids
+	 *
+	 * @since 2.0.6
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param array Array with Ids to remove
+	 * @return void
+	 */
+	public function removeDeprecatedHoststatusRecords($ids){
+		if(empty($ids)){
+			return;
+		}
+
+		$this->Hoststatus->deleteAll(['Hoststatus.host_object_id NOT' => $ids], false);
+	}
+	
+	/**
+	 * Delete service status records for given list of object Ids
+	 *
+	 * @since 2.0.6
+	 * @author Daniel Ziegler <daniel@statusengine.org>
+	 *
+	 * @param array Array with Ids to remove
+	 * @return void
+	 */
+	public function removeDeprecatedServicestatusRecords($ids){
+		if(empty($ids)){
+			return;
+		}
+
+		$this->Servicestatus->deleteAll(['Servicestatus.service_object_id NOT' => $ids], false);
 	}
 
 	/**
@@ -460,7 +496,14 @@ class StatusengineLegacyShell extends AppShell{
 				$this->saveParentServices();
 
 				// activate objects
+				CakeLog::info('Enable objects');
 				$this->activateObjects($this->dumpIds);
+				
+				//Remove deprecated status records
+				CakeLog::info('Delete deprecated status records');
+				$this->removeDeprecatedHoststatusRecords($this->dumpIds);
+				$this->removeDeprecatedServicestatusRecords($this->dumpIds);
+				
 				$this->dumpIds = [];
 
 				//We are done with object dumping and can write parent hosts and services to DB
