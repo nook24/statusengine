@@ -221,7 +221,7 @@ class BulkRepository{
 			return true;
 		}
 
-		if($this->lastPush < (time() - $this->queryTime)){
+		if($this->lastPush <= (time() - $this->queryTime)){
 			return true;
 		}
 

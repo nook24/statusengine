@@ -218,6 +218,8 @@ class StatusengineLegacyShell extends AppShell{
 
 		$this->bulkLastCheck = time();
 
+		$this->lastDatasourcePing = time();
+
 		$emptyMethods = ['truncate', 'delete'];
 		$emptyMethod = strtolower(Configure::read('empty_method'));
 		if(!in_array($emptyMethod, $emptyMethods)){
@@ -373,6 +375,50 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	/**
+	 * check if job payload is valid and log json parsing errors
+	 *
+	 * @since 2.0.6
+	 * @author Daniel Hoffend <dh@dotlan.net>
+	 *
+	 * @param GearmanJob $job
+	 * @return Object|false
+	 **/
+	protected function getJobPayload(GearmanJob $job)
+	{
+		$payload = json_decode($job->workload());
+		$error = json_last_error();
+
+		// parsing error
+		if ($error != JSON_ERROR_NONE) {
+			if (function_exists('json_last_error_msg')) {
+				 CakeLog::warning('Error while parsing job->workload() - ' . json_last_error_msg());
+			} else {
+				static $ERRORS = array(
+					JSON_ERROR_NONE => 'No error',
+					JSON_ERROR_DEPTH => 'Maximum stack depth exceeded',
+					JSON_ERROR_STATE_MISMATCH => 'State mismatch (invalid or malformed JSON)',
+					JSON_ERROR_CTRL_CHAR => 'Control character error, possibly incorrectly encoded',
+					JSON_ERROR_SYNTAX => 'Syntax error',
+					JSON_ERROR_UTF8 => 'Malformed UTF-8 characters, possibly incorrectly encoded'
+				);
+				CakeLog::warning('Error while parsing job->workload() - ' . (isset($ERRORS[$error]) ? $ERRORS[$error] : 'Unknown error') );
+			}
+			CakeLog::debug('Couldn\'t parse: ' . $job->workload());
+			return false;
+
+		// parsed object is not an object	
+		} elseif (!is_object($payload)) {
+			CakeLog::warning('Error while parsing job->workload() - Response isn\'t an object');
+			CakeLog::debug('Invalid job: ' . $job->workload());
+			return false;
+		}
+
+		else {
+			return $payload;
+		}
+	}
+
+	/**
 	 * Dump all objects to the DB
 	 *
 	 * If there are entries in gearmands Q objects, this function will process them
@@ -398,7 +444,10 @@ class StatusengineLegacyShell extends AppShell{
 			$this->bulkLastCheck = time();
 		}
 
-		$payload = json_decode($job->workload());
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
 		$this->Objects->create();
 		switch($payload->object_type){
 			case START_OBJECT_DUMP:
@@ -1515,26 +1564,23 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
+		$hostObjectId = $this->objectIdFromCache(OBJECT_HOST, $payload->hoststatus->name);
+		if($hostObjectId == null){
+			//Object has gone
+			return;
+		}
 
 		if($this->useMemcached === true){
 			$this->Memcached->setHoststatus($payload);
 			if($this->MemcachedProcessingType === 1){
 				return;
 			}
-		}
-
-		//$this->Hoststatus->create();
-
-		if($this->objectIdFromCache(OBJECT_HOST, $payload->hoststatus->name) === null){
-			return;
-		}
-
-		$hostObjectId = $this->objectIdFromCache(OBJECT_HOST, $payload->hoststatus->name);
-		//debug('Hoststatus Id: '.$hoststatusId);
-		if($hostObjectId == null){
-			//Object has gone
-			return;
 		}
 
 		$data = [
@@ -1609,9 +1655,20 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 		//Drop old servicestatus entries
 		if($payload->timestamp < (time() - $this->servicestatus_freshness)){
+			return;
+		}
+
+		$service_object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->servicestatus->host_name, $payload->servicestatus->description);
+		if($service_object_id === null){
+			//Object has gone
 			return;
 		}
 
@@ -1620,13 +1677,6 @@ class StatusengineLegacyShell extends AppShell{
 			if($this->MemcachedProcessingType === 1){
 				return;
 			}
-		}
-
-		$service_object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->servicestatus->host_name, $payload->servicestatus->description);
-
-		if($service_object_id === null){
-			//Object has gone
-			return;
 		}
 
 		$data = [
@@ -1702,7 +1752,12 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 		$service_object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->servicecheck->host_name, $payload->servicecheck->service_description);
 		if($service_object_id === null){
 			//CakeLog::debug(var_export($this->objectCache ,true));
@@ -1798,7 +1853,12 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 		$host_object_id = $this->objectIdFromCache(OBJECT_HOST, $payload->hostcheck->host_name);
 
 		if($host_object_id === null){
@@ -1855,18 +1915,21 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
 
 		$object_id = $this->getObjectIdForPayload($payload, 'statechange');
+		if($object_id === null){
+			//Object has gone
+			return;
+		}
 
 		if($this->useMemcached=== true && $payload->statechange->state == 0){
 			//Delete ack from memcached if record exists
 			$this->Memcached->deleteAcknowledgementIfExists($payload);
-		}
-
-		if($object_id === null){
-			//Object has gone
-			return;
 		}
 
 		//$this->Statehistory->create();
@@ -1896,7 +1959,12 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 		//$this->Logentry->create();
 		$data = [
 			'Logentry' => [
@@ -1923,7 +1991,12 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 		//$this->Systemcommand->create();
 		$data = [
 			'Systemcommand' => [
@@ -1950,7 +2023,11 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
 
 		$object_id = $this->getObjectIdForPayload($payload, 'comment');
 
@@ -2051,7 +2128,12 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 		//$this->Externalcommand->create();
 		$data = [
 			'Externalcommand' => [
@@ -2075,16 +2157,19 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
 
 		$object_id = $this->getObjectIdForPayload($payload, 'acknowledgement');
-
 		if($object_id === null){
 			//Object has gone
 			return;
 		}
 
-		if($this->useMemcached=== true){
+		if($this->useMemcached === true){
 			//Add a record in memcached
 			$this->Memcached->setAcknowledgement($payload);
 		}
@@ -2114,9 +2199,13 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
-		$object_id = $this->getObjectIdForPayload($payload, 'flapping');
 
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
+		$object_id = $this->getObjectIdForPayload($payload, 'flapping');
 		if($object_id === null){
 			//Object has gone
 			return;
@@ -2148,16 +2237,20 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
-		$object_id = $this->getObjectIdForPayload($payload, 'downtime');
 
-		if($this->useMemcached === true){
-			$this->Memcached->setDowntime($payload);
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
 		}
 
+		$object_id = $this->getObjectIdForPayload($payload, 'downtime');
 		if($object_id === null){
 			//Object has gone
 			return;
+		}
+
+		if($this->useMemcached === true){
+			$this->Memcached->setDowntime($payload);
 		}
 
 		if($payload->type == NEBTYPE_DOWNTIME_ADD || $payload->type == NEBTYPE_DOWNTIME_LOAD){
@@ -2353,7 +2446,12 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 		//$this->Processdata->create();
 		$data = [
 			'Processdata' => [
@@ -2376,19 +2474,23 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
+		$object_id = $this->getObjectIdForPayload($payload, 'notification_data');
+		if($object_id === null){
+			//Object has gone
+			return;
+		}
 
 		if($payload->type != NEBTYPE_NOTIFICATION_END){
 			//I guess everything else is trash, contacts_notified = 0 start_time = 0 and stuff like this :/
 			return;
 		}
 
-		$object_id = $this->getObjectIdForPayload($payload, 'notification_data');
-
-		if($object_id === null){
-			//Object has gone
-			return;
-		}
 		$this->Notification->create();
 		$data = [
 			'Notification' => [
@@ -2414,7 +2516,12 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 		//$this->Programmstatus->create();
 		$data = [
 			'Programmstatus' => [
@@ -2454,7 +2561,12 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 		$contactObjectId = $this->objectIdFromCache(OBJECT_CONTACT, $payload->contactstatus->contact_name);
 		//Update record if exists
 		$contactstatus = $this->Contactstatus->findByContactObjectId($contactObjectId);
@@ -2495,7 +2607,10 @@ class StatusengineLegacyShell extends AppShell{
 			return;
 		}
 
-		$payload = json_decode($job->workload());
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
 
 		if($payload->type != NEBTYPE_CONTACTNOTIFICATION_END){
 			//I guess everyting else is trash ?
@@ -2535,16 +2650,19 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
 
-		if($payload->type !== NEBTYPE_CONTACTNOTIFICATIONMETHOD_END){
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
 			return;
 		}
 
 		$contactObjectId = $this->objectIdFromCache(OBJECT_CONTACT, $payload->contactnotificationmethod->contact_name);
-
 		if($contactObjectId === null){
 			//Object has gone
+			return;
+		}
+
+		if($payload->type !== NEBTYPE_CONTACTNOTIFICATIONMETHOD_END){
 			return;
 		}
 
@@ -2580,7 +2698,12 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		$payload = json_decode($job->workload());
+
+		// get job payload and check for parsing errors
+		if (($payload = $this->getJobPayload($job)) == false) {
+			return;
+		}
+
 
 		if($payload->eventhandler->service_description != NULL){
 			$object_id = $this->objectIdFromCache(OBJECT_SERVICE, $payload->eventhandler->host_name, $payload->eventhandler->service_description);
@@ -3104,6 +3227,10 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		while(true){
 			if($this->work === true){
+				// Reconnect datasource before we refresh our cache	
+				CakeLog::info('Reconnect database');
+				$this->Objects->getDatasource()->reconnect();
+
 				CakeLog::info('Clear my objects cache');
 				$this->clearObjectsCache();
 
@@ -3168,6 +3295,17 @@ class StatusengineLegacyShell extends AppShell{
 						$repo->pushIfRequired();
 					}
 					$this->bulkLastCheck = time();
+				}
+
+				// ping datasource every now and then to keep the pdo connection alive
+				// simulate mysql_ping()
+				if($this->lastDatasourcePing + 60 < time()) {
+					try {
+						$this->Objects->getDatasource()->execute('SELECT 1');
+					} catch(PDOException $e) {
+						$this->Objects->getDatasource()->reconnect();
+					}
+					$this->lastDatasourcePing = time();
 				}
 			}
 		}
