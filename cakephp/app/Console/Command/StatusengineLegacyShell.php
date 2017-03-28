@@ -209,7 +209,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		$this->useBulkQueries = false;
 		$this->useBulkQueries = Configure::read('use_bulk_queries_for_status');
-
+		
 		$this->bulkQueryLimit = 200;
 		$this->bulkQueryLimit = Configure::read('bulk_query_limit');
 
@@ -406,7 +406,7 @@ class StatusengineLegacyShell extends AppShell{
 			CakeLog::debug('Couldn\'t parse: ' . $job->workload());
 			return false;
 
-		// parsed object is not an object	
+		// parsed object is not an object
 		} elseif (!is_object($payload)) {
 			CakeLog::warning('Error while parsing job->workload() - Response isn\'t an object');
 			CakeLog::debug('Invalid job: ' . $job->workload());
@@ -3299,7 +3299,7 @@ class StatusengineLegacyShell extends AppShell{
 
 				// ping datasource every now and then to keep the pdo connection alive
 				// simulate mysql_ping()
-				if($this->lastDatasourcePing + 60 < time()) {
+				if($this->lastDatasourcePing + 120 < time()) {
 					try {
 						$this->Objects->getDatasource()->execute('SELECT 1');
 					} catch(PDOException $e) {
