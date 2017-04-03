@@ -8,5 +8,10 @@ bin/naemon/statusengine.o: statusengine.c
 	mkdir -p bin/naemon
 	LANG=C gcc -DNAEMON -shared -o "$@" -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
 
+
+bin/naemon/statusengine-1-0-5.o: statusengine.c
+	mkdir -p bin/naemon
+	LANG=C gcc -DNAEMON105 -shared -o "$@" -fPIC  -Wall -Werror statusengine.c -luuid -levent -lgearman -ljson-c
+
 clean:
 	rm -f statusengine.o
