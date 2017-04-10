@@ -98,7 +98,7 @@ class BulkRepository{
 
 	public function push(){
 
-		if($this->counter > 1){
+		if($this->counter > 0){
 			CakeLog::debug(sprintf('Push bulk %d bulk inserts for %s', $this->counter, get_class($this->Model)));
 			
 			$query = $this->buildQuery();
