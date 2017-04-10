@@ -204,9 +204,9 @@ class LegacyAppModel extends AppModel{
 		}
 
 		$data = Set::extract('{n}.' . $this->alias, $data);
+
 		$duplicate_data = [];
 		$schema = $this->schema();
-		unset($schema[$this->primaryKey]);
 		$keyData = '`' . implode('`, `', array_keys($schema)) . '`';
 
 		$db = $this->getDataSource();
@@ -269,7 +269,6 @@ class LegacyAppModel extends AppModel{
 			$this->query($data);
 		}catch(Exception $e){
 			$error = $e->getMessage();
-			print_r($error.PHP_EOL);
 			if($error == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away'){
 				if($recursive === false){
 					$this->getDatasource()->reconnect();

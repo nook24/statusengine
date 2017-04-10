@@ -83,7 +83,6 @@ class Model{
 				if($ModelName == 'Downtime'){
 					if(isset($result[$this->ModelName]['scheduled_downtime_depth']) && $result[$this->ModelName]['scheduled_downtime_depth'] > 0){
 						$Downtime = new Downtime($this->Memcached);
-						print_r($objectName);
 						$_result = $Downtime->_find($objectName);
 						unset($Downtime);
 					}

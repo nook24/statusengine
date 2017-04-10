@@ -393,7 +393,8 @@ Cache::config('_cake_model_', array(
 App::uses('CakeLog', 'Log');
 CakeLog::config('default', array(
 	'engine' => 'Syslog',
-	'prefix' => 'statusengine'
+	'prefix' => 'statusengine',
+	'types' => array('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info'),
 ));
 
 Configure::write('Error', array(

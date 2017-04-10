@@ -1,6 +1,7 @@
 # User specific & automatically generated files #
 #################################################
-/app/tmp
+/app/tmp/*
+!/app/tmp/.empty
 /lib/Cake/Console/Templates/skel/tmp/
 /plugins
 /vendors
