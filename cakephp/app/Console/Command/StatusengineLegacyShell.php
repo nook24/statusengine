@@ -209,7 +209,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		$this->useBulkQueries = false;
 		$this->useBulkQueries = Configure::read('use_bulk_queries_for_status');
-		
+
 		$this->bulkQueryLimit = 200;
 		$this->bulkQueryLimit = Configure::read('bulk_query_limit');
 
@@ -313,7 +313,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		$this->Objects->updateAll(['Objects.is_active' => 1], ['Objects.object_id' => $ids]);
 	}
-	
+
 	/**
 	 * Delete host status records for given list of object Ids
 	 *
@@ -330,7 +330,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		$this->Hoststatus->deleteAll(['Hoststatus.host_object_id NOT' => $ids], false);
 	}
-	
+
 	/**
 	 * Delete service status records for given list of object Ids
 	 *
@@ -433,7 +433,7 @@ class StatusengineLegacyShell extends AppShell{
 		if($this->clearQ){
 			return;
 		}
-		
+
 		$this->Objects->getDatasource()->reconnect();
 
 		// check every second if there's something left to push
@@ -511,19 +511,19 @@ class StatusengineLegacyShell extends AppShell{
 							$this->{$Model}->tablePrefix,
 							$this->{$Model}->table
 						));
-						
+
 						$this->{$Model}->getDataSource()->rawQuery(sprintf(
 							'ALTER TABLE %s%s AUTO_INCREMENT = 1',
 							$this->{$Model}->tablePrefix,
 							$this->{$Model}->table
 						));
-						
+
 					} else {
 						CakeLog::debug('Truncate table for '.$Model);
 						$this->{$Model}->truncate();
 					}
 				}
-				
+
 				$this->clearObjectsCache();
 				$this->buildObjectsCache();
 				$this->createParentHosts = [];
@@ -547,12 +547,12 @@ class StatusengineLegacyShell extends AppShell{
 				// activate objects
 				CakeLog::info('Enable objects');
 				$this->activateObjects($this->dumpIds);
-				
+
 				//Remove deprecated status records
 				CakeLog::info('Delete deprecated status records');
 				$this->removeDeprecatedHoststatusRecords($this->dumpIds);
 				$this->removeDeprecatedServicestatusRecords($this->dumpIds);
-				
+
 				$this->dumpIds = [];
 
 				//We are done with object dumping and can write parent hosts and services to DB
@@ -1127,7 +1127,7 @@ class StatusengineLegacyShell extends AppShell{
 						'instance_id' => $this->instance_id,
 					]
 				]);
-				
+
 				// Add Service
 				$eventHandlerCommand = $this->parseCheckCommand($payload->event_handler);
 				$checkCommand = $this->parseCheckCommand($payload->check_command);
@@ -1191,7 +1191,7 @@ class StatusengineLegacyShell extends AppShell{
 						'importance' => $payload->hourly_value
 					]
 				];
-				
+
 				if ($this->useBulkQueries === true) {
 					$this->ObjectsRepository['Service']->commit($data['Service']);
 				} else {
@@ -1303,7 +1303,7 @@ class StatusengineLegacyShell extends AppShell{
 							'servicegroup_member_id' => NULL,
 							'instance_id' => $this->instance_id,
 							'servicegroup_id' => $objectId,
-							'service_object_id' => $objectId,
+							'service_object_id' => $this->objectIdFromCache(OBJECT_SERVICE, $ServiceArray->host_name, $ServiceArray->service_description),
 						]
 					];
 					if ($this->useBulkQueries === true) {
@@ -3227,7 +3227,7 @@ class StatusengineLegacyShell extends AppShell{
 		}
 		while(true){
 			if($this->work === true){
-				// Reconnect datasource before we refresh our cache	
+				// Reconnect datasource before we refresh our cache
 				CakeLog::info('Reconnect database');
 				$this->Objects->getDatasource()->reconnect();
 
@@ -3288,7 +3288,7 @@ class StatusengineLegacyShell extends AppShell{
 					CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
 					exit(3);
 				}
-				
+
 				// check every second if there's something left to push
 				if($this->useBulkQueries && $this->bulkLastCheck < time()) {
 					foreach ($this->BulkRepository as $name => $repo) {
