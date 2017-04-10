@@ -190,6 +190,13 @@ class StatusengineLegacyShell extends AppShell{
 		$this->processPerfdata = Configure::read('process_perfdata');
 
 		$this->processPerfdataCache = [];
+		
+		$this->useBulkQueries = false;
+		$this->useBulkQueries = Configure::read('use_bulk_queries_for_status');
+		
+		$this->queryLimit = 200;
+		$this->queryLimit = Configure::read('query_limit');
+		
 		if($this->processPerfdata === true){
 			$this->PerfdataBackend->init(Configure::read());
 
@@ -344,6 +351,7 @@ class StatusengineLegacyShell extends AppShell{
 
 			case FINISH_OBJECT_DUMP:
 				CakeLog::info('Finished dumping objects');
+				
 				$this->saveParentHosts();
 				$this->saveParentServices();
 				//We are done with object dumping and can write parent hosts and services to DB
@@ -1371,6 +1379,10 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
+		if($this->useBulkQueries === true){
+			$this->StatusRepository['Hoststatus']->commit($data['Hoststatus']);
+			return;
+		}
 		$this->Hoststatus->saveHoststatus($data, false);
 	}
 
@@ -1460,6 +1472,10 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
+		if($this->useBulkQueries === true){
+			$this->StatusRepository['Servicestatus']->commit($data['Servicestatus']);
+			return;
+		}
 		$this->Servicestatus->saveServicestatus($data, false);
 	}
 
@@ -1514,7 +1530,11 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 
-		$this->Servicecheck->rawInsert([$data], false);
+		if($this->useBulkQueries === true){
+			$this->StatusRepository['Servicecheck']->commit($data['Servicecheck']);
+		}else{
+			$this->Servicecheck->rawInsert([$data], false);
+		}
 
 		if($this->processPerfdata === true && $payload->servicecheck->perf_data !== null){
 			//process_performance_data == 1 ?
@@ -1610,6 +1630,11 @@ class StatusengineLegacyShell extends AppShell{
 				'perfdata' => $payload->hostcheck->perf_data,
 			]
 		];
+
+		if($this->useBulkQueries === true){
+			$this->StatusRepository['Hostcheck']->commit($data['Hostcheck']);
+			return;
+		}
 
 		$this->Hostcheck->rawInsert([$data], false);
 	}
@@ -2757,20 +2782,41 @@ class StatusengineLegacyShell extends AppShell{
 	public function waitForInstructions(){
 		CakeLog::info('Ok, i will wait for instructions');
 		if($this->bindQueues === true){
+			$this->StatusRepository = [];
+			
 			$this->worker = new GearmanWorker();
 
 			/* Avoid that gearman will stuck at GearmanWorker::work() if no jobs are present
-			 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
+			 * which is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 			 */
 			$this->worker->addOptions(GEARMAN_WORKER_NON_BLOCKING);
 			$this->worker->setTimeout(250);
 
 			$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 			foreach($this->queues as $queueName => $functionName){
-				CakeLog::info('Queue "'.$queueName.'" will be handled by function "'.$functionName.'"');
+				CakeLog::info(sprintf('Queue "%s" will be handled by function "%s"', $queueName, $functionName));
 				$this->worker->addFunction($queueName, [$this, $functionName]);
 			}
 			$this->bindQueues = false;
+
+			$MySQL = new MySQLBulk($this->Servicecheck->getDataSource());
+			$MySQL->connect();
+			
+			if(isset($this->queues['statusngin_servicechecks']) && $this->useBulkQueries){
+				$this->StatusRepository['Servicecheck'] = new StatusRepository($this->Servicecheck, $this->queryLimit, $MySQL);
+			}
+			
+			if(isset($this->queues['statusngin_hostchecks']) && $this->useBulkQueries){
+				$this->StatusRepository['Hostcheck'] = new StatusRepository($this->Hostcheck, $this->queryLimit, $MySQL);
+			}
+			
+			if(isset($this->queues['statusngin_servicestatus']) && $this->useBulkQueries){
+				$this->StatusRepository['Servicestatus'] = new StatusRepository($this->Servicestatus, $this->queryLimit, $MySQL);
+			}
+			
+			if(isset($this->queues['statusngin_hoststatus']) && $this->useBulkQueries){
+				$this->StatusRepository['Hoststatus'] = new StatusRepository($this->Hoststatus, $this->queryLimit, $MySQL);
+			}
 		}
 		while(true){
 			if($this->work === true){
@@ -2830,6 +2876,22 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->parentPid != posix_getppid()){
 					CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
 					exit(3);
+				}
+				
+				if(isset($this->queues['statusngin_servicechecks']) && $this->useBulkQueries){
+					$this->StatusRepository['Servicecheck']->pushIfRequired();
+				}
+			
+				if(isset($this->queues['statusngin_hostchecks']) && $this->useBulkQueries){
+					$this->StatusRepository['Hostcheck']->pushIfRequired();
+				}
+			
+				if(isset($this->queues['statusngin_servicestatus']) && $this->useBulkQueries){
+					$this->StatusRepository['Servicestatus']->pushIfRequired();
+				}
+			
+				if(isset($this->queues['statusngin_hoststatus']) && $this->useBulkQueries){
+					$this->StatusRepository['Hoststatus']->pushIfRequired();
 				}
 			}
 		}
