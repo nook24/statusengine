@@ -77,7 +77,7 @@
 			'div' => 'form-group col-md-8',
 			'class' => 'btn btn-success',
 			'before' => '<div class="pull-right">',
-			'after' => $this->Html->link(__('Cancle'), [
+			'after' => $this->Html->link(__('Cancel'), [
 				'controller' => 'Users',
 				'action' => 'index'
 			], [
