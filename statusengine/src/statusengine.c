@@ -251,6 +251,8 @@ int use_object_data = 1;
 int enable_ochp = 0;
 int enable_ocsp = 0;
 
+char* gearman_server_addr = "127.0.0.1";
+
 int statusengine_process_config_var(char *arg);
 int statusengine_process_module_args(char *args);
 
@@ -309,7 +311,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Memory allocation failure on client creation\n");
 	}
 
-	ret= gearman_client_add_server(&gman_client, "127.0.0.1", 4730);
+	ret= gearman_client_add_server(&gman_client, gearman_server_addr, 4730);
 	if (ret != GEARMAN_SUCCESS){
 		logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 	}
@@ -320,7 +322,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 			logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Memory allocation failure on client creation for OCHP/OCSP\n");
 		}
 
-		ret= gearman_client_add_server(&gman_client_ochp, "127.0.0.1", 4730);
+		ret= gearman_client_add_server(&gman_client_ochp, gearman_server_addr, 4730);
 		if (ret != GEARMAN_SUCCESS){
 			logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client_ochp));
 		}
@@ -460,6 +462,9 @@ int statusengine_process_config_var(char *arg) {
 	} else if (!strcmp(var, "use_object_data")) {
 		use_object_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with enabled use_object_data");
+	} else if (!strcmp(var, "gearman_server_addr")) {
+		gearman_server_addr = strdup(val);
+		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Gearman server address changed");
 	} else {
 		return ERROR;
 	}
