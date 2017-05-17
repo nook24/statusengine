@@ -102,12 +102,12 @@ Configure::write('Dispatcher.filters', array(
 App::uses('CakeLog', 'Log');
 CakeLog::config('debug', array(
 	'engine' => 'File',
-	'types' => array('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug'),
+	'types' => array('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info'),
 	'file' => 'debug',
 ));
 CakeLog::config('error', array(
 	'engine' => 'File',
-	'types' => array('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug'),
+	'types' => array('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info'),
 	'file' => 'error',
 ));
 
