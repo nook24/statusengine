@@ -1,4 +1,4 @@
-#Statusengine  - the missing event broker
+# Statusengine  - the missing event broker
 
 Statusengine is a drop in replacement for NDOutils and it is able to use the same
 database schema. Statusengine uses [gearmand](https://github.com/gearman) as Queueing engine,
@@ -15,7 +15,7 @@ Statusengine is modular, so you can use just the parts you need!
 
 [Visit the project page](https://www.statusengine.org) for more information.
 
-##Features
+## Features
 - Worker based Nagios/Naemon event data processor
 - Based on MySQL
 - Json based communication
@@ -27,7 +27,7 @@ Statusengine is modular, so you can use just the parts you need!
 - Modular
 - Tested on PHP5 and PHP7!
 
-##Requirements
+## Requirements
 - **Nagios 4** or **Naemon**
 - MySQL server
 - PHP 5.4 or greater
@@ -35,7 +35,7 @@ Statusengine is modular, so you can use just the parts you need!
 
 Looking for other Ubuntu or Debian version?[Take a look at the supported operating systems](https://www.statusengine.org/documentation.php#supported-os) for more information.
 
-##Installation
+## Installation
 
 Check the documentation for the [installation guide](https://statusengine.org/getting_started.php#installation)
 
@@ -87,7 +87,7 @@ service statusengine start
 ```
 Check the documentation for the [migration guide](https://statusengine.org/getting_started.php#migration)
 
-##Tested with
+## Tested with
 - Naemon 0.8.0
 - Naemon 1.0.3
 - Naemon master (development)
@@ -100,7 +100,14 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - PHP5
 - PHP7
 
-##Changelog
+## Changelog
+**2.1.0**
+- Add method for bulk insert - Many thanks to [dhoffend](https://github.com/dhoffend)
+- Add broker option gearman_server_addr  - Many thanks to [mjameswh](https://github.com/mjameswh)
+- Fixed typos in Statusengine Web Interface - Many thanks to [BlangTech](https://github.com/BlangTech)
+- Update Makefie
+
+
 **2.0.5**
 - Fix parsing of negative performance data
 
@@ -177,7 +184,7 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - First stable version of Statusengine
 
 
-##Licence
+## Licence
 
 Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>
 
