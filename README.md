@@ -105,7 +105,7 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - Add method for bulk insert - Many thanks to [dhoffend](https://github.com/dhoffend)
 - Add broker option gearman_server_addr  - Many thanks to [mjameswh](https://github.com/mjameswh)
 - Fixed typos in Statusengine Web Interface - Many thanks to [BlangTech](https://github.com/BlangTech)
-- Update Makefie
+- Update Makefile
 
 
 **2.0.5**
