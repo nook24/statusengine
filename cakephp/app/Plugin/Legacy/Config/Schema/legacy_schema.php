@@ -204,7 +204,9 @@ class LegacySchema extends CakeSchema {
 		'indexes' => array(
 			'PRIMARY' => array('column' => 'contactnotificationmethod_id', 'unique' => 1),
 			'instance_id' => array('column' => array('instance_id', 'contactnotification_id', 'start_time', 'start_time_usec'), 'unique' => 1),
-			'start_time' => array('column' => 'start_time', 'unique' => 0)
+			'start_time' => array('column' => 'start_time', 'unique' => 0),
+			'command_object_id' => array('column' => 'command_object_id', 'unique' => 0),
+			'contactnotification_id' => array('column' => 'contactnotification_id', 'unique' => 0)
 		),
 		'tableParameters' => array('charset' => 'utf8', 'collate' => 'utf8_swedish_ci', 'engine' => 'MyISAM')
 	);
