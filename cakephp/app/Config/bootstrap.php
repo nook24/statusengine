@@ -100,16 +100,6 @@ Configure::write('Dispatcher.filters', array(
  * Configures default file logging options
  */
 App::uses('CakeLog', 'Log');
-CakeLog::config('debug', array(
-	'engine' => 'File',
-	'types' => array('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info'),
-	'file' => 'debug',
-));
-CakeLog::config('error', array(
-	'engine' => 'File',
-	'types' => array('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info'),
-	'file' => 'error',
-));
 
 App::uses('AppError', 'Lib');
 
