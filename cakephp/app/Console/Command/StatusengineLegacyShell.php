@@ -549,9 +549,16 @@ class StatusengineLegacyShell extends AppShell{
 				$this->activateObjects($this->dumpIds);
 
 				//Remove deprecated status records
-				CakeLog::info('Delete deprecated status records');
-				$this->removeDeprecatedHoststatusRecords($this->dumpIds);
-				$this->removeDeprecatedServicestatusRecords($this->dumpIds);
+				
+				////Removed due to: https://www.percona.com/blog/2011/11/29/avoiding-auto-increment-holes-on-innodb-with-insert-ignore/
+				//CakeLog::info('Delete deprecated status records');
+				//$this->removeDeprecatedHoststatusRecords($this->dumpIds);
+				//$this->removeDeprecatedServicestatusRecords($this->dumpIds);
+				
+				CakeLog::info('Truncate table hoststatus');
+				$this->Hoststatus->truncate();
+				CakeLog::info('Truncate table servicestatus');
+				$this->Servicestatus->truncate();
 
 				$this->dumpIds = [];
 
