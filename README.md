@@ -1,3 +1,9 @@
+# Statusengine 2 (Old Stable)
+This Version of Statusengine is marked as old stable. You can still use it, but take a look at [Version 3](https://github.com/statusengine) or the [FAQ](https://github.com/nook24/statusengine/issues/41).
+
+[Visit the project page](https://www.statusengine.org) for more information.
+
+
 # Statusengine  - the missing event broker
 
 Statusengine is a drop in replacement for NDOutils and it is able to use the same
@@ -13,7 +19,7 @@ scripts by quering the HTTP API and append the url with **.json** or **.xml** ex
 
 Statusengine is modular, so you can use just the parts you need!
 
-[Visit the project page](https://www.statusengine.org) for more information.
+[Visit the project page](https://www.statusengine.org/oldstable) for more information.
 
 ## Features
 - Worker based Nagios/Naemon event data processor
