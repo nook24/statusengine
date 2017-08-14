@@ -1265,7 +1265,7 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "notification_data", notification_data_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&gman_client, "statusngin_notifications", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_high_background(&gman_client, "statusngin_notifications", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
