@@ -266,7 +266,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_TITLE,   "Statusengine - the missing event broker");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_AUTHOR,  "Daniel Ziegler");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_TITLE,   "Copyright (c) 2014 - present Daniel Ziegler");
-	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.4");
+	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.5");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v2");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_DESC,    "A powerful and flexible event broker");
 
@@ -1265,7 +1265,7 @@ int statusengine_handle_data(int event_type, void *data){
 
 					json_object_object_add(my_object, "notification_data", notification_data_object);
 					const char* json_string = json_object_to_json_string(my_object);
-					ret= gearman_client_do_background(&gman_client, "statusngin_notifications", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+					ret= gearman_client_do_high_background(&gman_client, "statusngin_notifications", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 					if (ret != GEARMAN_SUCCESS)
 						logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 
@@ -1429,7 +1429,7 @@ int statusengine_handle_data(int event_type, void *data){
 
 						json_object_object_add(my_object, "contactnotificationmethod", cnm_object);
 						const char* json_string = json_object_to_json_string(my_object);
-						ret= gearman_client_do_background(&gman_client, "statusngin_contactnotificationmethod", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
+						ret= gearman_client_do_low_background(&gman_client, "statusngin_contactnotificationmethod", NULL, (void *)json_string, (size_t)strlen(json_string), NULL);
 						if (ret != GEARMAN_SUCCESS)
 							logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
 

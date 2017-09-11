@@ -106,10 +106,7 @@ $config = [
 		],
 		[
 			'queues' => [
-				'statusngin_notifications' => 'processNotifications',
 				'statusngin_contactstatus' => 'processContactstatus',
-				'statusngin_contactnotificationdata' => 'processContactnotificationdata',
-				'statusngin_contactnotificationmethod' => 'processContactnotificationmethod',
 				'statusngin_acknowledgements' => 'processAcknowledgements',
 				'statusngin_comments' => 'processComments',
 				'statusngin_flappings' => 'processFlappings',
@@ -118,7 +115,14 @@ $config = [
 				'statusngin_systemcommands' => 'processSystemcommands',
 				'statusngin_eventhandler' => 'processEventhandler'
 			]
-		]
+		],
+                [
+                        'queues' => [
+                                'statusngin_notifications' => 'processNotifications',
+                                'statusngin_contactnotificationdata' => 'processContactnotificationdata',
+                                'statusngin_contactnotificationmethod' => 'processContactnotificationmethod',
+                        ]
+                ]
 	],
 
 
