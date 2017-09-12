@@ -107,6 +107,12 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - PHP7
 
 ## Changelog
+**2.1.3**
+Resolve missing notifications in database - again
+The queues `statusngin_notifications` and `statusngin_contactnotificationdata` are no longer in
+use by StatusengineLegacyShell.
+All data is parsed out of `statusngin_contactnotificationmethod`
+
 **2.1.2**
 Resolve missing notifications in database
 
