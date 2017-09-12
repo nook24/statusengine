@@ -107,6 +107,12 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - PHP7
 
 ## Changelog
+**2.1.2**
+Resolve missing notifications in database
+
+**2.1.1**
+Resolve Gab in servicestatus_id due to MySQL behavior [#40](https://github.com/nook24/statusengine/issues/40)
+
 **2.1.0**
 - Add method for bulk insert - Many thanks to [dhoffend](https://github.com/dhoffend)
 - Add broker option gearman_server_addr  - Many thanks to [mjameswh](https://github.com/mjameswh)
