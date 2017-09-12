@@ -116,13 +116,13 @@ $config = [
 				'statusngin_eventhandler' => 'processEventhandler'
 			]
 		],
-                [
-                        'queues' => [
-                                'statusngin_notifications' => 'processNotifications',
-                                'statusngin_contactnotificationdata' => 'processContactnotificationdata',
-                                'statusngin_contactnotificationmethod' => 'processContactnotificationmethod',
-                        ]
-                ]
+		[
+			'queues' => [
+				'statusngin_contactnotificationmethod' => 'processContactnotificationmethod',
+				'statusngin_notifications' => 'processNotifications',
+				'statusngin_contactnotificationdata' => 'processContactnotificationdata'
+			]
+		]
 	],
 
 

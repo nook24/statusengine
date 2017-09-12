@@ -2478,45 +2478,12 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	public function processNotifications($job){
-		if($this->clearQ){
-			return;
-		}
-
-		// get job payload and check for parsing errors
-		if (($payload = $this->getJobPayload($job)) == false) {
-			return;
-		}
-
-		$object_id = $this->getObjectIdForPayload($payload, 'notification_data');
-		if($object_id === null){
-			//Object has gone
-			return;
-		}
-
-		if($payload->type != NEBTYPE_NOTIFICATION_END){
-			//I guess everything else is trash, contacts_notified = 0 start_time = 0 and stuff like this :/
-			return;
-		}
-
-		$this->Notification->create();
-		$data = [
-			'Notification' => [
-				'instance_id' => $this->instance_id,
-				'notification_type' => $payload->notification_data->notification_type,
-				'notification_reason' => $payload->notification_data->reason_type,
-				'object_id' => $object_id,
-				'start_time' => date('Y-m-d H:i:s', $payload->notification_data->start_time),
-				'start_time_usec' => $payload->notification_data->start_time,
-				'end_time' => date('Y-m-d H:i:s', $payload->notification_data->end_time),
-				'end_time_usec' => $payload->notification_data->end_time,
-				'state' => $payload->notification_data->state,
-				'output' => $payload->notification_data->output,
-				'long_output' => $payload->notification_data->long_output,
-				'escalated' => $payload->notification_data->escalated,
-				'contacts_notified' => $payload->notification_data->contacts_notified,
-			]
-		];
-		$result = $this->Notification->save($data);
+		return true;
+		
+		//All this code is history Notification is deprecated
+		//Please disable this event in your broker options and only use the contactnotificationmethods!
+		//$this->processContactnotificationmethod
+		//use_notification_data=0
 	}
 
 	public function processProgrammstatus($job){
@@ -2610,47 +2577,14 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	public function processContactnotificationdata($job){
-		if($this->clearQ){
-			return;
-		}
-
-		// get job payload and check for parsing errors
-		if (($payload = $this->getJobPayload($job)) == false) {
-			return;
-		}
-
-		if($payload->type != NEBTYPE_CONTACTNOTIFICATION_END){
-			//I guess everyting else is trash ?
-			return;
-		}
-		$objectId = $this->getObjectIdForPayload($payload, 'contactnotificationdata');
-
-		//Find notification_id
-		$notification = $this->Notification->find('first', [
-			'conditions' => [
-				'Notification.start_time = FROM_UNIXTIME('.$payload->contactnotificationdata->start_time.')',
-				'Notification.end_time = FROM_UNIXTIME('.$payload->contactnotificationdata->end_time.')',
-				'Notification.object_id' => $objectId
-			]
-		]);
-
-		if(isset($notification['Notification']['notification_id']) && $notification['Notification']['notification_id'] != null){
-			$this->Contactnotification->create();
-			$data = [
-				'Contactnotification' => [
-					'contactnotification_id' => NULL,
-					'instance_id' => $this->instance_id,
-					'notification_id' => $notification['Notification']['notification_id'],
-					'contact_object_id' => $this->objectIdFromCache(OBJECT_CONTACT, $payload->contactnotificationdata->contact_name),
-					'start_time' => date('Y-m-d H:i:s', $payload->contactnotificationdata->start_time),
-					'start_time_usec' => $payload->contactnotificationdata->start_time,
-					'end_time' => date('Y-m-d H:i:s', $payload->contactnotificationdata->end_time),
-					'end_time_usec' => $payload->contactnotificationdata->end_time
-				]
-			];
-
-			$this->Contactnotification->rawInsert([$data], false);
-		}
+		return true;
+		
+		
+		//All this code is history Contactnotificationdata is deprecated
+		//Please disable this event in your broker options and only use the contactnotificationmethods!
+		//$this->processContactnotificationmethod
+		//use_contact_notification_data=0
+		
 	}
 
 	public function processContactnotificationmethod($job){
@@ -2662,9 +2596,13 @@ class StatusengineLegacyShell extends AppShell{
 		if (($payload = $this->getJobPayload($job)) == false) {
 			return;
 		}
+		
 
+		$commandObjectId = $this->objectIdFromCache(OBJECT_COMMAND, $payload->contactnotificationmethod->command_name);
 		$contactObjectId = $this->objectIdFromCache(OBJECT_CONTACT, $payload->contactnotificationmethod->contact_name);
-		if($contactObjectId === null){
+		$hostOrServiceObjectId = $this->getObjectIdForPayload($payload, 'contactnotificationmethod');
+		
+		if($contactObjectId === null || $commandObjectId === null || $hostOrServiceObjectId === null){
 			//Object has gone
 			return;
 		}
@@ -2672,27 +2610,67 @@ class StatusengineLegacyShell extends AppShell{
 		if($payload->type !== NEBTYPE_CONTACTNOTIFICATIONMETHOD_END){
 			return;
 		}
-
-		//Find last contactnotification
-		$cn = $this->Contactnotification->find('first', [
-			'conditions' => [
-				'Contactnotification.start_time = FROM_UNIXTIME('.$payload->contactnotificationmethod->start_time.')',
-				'Contactnotification.end_time = FROM_UNIXTIME('.$payload->contactnotificationmethod->end_time.')',
-				'contact_object_id' => $contactObjectId
+		
+		$notificationType = 0;
+		if($payload->contactnotificationmethod->service_description !== null){
+			$notificationType = 1;
+		}
+		
+		$escalated = 0;
+		if(property_exists($payload->contactnotificationmethod, 'escalated')){
+			$escalated = $payload->contactnotificationmethod->escalated;
+		}
+		
+		$this->Notification->create();
+		$data = [
+			'Notification' => [
+				'instance_id' => $this->instance_id,
+				'notification_type' => $notificationType,
+				'notification_reason' => $payload->contactnotificationmethod->reason_type,
+				'object_id' => $hostOrServiceObjectId,
+				'start_time' => date('Y-m-d H:i:s', $payload->contactnotificationmethod->start_time),
+				'start_time_usec' => $payload->contactnotificationmethod->start_time,
+				'end_time' => date('Y-m-d H:i:s', $payload->contactnotificationmethod->end_time),
+				'end_time_usec' => $payload->contactnotificationmethod->end_time,
+				'state' => $payload->contactnotificationmethod->state,
+				'output' => $payload->contactnotificationmethod->output,
+				'long_output' => $payload->contactnotificationmethod->output,
+				'escalated' => $escalated,
+				'contacts_notified' => 1,
 			]
-		]);
+		];
+		$result = $this->Notification->save($data);
+		
+		
+		if(isset($result['Notification']['notification_id']) && $result['Notification']['notification_id'] != null){
+			$this->Contactnotification->create();
+			$data = [
+				'Contactnotification' => [
+					'contactnotification_id' => NULL,
+					'instance_id' => $this->instance_id,
+					'notification_id' => $result['Notification']['notification_id'],
+					'contact_object_id' => $contactObjectId,
+					'start_time' => date('Y-m-d H:i:s', $payload->contactnotificationmethod->start_time),
+					'start_time_usec' => $payload->contactnotificationmethod->start_time,
+					'end_time' => date('Y-m-d H:i:s', $payload->contactnotificationmethod->end_time),
+					'end_time_usec' => $payload->contactnotificationmethod->end_time
+				]
+			];
 
-		if(isset($cn['Contactnotification']['contactnotification_id']) && $cn['Contactnotification']['contactnotification_id'] != null){
+			$contactnotification_id = $this->Contactnotification->rawInsert([$data], true);
+		}
+		
+		if($contactnotification_id){
 			$this->Contactnotificationmethod->create();
 			$data = [
 				'Contactnotificationmethod' => [
 					'instance_id' => $this->instance_id,
-					'contactnotification_id' => $cn['Contactnotification']['contactnotification_id'],
+					'contactnotification_id' => $contactnotification_id,
 					'start_time' => date('Y-m-d H:i:s', $payload->contactnotificationmethod->start_time),
 					'start_time_usec' => $payload->contactnotificationmethod->start_time,
 					'end_time' => date('Y-m-d H:i:s', $payload->contactnotificationmethod->end_time),
 					'end_time_usec' => $payload->contactnotificationmethod->end_time,
-					'command_object_id' => $this->objectIdFromCache(OBJECT_COMMAND, $payload->contactnotificationmethod->command_name),
+					'command_object_id' => $commandObjectId,
 					'command_args' => $payload->contactnotificationmethod->command_args
 				]
 			];
