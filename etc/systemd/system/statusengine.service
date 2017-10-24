@@ -7,6 +7,7 @@ User=root
 Type=simple
 Restart=on-failure
 ExecStart=/opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w
+RestartSec=30
 
 [Install]
 WantedBy=multi-user.target
