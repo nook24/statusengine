@@ -266,7 +266,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_TITLE,   "Statusengine - the missing event broker");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_AUTHOR,  "Daniel Ziegler");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_TITLE,   "Copyright (c) 2014 - present Daniel Ziegler");
-	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.6");
+	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_VERSION, "2.0.7");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_LICENSE, "GPL v2");
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_DESC,    "A powerful and flexible event broker");
 
@@ -1605,8 +1605,8 @@ void dump_object_data(){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",                    json_object_new_int(10));
 		json_object_object_add(my_object, "name",                           json_object_new_string(temp_contact->name));
-		json_object_object_add(my_object, "alias",                          json_object_new_string(temp_contact->alias));
-		json_object_object_add(my_object, "email",                          json_object_new_string(temp_contact->email));
+		json_object_object_add(my_object, "alias",                          (temp_contact->alias != NULL ? json_object_new_string(temp_contact->alias) : NULL));
+		json_object_object_add(my_object, "email",                          (temp_contact->email != NULL ? json_object_new_string(temp_contact->email) : NULL));
 		json_object_object_add(my_object, "pager",                          (temp_contact->pager != NULL ? json_object_new_string(temp_contact->pager) : NULL));
 		json_object_object_add(my_object, "host_notification_period",       json_object_new_string(temp_contact->host_notification_period));
 		json_object_object_add(my_object, "service_notification_period",    json_object_new_string(temp_contact->service_notification_period));
