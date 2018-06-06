@@ -115,7 +115,7 @@ class NebTypes{
 		'NEBTYPE_FLAPPING_STOP'                   =>  1001, // NOT USED
 
 		'NEBTYPE_DOWNTIME_ADD'                    =>  1100,
-		'NEBTYPE_DOWNTIME_DELETE'                 =>  1101, // NOT USED
+		'NEBTYPE_DOWNTIME_DELETE'                 =>  1101,
 		'NEBTYPE_DOWNTIME_LOAD'                   =>  1102,
 		'NEBTYPE_DOWNTIME_START'                  =>  1103,
 		'NEBTYPE_DOWNTIME_STOP'                   =>  1104,

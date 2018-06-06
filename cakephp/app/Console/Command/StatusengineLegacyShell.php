@@ -2447,6 +2447,51 @@ class StatusengineLegacyShell extends AppShell{
 				$this->Scheduleddowntime->delete($downtime['Scheduleddowntime']['scheduleddowntime_id']);
 			}
 		}
+		
+		if($payload->type == NEBTYPE_DOWNTIME_DELETE){
+			//Check if the downtime was never started, because of scheduled start time is in future
+			//and downtime got deleted before scheduled start time was reached
+			
+			//Compare scheduled start time with the timestamp of the delete event
+			//If scheduled start time was not reached until the delete event was fired, the downtime never started
+			if($payload->downtime->start_time > $payload->timestamp){
+				//The downtime exists, but was deleted now
+				$downtime = $this->Downtimehistory->find('first', [
+					'conditions' => [
+						'instance_id' => $this->instance_id,
+						'downtime_type' => $payload->downtime->downtime_type,
+						'object_id' => $object_id,
+						'entry_time' => date('Y-m-d H:i:s', $payload->downtime->entry_time),
+						'scheduled_start_time' => date('Y-m-d H:i:s', $payload->downtime->start_time),
+						'scheduled_end_time' => date('Y-m-d H:i:s', $payload->downtime->end_time),
+						'internal_downtime_id' => $payload->downtime->downtime_id,
+					]
+				]);
+				
+				
+				if(isset($downtime['Downtimehistory']['downtimehistory_id']) && $downtime['Downtimehistory']['downtimehistory_id'] !== null){
+					//The downtime was found in DB, delete it
+					$this->Downtimehistory->delete($downtime['Downtimehistory']['downtimehistory_id']);
+				}
+				
+				//Delete from scheduledowntime table
+				$downtime = $this->Scheduleddowntime->find('first', [
+					'conditions' => [
+						'instance_id' => $this->instance_id,
+						'downtime_type' => $payload->downtime->downtime_type,
+						'object_id' => $object_id,
+						'entry_time' => date('Y-m-d H:i:s', $payload->downtime->entry_time),
+						'scheduled_start_time' => date('Y-m-d H:i:s', $payload->downtime->start_time),
+						'scheduled_end_time' => date('Y-m-d H:i:s', $payload->downtime->end_time),
+						'internal_downtime_id' => $payload->downtime->downtime_id,
+					]
+				]);
+
+				if(isset($downtime['Scheduleddowntime']['scheduleddowntime_id']) && $downtime['Scheduleddowntime']['scheduleddowntime_id'] !== null){
+					$this->Scheduleddowntime->delete($downtime['Scheduleddowntime']['scheduleddowntime_id']);
+				}
+			}
+		}
 	}
 
 	public function processProcessdata($job){
