@@ -549,12 +549,12 @@ class StatusengineLegacyShell extends AppShell{
 				$this->activateObjects($this->dumpIds);
 
 				//Remove deprecated status records
-				
+
 				////Removed due to: https://www.percona.com/blog/2011/11/29/avoiding-auto-increment-holes-on-innodb-with-insert-ignore/
 				//CakeLog::info('Delete deprecated status records');
 				//$this->removeDeprecatedHoststatusRecords($this->dumpIds);
 				//$this->removeDeprecatedServicestatusRecords($this->dumpIds);
-				
+
 				CakeLog::info('Truncate table hoststatus');
 				$this->Hoststatus->truncate();
 				CakeLog::info('Truncate table servicestatus');
@@ -2262,49 +2262,53 @@ class StatusengineLegacyShell extends AppShell{
 
 		if($payload->type == NEBTYPE_DOWNTIME_ADD || $payload->type == NEBTYPE_DOWNTIME_LOAD){
 			//Add a new downtime
-			$downtime = $this->Downtimehistory->find('first', [
-				'conditions' => [
-					'instance_id' => $this->instance_id,
-					'downtime_type' => $payload->downtime->downtime_type,
-					'object_id' => $object_id,
-					'entry_time' => date('Y-m-d H:i:s', $payload->downtime->entry_time),
-					'scheduled_start_time' => date('Y-m-d H:i:s', $payload->downtime->start_time),
-					'scheduled_end_time' => date('Y-m-d H:i:s', $payload->downtime->end_time),
-					'internal_downtime_id' => $payload->downtime->downtime_id,
-				]
-			]);
+			
+			//Only update downtime history table on ADD, not on LOAD events, to avoid was_started=0 and wrong timestamps
+			if($payload->type == NEBTYPE_DOWNTIME_ADD){
+				$downtime = $this->Downtimehistory->find('first', [
+					'conditions' => [
+						'instance_id' => $this->instance_id,
+						'downtime_type' => $payload->downtime->downtime_type,
+						'object_id' => $object_id,
+						'entry_time' => date('Y-m-d H:i:s', $payload->downtime->entry_time),
+						'scheduled_start_time' => date('Y-m-d H:i:s', $payload->downtime->start_time),
+						'scheduled_end_time' => date('Y-m-d H:i:s', $payload->downtime->end_time),
+						'internal_downtime_id' => $payload->downtime->downtime_id,
+					]
+				]);
 
-			if(isset($downtime['Downtimehistory']['downtimehistory_id']) && $downtime['Downtimehistory']['downtimehistory_id'] !== null){
-				$downtimehistory_id = $downtime['Downtimehistory']['downtimehistory_id'];
-			}else{
-				$downtimehistory_id = null;
-				$this->Downtimehistory->create();
+				if(isset($downtime['Downtimehistory']['downtimehistory_id']) && $downtime['Downtimehistory']['downtimehistory_id'] !== null){
+					$downtimehistory_id = $downtime['Downtimehistory']['downtimehistory_id'];
+				}else{
+					$downtimehistory_id = null;
+					$this->Downtimehistory->create();
+				}
+
+				$data = [
+					'Downtimehistory' => [
+						'downtimehistory_id' => $downtimehistory_id,
+						'instance_id' => $this->instance_id,
+						'downtime_type' => $payload->downtime->downtime_type,
+						'object_id' => $object_id,
+						'entry_time' => date('Y-m-d H:i:s', $payload->downtime->entry_time),
+						'author_name' => $payload->downtime->author_name,
+						'comment_data' => $payload->downtime->comment_data,
+						'internal_downtime_id' => $payload->downtime->downtime_id,
+						'triggered_by_id' => $payload->downtime->triggered_by,
+						'is_fixed' => $payload->downtime->fixed,
+						'duration' => $payload->downtime->duration,
+						'scheduled_start_time' => date('Y-m-d H:i:s', $payload->downtime->start_time),
+						'scheduled_end_time' => date('Y-m-d H:i:s', $payload->downtime->end_time),
+						'was_started' => 0,
+						'actual_start_time' =>  date('Y-m-d H:i:s', 0),
+						'actual_start_time_usec' => 0,
+						'actual_end_time' => date('Y-m-d H:i:s', 0),
+						'actual_end_time_usec' => 0,
+						'was_cancelled' => 0,
+					]
+				];
+				$result = $this->Downtimehistory->save($data);
 			}
-
-			$data = [
-				'Downtimehistory' => [
-					'downtimehistory_id' => $downtimehistory_id,
-					'instance_id' => $this->instance_id,
-					'downtime_type' => $payload->downtime->downtime_type,
-					'object_id' => $object_id,
-					'entry_time' => date('Y-m-d H:i:s', $payload->downtime->entry_time),
-					'author_name' => $payload->downtime->author_name,
-					'comment_data' => $payload->downtime->comment_data,
-					'internal_downtime_id' => $payload->downtime->downtime_id,
-					'triggered_by_id' => $payload->downtime->triggered_by,
-					'is_fixed' => $payload->downtime->fixed,
-					'duration' => $payload->downtime->duration,
-					'scheduled_start_time' => date('Y-m-d H:i:s', $payload->downtime->start_time),
-					'scheduled_end_time' => date('Y-m-d H:i:s', $payload->downtime->end_time),
-					'was_started' => 0,
-					'actual_start_time' =>  date('Y-m-d H:i:s', 0),
-					'actual_start_time_usec' => 0,
-					'actual_end_time' => date('Y-m-d H:i:s', 0),
-					'actual_end_time_usec' => 0,
-					'was_cancelled' => 0,
-				]
-			];
-			$result = $this->Downtimehistory->save($data);
 
 
 			//Scheduleddowntime table data
@@ -2447,11 +2451,11 @@ class StatusengineLegacyShell extends AppShell{
 				$this->Scheduleddowntime->delete($downtime['Scheduleddowntime']['scheduleddowntime_id']);
 			}
 		}
-		
+
 		if($payload->type == NEBTYPE_DOWNTIME_DELETE){
 			//Check if the downtime was never started, because of scheduled start time is in future
 			//and downtime got deleted before scheduled start time was reached
-			
+
 			//Compare scheduled start time with the timestamp of the delete event
 			//If scheduled start time was not reached until the delete event was fired, the downtime never started
 			if($payload->downtime->start_time > $payload->timestamp){
@@ -2467,13 +2471,13 @@ class StatusengineLegacyShell extends AppShell{
 						'internal_downtime_id' => $payload->downtime->downtime_id,
 					]
 				]);
-				
-				
+
+
 				if(isset($downtime['Downtimehistory']['downtimehistory_id']) && $downtime['Downtimehistory']['downtimehistory_id'] !== null){
 					//The downtime was found in DB, delete it
 					$this->Downtimehistory->delete($downtime['Downtimehistory']['downtimehistory_id']);
 				}
-				
+
 				//Delete from scheduledowntime table
 				$downtime = $this->Scheduleddowntime->find('first', [
 					'conditions' => [
@@ -2524,7 +2528,7 @@ class StatusengineLegacyShell extends AppShell{
 
 	public function processNotifications($job){
 		return true;
-		
+
 		//All this code is history Notification is deprecated
 		//Please disable this event in your broker options and only use the contactnotificationmethods!
 		//$this->processContactnotificationmethod
@@ -2623,13 +2627,13 @@ class StatusengineLegacyShell extends AppShell{
 
 	public function processContactnotificationdata($job){
 		return true;
-		
-		
+
+
 		//All this code is history Contactnotificationdata is deprecated
 		//Please disable this event in your broker options and only use the contactnotificationmethods!
 		//$this->processContactnotificationmethod
 		//use_contact_notification_data=0
-		
+
 	}
 
 	public function processContactnotificationmethod($job){
@@ -2641,12 +2645,12 @@ class StatusengineLegacyShell extends AppShell{
 		if (($payload = $this->getJobPayload($job)) == false) {
 			return;
 		}
-		
+
 
 		$commandObjectId = $this->objectIdFromCache(OBJECT_COMMAND, $payload->contactnotificationmethod->command_name);
 		$contactObjectId = $this->objectIdFromCache(OBJECT_CONTACT, $payload->contactnotificationmethod->contact_name);
 		$hostOrServiceObjectId = $this->getObjectIdForPayload($payload, 'contactnotificationmethod');
-		
+
 		if($contactObjectId === null || $commandObjectId === null || $hostOrServiceObjectId === null){
 			//Object has gone
 			return;
@@ -2655,17 +2659,17 @@ class StatusengineLegacyShell extends AppShell{
 		if($payload->type !== NEBTYPE_CONTACTNOTIFICATIONMETHOD_END){
 			return;
 		}
-		
+
 		$notificationType = 0;
 		if($payload->contactnotificationmethod->service_description !== null){
 			$notificationType = 1;
 		}
-		
+
 		$escalated = 0;
 		if(property_exists($payload->contactnotificationmethod, 'escalated')){
 			$escalated = $payload->contactnotificationmethod->escalated;
 		}
-		
+
 		$this->Notification->create();
 		$data = [
 			'Notification' => [
@@ -2685,8 +2689,8 @@ class StatusengineLegacyShell extends AppShell{
 			]
 		];
 		$result = $this->Notification->save($data);
-		
-		
+
+
 		if(isset($result['Notification']['notification_id']) && $result['Notification']['notification_id'] != null){
 			$this->Contactnotification->create();
 			$data = [
@@ -2704,7 +2708,7 @@ class StatusengineLegacyShell extends AppShell{
 
 			$contactnotification_id = $this->Contactnotification->rawInsert([$data], true);
 		}
-		
+
 		if($contactnotification_id){
 			$this->Contactnotificationmethod->create();
 			$data = [
