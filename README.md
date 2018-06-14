@@ -105,19 +105,27 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - MariaDB
 - PHP5
 - PHP7
+- PHP7.2
 
 ## Changelog
+**2.1.5**
+- Remove bulk insert debug messages
+- Fix a bug where downtimes got reset on nagios/naemon restart in downtimehistory table
+- Downtimes with start time in future get now be delete gracefully
+
+**2.1.4**
+Update CakePHP to Version 2.10.9 for better PHP7.2 compatibility
+
 **2.1.3**
-Resolve missing notifications in database - again
-The queues `statusngin_notifications` and `statusngin_contactnotificationdata` are no longer in
-use by StatusengineLegacyShell.
-All data is parsed out of `statusngin_contactnotificationmethod`
+- Resolve missing notifications in database - again
+- The queues `statusngin_notifications` and `statusngin_contactnotificationdata` are no longer in use by StatusengineLegacyShell.
+- All data is parsed out of `statusngin_contactnotificationmethod`
 
 **2.1.2**
-Resolve missing notifications in database
+- Resolve missing notifications in database
 
 **2.1.1**
-Resolve Gab in servicestatus_id due to MySQL behavior [#40](https://github.com/nook24/statusengine/issues/40)
+- Resolve Gab in servicestatus_id due to MySQL behavior [#40](https://github.com/nook24/statusengine/issues/40)
 
 **2.1.0**
 - Add method for bulk insert - Many thanks to [dhoffend](https://github.com/dhoffend)
