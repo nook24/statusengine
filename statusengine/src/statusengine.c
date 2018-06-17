@@ -147,6 +147,8 @@
 
 //Load external libs
 #include <libgearman/gearman.h>
+#include <stdarg.h>
+#include <sys/time.h>
 
 #ifdef DEBIAN7
 #include <json/json.h>
@@ -157,8 +159,6 @@
 #if defined NAEMON105 || defined NAEMON
 #include <string.h>
 #endif
-
-#include <stdarg.h>
 
 // specify event broker API version (required)
 NEB_API_VERSION(CURRENT_NEB_API_VERSION);
@@ -188,7 +188,10 @@ extern sched_info scheduling_info;
 extern char *global_host_event_handler;
 extern char *global_service_event_handler;
 
+// gearman stuff
 gearman_client_st gman_client;
+int gman_connection_errors = 0;
+struct timeval gman_error_time;
 
 
 void *statusengine_module_handle = NULL;
@@ -282,16 +285,40 @@ int statusengine_create_client() {
 
 // send job to main gearman
 int statusengine_send_job(char * queue, char * data) {
+	struct timeval now;
+
 	// send job to gearman server
 	gearman_return_t ret = gearman_client_do_background(&gman_client, queue, NULL, (void *)data, (size_t)strlen(data), NULL);
 
 	// recreate client, otherwise gearman sigsegvs
 	if (ret != GEARMAN_SUCCESS) {
-		logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
+		gettimeofday(&now,NULL);
+
+		// log first errors
+		if (gman_connection_errors == 0) {
+			gettimeofday(&gman_error_time,NULL);
+			logswitch(NSLOG_INFO_MESSAGE, "sending to gearmand failed: %s\n", (char *)gearman_client_error(&gman_client));
+		}
+		// repeat connection error every minute
+		else if( now.tv_sec >= gman_error_time.tv_sec + 60) {
+			gettimeofday(&gman_error_time,NULL);
+			logswitch(NSLOG_INFO_MESSAGE, "sending to gearmand failed: %s (%i jobs lost so far)\n", (char *)gearman_client_error(&gman_client), gman_connection_errors);
+		}
+
+		gman_connection_errors++;
 		gearman_client_free(&gman_client);
 		statusengine_create_client();
 		return ERROR;
 	}
+
+	// log successful reconnect
+	if (gman_connection_errors > 0) {
+		logswitch(NSLOG_INFO_MESSAGE, "successfull reconnected to gearmand (%i lost jobs)\n", gman_connection_errors);
+	}
+
+	// reset if ok
+	gman_connection_errors = 0;
+
 	return OK;
 }
 
