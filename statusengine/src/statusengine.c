@@ -188,10 +188,22 @@ extern sched_info scheduling_info;
 extern char *global_host_event_handler;
 extern char *global_service_event_handler;
 
+// Structure of server object
+typedef struct gman_server {
+	char * server;
+	gearman_client_st * client;
+	int errors;
+	struct timeval error_time;
+} gman_server_t;
+
 // gearman stuff
+#define GMAN_MAX_SERVERS 16
+#define GMAN_DEFAULT_SERVER "localhost"
 gearman_client_st gman_client;
 int gman_connection_errors = 0;
 struct timeval gman_error_time;
+gman_server_t * gearman_server_list[GMAN_MAX_SERVERS];
+int gearman_server_num = 0;
 
 
 void *statusengine_module_handle = NULL;
@@ -263,63 +275,85 @@ int use_object_data = 1;
 int enable_ochp = 0;
 int enable_ocsp = 0;
 
-char* gearman_server = "127.0.0.1";
-
 int statusengine_process_config_var(char *arg);
 int statusengine_process_module_args(char *args);
 
-// create main gearman client
-int statusengine_create_client() {
-	// Create gearman client
-	if (gearman_client_create(&gman_client) == NULL){
-		logswitch(NSLOG_INFO_MESSAGE, "statusengine_create_client() Memory allocation failure on client creation\n");
+// add server to list
+void statusengine_add_server(int * server_num, gman_server_t * server_list[GMAN_MAX_SERVERS], char * server) {
+	gman_server_t *new_server;
+	if (strcmp(server,"") != 0 && *server_num < GMAN_MAX_SERVERS) {
+		logswitch(NSLOG_INFO_MESSAGE, "add gearmand server[%i] %s\n", *server_num, server);
+		new_server = malloc(sizeof(gman_server_t));
+		new_server->server = strdup(server);
+		new_server->errors = 0;
+		new_server->client = malloc(sizeof(gearman_client_st));
+		server_list[*server_num] = new_server;
+		*server_num = *server_num + 1;
 	}
+	return;
+}
 
-	gearman_return_t ret = gearman_client_add_servers(&gman_client, gearman_server);
-	if (ret != GEARMAN_SUCCESS){
-		logswitch(NSLOG_INFO_MESSAGE, (char *)gearman_client_error(&gman_client));
+// create gearman client
+int statusengine_create_client(int i, gman_server_t * server_list[GMAN_MAX_SERVERS]) {
+	// check server number
+	if (i < 0 || i >= GMAN_MAX_SERVERS)
+                return ERROR;
+
+	// create client
+	if (gearman_client_create(server_list[i]->client) == NULL)
+		logswitch(NSLOG_INFO_MESSAGE, "Memory allocation failure on client creation\n");
+
+	// attach server
+	gearman_return_t ret = gearman_client_add_servers(server_list[i]->client, server_list[i]->server);
+	if (ret != GEARMAN_SUCCESS) {
+		logswitch(NSLOG_INFO_MESSAGE, "couldn't attach server %s to client: %s", server_list[i]->server, (char *)gearman_client_error(server_list[i]->client));
 		return ERROR;
 	}
 	return OK;
 }
 
-// send job to main gearman
+// send job to all gearmand servers
 int statusengine_send_job(char * queue, char * data) {
 	struct timeval now;
+	int final = OK;
 
-	// send job to gearman server
-	gearman_return_t ret = gearman_client_do_background(&gman_client, queue, NULL, (void *)data, (size_t)strlen(data), NULL);
+	// loop through all dup servers
+	for (int i=0; i<gearman_server_num; i++) {
+		gearman_return_t ret = gearman_client_do_background(gearman_server_list[i]->client, queue, NULL, (void *)data, (size_t)strlen(data), NULL);
 
-	// recreate client, otherwise gearman sigsegvs
-	if (ret != GEARMAN_SUCCESS) {
-		gettimeofday(&now,NULL);
+		// recreate client on error
+		if (ret != GEARMAN_SUCCESS) {
+			gettimeofday(&now,NULL);
 
-		// log first errors
-		if (gman_connection_errors == 0) {
-			gettimeofday(&gman_error_time,NULL);
-			logswitch(NSLOG_INFO_MESSAGE, "sending to gearmand failed: %s\n", (char *)gearman_client_error(&gman_client));
+			// log first error
+			if (gearman_server_list[i]->errors == 0) {
+				gettimeofday(&gearman_server_list[i]->error_time,NULL);
+				logswitch(NSLOG_INFO_MESSAGE, "sending to gearmand %s failed: %s\n", gearman_server_list[i]->server, (char *)gearman_client_error(gearman_server_list[i]->client));
+			}
+			// repeat connection error every minute
+			else if( now.tv_sec >= gearman_server_list[i]->error_time.tv_sec + 60) {
+				gettimeofday(&gearman_server_list[i]->error_time,NULL);
+				logswitch(NSLOG_INFO_MESSAGE, "sending to gearmand %s failed: %s (%i jobs lost so far)\n", gearman_server_list[i]->server, (char *)gearman_client_error(gearman_server_list[i]->client), gearman_server_list[i]->errors);
+			}
+
+			// inc couter
+			gearman_server_list[i]->errors++;
+
+			// recreate client
+			gearman_client_free(gearman_server_list[i]->client);
+			statusengine_create_client(i, gearman_server_list);
+			final = ERROR;
+		} else {
+			// log successful reconnect
+			if (gearman_server_list[i]->errors > 0) {
+				logswitch(NSLOG_INFO_MESSAGE, "successfull reconnected to gearmand %s (%i lost jobs)\n", gearman_server_list[i]->server, gearman_server_list[i]->errors);
+			}
+
+			// reset if ok
+			gearman_server_list[i]->errors = 0;
 		}
-		// repeat connection error every minute
-		else if( now.tv_sec >= gman_error_time.tv_sec + 60) {
-			gettimeofday(&gman_error_time,NULL);
-			logswitch(NSLOG_INFO_MESSAGE, "sending to gearmand failed: %s (%i jobs lost so far)\n", (char *)gearman_client_error(&gman_client), gman_connection_errors);
-		}
-
-		gman_connection_errors++;
-		gearman_client_free(&gman_client);
-		statusengine_create_client();
-		return ERROR;
 	}
-
-	// log successful reconnect
-	if (gman_connection_errors > 0) {
-		logswitch(NSLOG_INFO_MESSAGE, "successfull reconnected to gearmand (%i lost jobs)\n", gman_connection_errors);
-	}
-
-	// reset if ok
-	gman_connection_errors = 0;
-
-	return OK;
+	return final;
 }
 
 //Broker initialize function
@@ -370,9 +404,15 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	neb_register_callback(NEBCALLBACK_CONTACT_NOTIFICATION_METHOD_DATA, statusengine_module_handle, 0, statusengine_handle_data);
 	neb_register_callback(NEBCALLBACK_EVENT_HANDLER_DATA,               statusengine_module_handle, 0, statusengine_handle_data);
 	
+	// add server if none has been defined
+	if (gearman_server_num == 0)
+		statusengine_add_server(&gearman_server_num, gearman_server_list, GMAN_DEFAULT_SERVER);
 
-	//Create gearman client
-	statusengine_create_client();
+	// create gearman clients
+	logswitch(NSLOG_INFO_MESSAGE, "create %i gearman client(s)\n", gearman_server_num);
+        for (int i=0; i<gearman_server_num; i++) {
+                statusengine_create_client(i, gearman_server_list);
+        }
 
 	return 0;
 }
@@ -405,8 +445,12 @@ int nebmodule_deinit(int flags, int reason){
 	logswitch(NSLOG_INFO_MESSAGE, "We are done here");
 	logswitch(NSLOG_INFO_MESSAGE, "Bye");
 
-	//Delete gearman client
-	gearman_client_free(&gman_client);
+	// cleanup
+        for (int i=0; i<gearman_server_num; i++) {
+		gearman_client_free(gearman_server_list[i]->client);
+		free(gearman_server_list[i]);
+        }
+	gearman_server_num = 0;
 
 	return 0;
 }
@@ -508,12 +552,12 @@ int statusengine_process_config_var(char *arg) {
 	} else if (!strcmp(var, "use_object_data")) {
 		use_object_data = atoi(strdup(val));
 		logswitch(NSLOG_INFO_MESSAGE, "start with enabled use_object_data");
-	} else if (!strcmp(var, "gearman_server")) {
-		gearman_server = strdup(val);
+	} else if (!strcmp(var, "gearman_server") || !strcmp(var, "gearman_server_addr")) { // fallback for old variable
 		logswitch(NSLOG_INFO_MESSAGE, "Gearman server address changed: %s", val);
-	} else if (!strcmp(var, "gearman_server_addr")) {	// fallback to old variable
-		gearman_server = strdup(val);
-		logswitch(NSLOG_INFO_MESSAGE, "Gearman server address changed: %s", val);
+		char *servername;
+		while ( (servername = strsep( &val, ";" )) != NULL ) {
+			statusengine_add_server(&gearman_server_num, gearman_server_list, servername);
+		}
 	} else {
 		return ERROR;
 	}
