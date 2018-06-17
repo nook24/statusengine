@@ -158,6 +158,8 @@
 #include <string.h>
 #endif
 
+#include <stdarg.h>
+
 // specify event broker API version (required)
 NEB_API_VERSION(CURRENT_NEB_API_VERSION);
 
@@ -195,12 +197,23 @@ int statusengine_handle_data(int, void *);
 void dump_object_data();
 
 
-void logswitch(int level, char *message){
+void logswitch(int level, char *message, ...){
+	char buffer[65536];
+	va_list ap;
+
+	// always prepend
+	snprintf(buffer, 15, "statusengine: ");
+
+	// easier logging with sprintf
+	va_start(ap, message);
+	vsnprintf( buffer + strlen( buffer ), sizeof( buffer ) - strlen( buffer ), message, ap );
+	va_end( ap );
+
 #ifdef NAGIOS
-	write_to_all_logs(message, level);
+	write_to_all_logs(buffer, level);
 #endif
 #if defined NAEMON105 || defined NAEMON
-	nm_log(level, "%s", message);
+	nm_log(level, "%s", buffer);
 #endif
 }
 
@@ -256,7 +269,7 @@ int statusengine_process_module_args(char *args);
 int statusengine_create_client() {
 	// Create gearman client
 	if (gearman_client_create(&gman_client) == NULL){
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Memory allocation failure on client creation\n");
+		logswitch(NSLOG_INFO_MESSAGE, "statusengine_create_client() Memory allocation failure on client creation\n");
 	}
 
 	gearman_return_t ret = gearman_client_add_servers(&gman_client, gearman_server);
@@ -297,20 +310,19 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 	neb_set_module_info(statusengine_module_handle, NEBMODULE_MODINFO_DESC,    "A powerful and flexible event broker");
 
 	//Welcome messages
-	logswitch(NSLOG_INFO_MESSAGE, "Statusengine - the missing event broker");
-	logswitch(NSLOG_INFO_MESSAGE, "Statusengine - the missing event broker");
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>");
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Please visit https://www.statusengine.org for more information");
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Contribute to Statusenigne at: https://github.com/nook24/statusengine");
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Thanks for using Statusengine :-)");
+	logswitch(NSLOG_INFO_MESSAGE, "the missing event broker");
+	logswitch(NSLOG_INFO_MESSAGE, "Copyright (c) 2014 - present Daniel Ziegler <daniel@statusengine.org>");
+	logswitch(NSLOG_INFO_MESSAGE, "Please visit https://www.statusengine.org for more information");
+	logswitch(NSLOG_INFO_MESSAGE, "Contribute to Statusenigne at: https://github.com/nook24/statusengine");
+	logswitch(NSLOG_INFO_MESSAGE, "Thanks for using Statusengine :-)");
 
 	if (statusengine_process_module_args(args) == ERROR) {
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] An error occurred while attempting to process module arguments.");
+		logswitch(NSLOG_INFO_MESSAGE, "An error occurred while attempting to process module arguments.");
 		return ERROR;
 	}
 
 	//Register callbacks
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Register callbacks");
+	logswitch(NSLOG_INFO_MESSAGE, "Register callbacks");
 	neb_register_callback(NEBCALLBACK_HOST_STATUS_DATA,                 statusengine_module_handle, 0, statusengine_handle_data);
 	neb_register_callback(NEBCALLBACK_SERVICE_STATUS_DATA,              statusengine_module_handle, 0, statusengine_handle_data);
 	neb_register_callback(NEBCALLBACK_PROCESS_DATA,                     statusengine_module_handle, 0, statusengine_handle_data);
@@ -342,7 +354,7 @@ int nebmodule_init(int flags, char *args, nebmodule *handle){
 int nebmodule_deinit(int flags, int reason){
 
 	// Deregister all callbacks
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Deregister callbacks");
+	logswitch(NSLOG_INFO_MESSAGE, "Deregister callbacks");
 	neb_deregister_callback(NEBCALLBACK_HOST_STATUS_DATA,                 statusengine_handle_data);
 	neb_deregister_callback(NEBCALLBACK_SERVICE_STATUS_DATA,              statusengine_handle_data);
 	neb_deregister_callback(NEBCALLBACK_PROCESS_DATA,                     statusengine_handle_data);
@@ -363,8 +375,8 @@ int nebmodule_deinit(int flags, int reason){
 	neb_deregister_callback(NEBCALLBACK_CONTACT_NOTIFICATION_METHOD_DATA, statusengine_handle_data);
 	neb_deregister_callback(NEBCALLBACK_EVENT_HANDLER_DATA,               statusengine_handle_data);
 
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] We are done here");
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Bye");
+	logswitch(NSLOG_INFO_MESSAGE, "We are done here");
+	logswitch(NSLOG_INFO_MESSAGE, "Bye");
 
 	//Delete gearman client
 	gearman_client_free(&gman_client);
@@ -405,76 +417,76 @@ int statusengine_process_config_var(char *arg) {
 	/* process the variable... */
 	if (!strcmp(var, "use_host_status_data")) {
 		use_host_status_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled host_status_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled host_status_data");
 	} else if (!strcmp(var, "use_service_status_data")) {
 		use_service_status_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled service_status_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled service_status_data");
 	} else if (!strcmp(var, "use_process_data")) {
 		use_process_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled process_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled process_data");
 	} else if (!strcmp(var, "use_service_check_data")) {
 		use_service_check_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled service_check_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled service_check_data");
 	} else if (!strcmp(var, "use_host_check_data")) {
 		use_host_check_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled host_check_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled host_check_data");
 	} else if (!strcmp(var, "use_state_change_data")) {
 		use_state_change_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled state_change_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled state_change_data");
 	} else if (!strcmp(var, "use_log_data")) {
 		use_log_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled log_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled log_data");
 	} else if (!strcmp(var, "use_system_command_data")) { 
 		use_system_command_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled system_command_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled system_command_data");
 	} else if (!strcmp(var, "use_comment_data")) {
 		use_comment_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled comment_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled comment_data");
 	} else if (!strcmp(var, "use_external_command_data")) {
 		use_external_command_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled external_command_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled external_command_data");
 	} else if (!strcmp(var, "use_acknowledgement_data")) {
 		use_acknowledgement_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled acknowledgement_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled acknowledgement_data");
 	} else if (!strcmp(var, "use_flapping_data")) { 
 		use_flapping_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled flapping_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled flapping_data");
 	} else if (!strcmp(var, "use_downtime_data")) {
 		use_downtime_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled downtime_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled downtime_data");
 	} else if (!strcmp(var, "use_notification_data")) {
 		use_notification_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled notification_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled notification_data");
 	} else if (!strcmp(var, "use_program_status_data")) {
 		use_program_status_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled program_status_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled program_status_data");
 	} else if (!strcmp(var, "use_contact_status_data")) { 
 		use_contact_status_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled contact_status_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled contact_status_data");
 	} else if (!strcmp(var, "use_contact_notification_data")) { 
 		use_contact_notification_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled contact_notification_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled contact_notification_data");
 	} else if (!strcmp(var, "use_contact_notification_method_data")) {
 		use_contact_notification_method_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled contact_notification_method_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled contact_notification_method_data");
 	} else if (!strcmp(var, "use_event_handler_data")) {
 		use_event_handler_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with disabled event_handler_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with disabled event_handler_data");
 	} else if (!strcmp(var, "enable_ochp")) {
 		enable_ochp = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with enabled enable_ochp");
+		logswitch(NSLOG_INFO_MESSAGE, "start with enabled enable_ochp");
 	} else if (!strcmp(var, "enable_ocsp")) {
 		enable_ocsp = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with enabled enable_ocsp");
+		logswitch(NSLOG_INFO_MESSAGE, "start with enabled enable_ocsp");
 	} else if (!strcmp(var, "use_object_data")) {
 		use_object_data = atoi(strdup(val));
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] start with enabled use_object_data");
+		logswitch(NSLOG_INFO_MESSAGE, "start with enabled use_object_data");
 	} else if (!strcmp(var, "gearman_server")) {
 		gearman_server = strdup(val);
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Gearman server address changed");
+		logswitch(NSLOG_INFO_MESSAGE, "Gearman server address changed: %s", val);
 	} else if (!strcmp(var, "gearman_server_addr")) {	// fallback to old variable
 		gearman_server = strdup(val);
-		logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Gearman server address changed");
+		logswitch(NSLOG_INFO_MESSAGE, "Gearman server address changed: %s", val);
 	} else {
 		return ERROR;
 	}
@@ -1504,7 +1516,7 @@ void dump_object_data(){
 
 	json_object_put(my_object);
 
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping command configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping command configuration");
 	for(temp_command = command_list; temp_command != NULL; temp_command = temp_command->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type", json_object_new_int(12));
@@ -1520,7 +1532,7 @@ void dump_object_data(){
 
 	//Fetch timeperiods
 	//Logging that we dump commands right now
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping timeperiod configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping timeperiod configuration");
 	for(temp_timeperiod = timeperiod_list; temp_timeperiod != NULL; temp_timeperiod = temp_timeperiod->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type", json_object_new_int(9));
@@ -1553,7 +1565,7 @@ void dump_object_data(){
 	}
 
 	//Fetch contact configuration
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping contact configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping contact configuration");
 	for(temp_contact = contact_list; temp_contact != NULL; temp_contact = temp_contact->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",                    json_object_new_int(10));
@@ -1629,7 +1641,7 @@ void dump_object_data(){
 	}
 
 	//Fetch contact group configuration
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping contact group configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping contact group configuration");
 	for(temp_contactgroup = contactgroup_list; temp_contactgroup != NULL; temp_contactgroup = temp_contactgroup->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(11));
@@ -1652,7 +1664,7 @@ void dump_object_data(){
 	}
 
 	//Fetch host configuration
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping host configuration");
 	for(temp_host = host_list; temp_host != NULL; temp_host = temp_host->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(1));
@@ -1762,7 +1774,7 @@ void dump_object_data(){
 	}
 
 	//Fetch hostgroup configuration
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host group configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping host group configuration");
 	for(temp_hostgroup = hostgroup_list; temp_hostgroup != NULL; temp_hostgroup=temp_hostgroup->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(3));
@@ -1791,7 +1803,7 @@ void dump_object_data(){
 
 
 	//Fetch service configuration
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping service configuration");
 	for(temp_service = service_list; temp_service != NULL; temp_service = temp_service->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(2));
@@ -1889,7 +1901,7 @@ void dump_object_data(){
 	}
 
 	//Fetch service groups
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service group configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping service group configuration");
 	for(temp_servicegroup = servicegroup_list; temp_servicegroup != NULL; temp_servicegroup = temp_servicegroup->next){
 		my_object = json_object_new_object();
 		json_object_object_add(my_object, "object_type",  json_object_new_int(4));
@@ -1916,7 +1928,7 @@ void dump_object_data(){
 
 	#if defined NAEMON || defined NAGIOS
 	//Fetch host escalations
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host escalation configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping host escalation configuration");
 	for(x = 0; x < num_objects.hostescalations; x++){
 		temp_hostescalation = hostescalation_ary[x];
 		my_object = json_object_new_object();
@@ -1955,7 +1967,7 @@ void dump_object_data(){
 	}
 
 	//Fetch service escalations
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping servcie escalation configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping servcie escalation configuration");
 	for(x = 0; x < num_objects.serviceescalations; x++) {
 		temp_serviceescalation = serviceescalation_ary[x];
 		my_object = json_object_new_object();
@@ -1995,7 +2007,7 @@ void dump_object_data(){
 		json_object_put(my_object);
 	}
 
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping host dependency configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping host dependency configuration");
 	for(x = 0; x < num_objects.hostdependencies; x++){
 		temp_hostdependency = hostdependency_ary[x];
 		my_object = json_object_new_object();
@@ -2017,7 +2029,7 @@ void dump_object_data(){
 		json_object_put(my_object);
 	}
 
-	logswitch(NSLOG_INFO_MESSAGE, "[Statusengine] Dumping service dependency configuration");
+	logswitch(NSLOG_INFO_MESSAGE, "Dumping service dependency configuration");
 	for(x = 0; x < num_objects.servicedependencies; x++){
 		temp_servicedependency = servicedependency_ary[x];
 		my_object = json_object_new_object();
