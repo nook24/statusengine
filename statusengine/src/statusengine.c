@@ -154,7 +154,7 @@
 #include <json-c/json.h>
 #endif
 
-#ifdef NAEMON
+#if defined NAEMON105 || defined NAEMON
 #include <string.h>
 #endif
 
@@ -186,10 +186,8 @@ extern sched_info scheduling_info;
 extern char *global_host_event_handler;
 extern char *global_service_event_handler;
 
-
-
-gearman_return_t ret; //remove me!!!
 gearman_client_st gman_client;
+
 
 void *statusengine_module_handle = NULL;
 
@@ -271,10 +269,8 @@ int statusengine_create_client() {
 
 // send job to main gearman
 int statusengine_send_job(char * queue, char * data) {
-	gearman_return_t ret = OK;
-
 	// send job to gearman server
-	ret = gearman_client_do_background(&gman_client, queue, NULL, (void *)data, (size_t)strlen(data), NULL);
+	gearman_return_t ret = gearman_client_do_background(&gman_client, queue, NULL, (void *)data, (size_t)strlen(data), NULL);
 
 	// recreate client, otherwise gearman sigsegvs
 	if (ret != GEARMAN_SUCCESS) {
