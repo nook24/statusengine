@@ -203,7 +203,7 @@ void logswitch(int level, char *message){
 #ifdef NAGIOS
 	write_to_all_logs(message, level);
 #endif
-#ifdef NAEMON
+#if defined NAEMON105 || defined NAEMON
 	nm_log(level, "%s", message);
 #endif
 }
