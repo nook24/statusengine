@@ -130,6 +130,13 @@ class StatusengineLegacyShell extends AppShell{
 	protected $ObjectsRepository = [];
 
 	/**
+	 * Array for childs to watch for
+	 *
+	 * @var array
+	 **/
+	protected $childs = [];
+
+	/**
 	 * CakePHP's option parser
 	 *
 	 * Parse the parameters, if the user enter some (example: -w or --help)
@@ -177,7 +184,7 @@ class StatusengineLegacyShell extends AppShell{
 		$NebTypes = new NebTypes();
 		$NebTypes->defineNebTypesAsGlobals();
 
-		$this->childPids = [];
+		$this->childs = [];
 		$this->_constants();
 		$this->clearQ = false;
 
@@ -2262,7 +2269,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		if($payload->type == NEBTYPE_DOWNTIME_ADD || $payload->type == NEBTYPE_DOWNTIME_LOAD){
 			//Add a new downtime
-			
+
 			//Only update downtime history table on ADD, not on LOAD events, to avoid was_started=0 and wrong timestamps
 			if($payload->type == NEBTYPE_DOWNTIME_ADD){
 				$downtime = $this->Downtimehistory->find('first', [
@@ -3141,6 +3148,31 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	/**
+	 * create a forks a client with given queues
+	 *
+	 * @author Daniel Hoffend <dh@dotlan.net>
+	 * @return void
+	 **/
+	protected function createChild(array $worker)
+	{
+
+		CakeLog::info('Forking a new worker child');
+		$pid = pcntl_fork();
+		if(!$pid){
+			//We are the child
+			$this->childs = [];
+			CakeLog::info('Hey, my queues are: '.implode(',', array_keys($worker['queues'])));
+			$this->bindQueues = true;
+			$this->queues = $worker['queues'];
+			$this->work = false;
+			$this->bindChildSignalHandler();
+			$this->waitForInstructions();
+		} else {
+			return $pid;
+		}
+	}
+
+	/**
 	 * This function will fork the child processes (worker) if you run with -w
 	 *
 	 * @since 1.0.0
@@ -3150,24 +3182,22 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function forkWorker(){
 		$workers = Configure::read('workers');
-		foreach($workers as $worker){
-			declare(ticks = 1);
-			CakeLog::info('Forking a new worker child');
-			$pid = pcntl_fork();
-			if(!$pid){
-				//We are the child
-				CakeLog::info('Hey, my queues are: '.implode(',', array_keys($worker['queues'])));
-				$this->bindQueues = true;
-				$this->queues = $worker['queues'];
-				$this->work = false;
-				$this->bindChildSignalHandler();
-				$this->waitForInstructions();
-			}else{
-				//we are the parrent
-				$this->childPids[] = $pid;
 
-			}
+		declare(ticks = 1);
+
+		// prepare childs
+		foreach($workers as $worker){
+			$this->childs[] = [
+				'worker' => $worker,
+				'pid' => null
+			];
+		};
+
+		// create all workers
+		foreach($this->childs as $id => $child){
+			$this->childs[$id]['pid'] = $this->createChild($child['worker']);
 		}
+
 		pcntl_signal(SIGTERM, [$this, 'signalHandler']);
 		pcntl_signal(SIGINT,  [$this, 'signalHandler']);
 
@@ -3201,6 +3231,15 @@ class StatusengineLegacyShell extends AppShell{
 				if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
 					//Lost connection - lets wait a bit
 					sleep(1);
+				}
+			}
+
+			// check for dead childs and recreate
+			foreach ($this->childs AS $id => $child) {
+				// send ping to child
+				if(!$child['pid'] || !posix_kill(intval($child['pid']), 0)) {
+					CakeLog::info('Found dead child with pid: '.$child['pid']);
+					$this->childs[$id]['pid'] = $this->createChild($child['worker']);
 				}
 			}
 		}
@@ -3408,20 +3447,20 @@ class StatusengineLegacyShell extends AppShell{
 		$gmanClient = new GearmanClient();
 		$gmanClient->addServer(Configure::read('server'), Configure::read('port'));
 		if($signal !== SIGTERM){
-			foreach($this->childPids as $cpid){
-				CakeLog::info('Send signal to child pid: '.$cpid);
-				posix_kill($cpid, $signal);
+			foreach($this->childs as $child){
+				CakeLog::info('Send signal to child pid: '.$child['pid']);
+				posix_kill($child['pid'], $signal);
 			}
 		}
 
 		if($signal == SIGTERM){
-			foreach($this->childPids as $cpid){
-				CakeLog::info('Will kill pid: '.$cpid);
-				posix_kill($cpid, SIGTERM);
+			foreach($this->childs as $child){
+				CakeLog::info('Will kill pid: '.$child['pid']);
+				posix_kill($child['pid'], SIGTERM);
 			}
-			foreach($this->childPids as $cpid){
-				pcntl_waitpid($cpid, $status);
-				CakeLog::info('Child ['.$cpid.'] killed successfully');
+			foreach($this->childs as $child){
+				pcntl_waitpid($child['pid'], $status);
+				CakeLog::info('Child ['.$child['pid'].'] killed successfully');
 			}
 		}
 	}
