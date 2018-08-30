@@ -3410,7 +3410,6 @@ class StatusengineLegacyShell extends AppShell{
 				$this->work = false;
 				break;
 		}
-		$this->bindWorkerSignalHandler();
 	}
 
 	/**
