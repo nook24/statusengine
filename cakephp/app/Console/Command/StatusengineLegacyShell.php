@@ -3165,7 +3165,7 @@ class StatusengineLegacyShell extends AppShell{
 			$this->bindQueues = true;
 			$this->queues = $worker['queues'];
 			$this->work = false;
-			$this->bindChildSignalHandler();
+			$this->bindWorkerSignalHandler();
 			$this->waitForInstructions();
 		} else {
 			return $pid;
@@ -3323,9 +3323,8 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				CakeLog::info('I will continue my work');
-				$this->childWork();
+				$this->workerLoop();
 			}
-
 
 			pcntl_signal_dispatch();
 			//Check if the parent process still exists
@@ -3337,13 +3336,13 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 
-	public function bindChildSignalHandler(){
-		pcntl_signal(SIGTERM, [$this, 'childSignalHandler']);
-		pcntl_signal(SIGUSR1, [$this, 'childSignalHandler']);
-		pcntl_signal(SIGUSR2, [$this, 'childSignalHandler']);
+	public function bindWorkerSignalHandler(){
+		pcntl_signal(SIGTERM, [$this, 'workerSignalHandler']);
+		pcntl_signal(SIGUSR1, [$this, 'workerSignalHandler']);
+		pcntl_signal(SIGUSR2, [$this, 'workerSignalHandler']);
 	}
 
-	public function childWork(){
+	public function workerLoop(){
 		while($this->work === true){
 			pcntl_signal_dispatch();
 			$this->worker->work();
@@ -3384,7 +3383,7 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 
-	public function childSignalHandler($signo){
+	public function workerSignalHandler($signo){
 		CakeLog::info('Recived signal: '.$signo);
 		switch($signo){
 			case SIGTERM:
@@ -3411,7 +3410,7 @@ class StatusengineLegacyShell extends AppShell{
 				$this->work = false;
 				break;
 		}
-		$this->bindChildSignalHandler();
+		$this->bindWorkerSignalHandler();
 	}
 
 	/**
