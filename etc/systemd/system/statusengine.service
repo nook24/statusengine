@@ -5,7 +5,7 @@ After=syslog.target network.target mysql.service gearman-job-server.service
 [Service]
 User=root
 Type=simple
-Restart=on-failure
+Restart=always
 ExecStart=/opt/statusengine/cakephp/app/Console/cake statusengine_legacy -w -q
 RestartSec=30
 
