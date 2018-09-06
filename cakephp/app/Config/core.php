@@ -405,6 +405,7 @@ CakeLog::levels([
 CakeLog::config('default', array(
 	'engine' => 'Syslog',
 	'prefix' => 'statusengine',
+	'flag' => LOG_ODELAY | LOG_PID,
 	'types' => array('emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info'),
 ));
 
