@@ -109,7 +109,7 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 
 ## Changelog
 **2.2.0**
-- Restart dead childs in case of database errors [#44](https://github.com/nook24/statusengine/issues/44)
+- Restart dead childs in case of database errors [#44](https://github.com/nook24/statusengine/pull/44)
 - Fix restart through systemd
 - Thanks to [dhoffend](https://github.com/dhoffend)
 
