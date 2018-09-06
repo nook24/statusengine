@@ -4,3 +4,4 @@ statusengine-naemon-1-0-3.o
 statusengine-nagios.o
 statusengine-naemon.o
 ._*
+.nfs*

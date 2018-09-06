@@ -108,6 +108,11 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - PHP7.2
 
 ## Changelog
+**2.2.0**
+- Restart dead childs in case of database errors [#44](https://github.com/nook24/statusengine/pull/44)
+- Fix restart through systemd
+- Thanks to [dhoffend](https://github.com/dhoffend)
+
 **2.1.5**
 - Remove bulk insert debug messages
 - Fix a bug where downtimes got reset on nagios/naemon restart in downtimehistory table

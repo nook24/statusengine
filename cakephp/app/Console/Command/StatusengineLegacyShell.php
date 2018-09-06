@@ -130,6 +130,13 @@ class StatusengineLegacyShell extends AppShell{
 	protected $ObjectsRepository = [];
 
 	/**
+	 * Array for childs to watch for
+	 *
+	 * @var array
+	 **/
+	protected $childs = [];
+
+	/**
 	 * CakePHP's option parser
 	 *
 	 * Parse the parameters, if the user enter some (example: -w or --help)
@@ -177,12 +184,13 @@ class StatusengineLegacyShell extends AppShell{
 		$NebTypes = new NebTypes();
 		$NebTypes->defineNebTypesAsGlobals();
 
-		$this->childPids = [];
+		$this->childs = [];
 		$this->_constants();
 		$this->clearQ = false;
 
 		//the Gearman worker
 		$this->worker = null;
+		$this->work = false;
 		$this->createParentHosts = [];
 		$this->createParentServices = [];
 
@@ -219,6 +227,7 @@ class StatusengineLegacyShell extends AppShell{
 		$this->bulkLastCheck = time();
 
 		$this->lastDatasourcePing = time();
+		$this->lastChildPing = time();
 
 		$emptyMethods = ['truncate', 'delete'];
 		$emptyMethod = strtolower(Configure::read('empty_method'));
@@ -438,7 +447,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		// check every second if there's something left to push
 		if($this->useBulkQueries && $this->bulkLastCheck < time()) {
-			foreach ($this->ObjectsRepository AS $repo) {
+			foreach ($this->ObjectsRepository as $repo) {
 				$repo->pushIfRequired();
 			}
 			$this->bulkLastCheck = time();
@@ -453,6 +462,7 @@ class StatusengineLegacyShell extends AppShell{
 			case START_OBJECT_DUMP:
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR2);
+					$this->work = false;
 				}
 
 				$this->dumpObjects = true;
@@ -536,7 +546,7 @@ class StatusengineLegacyShell extends AppShell{
 				// flush all objects queues
 				if ($this->useBulkQueries) {
 					CakeLog::info('Force flushing all bulk queues');
-					foreach ($this->ObjectsRepository AS $repo) {
+					foreach ($this->ObjectsRepository as $repo) {
 						$repo->push();
 					}
 				}
@@ -570,6 +580,7 @@ class StatusengineLegacyShell extends AppShell{
 
 				if($this->workerMode === true){
 					$this->sendSignal(SIGUSR1);
+					$this->work = true;
 				}
 
 				if($this->workerMode === false && $this->processPerfdata === true){
@@ -2262,7 +2273,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		if($payload->type == NEBTYPE_DOWNTIME_ADD || $payload->type == NEBTYPE_DOWNTIME_LOAD){
 			//Add a new downtime
-			
+
 			//Only update downtime history table on ADD, not on LOAD events, to avoid was_started=0 and wrong timestamps
 			if($payload->type == NEBTYPE_DOWNTIME_ADD){
 				$downtime = $this->Downtimehistory->find('first', [
@@ -2822,6 +2833,7 @@ class StatusengineLegacyShell extends AppShell{
 		 * witch is bad because if GearmanWorker::work() stuck, PHP can not execute the signal handler
 		 */
 		$this->worker->addOptions(GEARMAN_WORKER_NON_BLOCKING);
+		$this->worker->setTimeout(1000);
 
 		$this->worker->addServer(Configure::read('server'), Configure::read('port'));
 
@@ -3141,6 +3153,45 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	/**
+	 * create a forks a client with given queues
+	 *
+	 * @param array $worker
+	 * @author Daniel Hoffend <dh@dotlan.net>
+	 * @return void
+	 **/
+	protected function createChild($worker)
+	{
+
+		CakeLog::info('Forking a new worker child');
+		// don't duplicate the worker object on fork
+		$oldworker = false;
+		if ($this->worker) {
+			$oldworker = $this->worker;
+			$this->worker = false;
+		}
+		// disconnect dbo if connected
+		$pid = pcntl_fork();
+		if(!$pid){
+			//We are the child
+			$this->childs = [];
+			$this->ObjectsRepository = [];
+			$this->BulkRepository = [];
+			CakeLog::info('Hey, my queues are: '.implode(',', array_keys($worker['queues'])));
+			$this->bindQueues = true;
+			$this->queues = $worker['queues'];
+			$this->worker = false;
+			$this->bindWorkerSignalHandler();
+			$this->Objects->getDatasource()->reconnect();
+			$this->waitForInstructions();
+			exit;
+		} else {
+			// restore
+			$this->worker = $oldworker;
+			return $pid;
+		}
+	}
+
+	/**
 	 * This function will fork the child processes (worker) if you run with -w
 	 *
 	 * @since 1.0.0
@@ -3150,26 +3201,25 @@ class StatusengineLegacyShell extends AppShell{
 	 */
 	public function forkWorker(){
 		$workers = Configure::read('workers');
-		foreach($workers as $worker){
-			declare(ticks = 1);
-			CakeLog::info('Forking a new worker child');
-			$pid = pcntl_fork();
-			if(!$pid){
-				//We are the child
-				CakeLog::info('Hey, my queues are: '.implode(',', array_keys($worker['queues'])));
-				$this->bindQueues = true;
-				$this->queues = $worker['queues'];
-				$this->work = false;
-				$this->bindChildSignalHandler();
-				$this->waitForInstructions();
-			}else{
-				//we are the parrent
-				$this->childPids[] = $pid;
 
-			}
+		declare(ticks = 1);
+
+		// prepare childs
+		foreach($workers as $worker){
+			$this->childs[] = [
+				'worker' => $worker,
+				'pid' => null
+			];
+		};
+
+		// create all workers
+		foreach($this->childs as $id => $child){
+			$this->childs[$id]['pid'] = $this->createChild($child['worker']);
 		}
+
 		pcntl_signal(SIGTERM, [$this, 'signalHandler']);
 		pcntl_signal(SIGINT,  [$this, 'signalHandler']);
+		pcntl_signal(SIGCHLD, [$this, 'childSignalHandler']);
 
 		//Every worker is created now, so lets rock!
 
@@ -3187,20 +3237,37 @@ class StatusengineLegacyShell extends AppShell{
 		$this->gearmanConnect();
 		CakeLog::info('Lets rock!');
 		$this->sendSignal(SIGUSR1);
-		$this->worker->setTimeout(1000);
+		$this->work = true;
 
 		while(true){
 			pcntl_signal_dispatch();
-			$this->worker->work();
 
-			if($this->worker->returnCode() == GEARMAN_SUCCESS){
-				continue;
+			// check for dead childs every 10s and recreate if needed
+			if ($this->lastChildPing + 10 <= time()) {
+				foreach ($this->childs as $id => $child) {
+					if($child['pid'] === null){
+						//Child is dead - Recreate it
+						CakeLog::info('Found missing child');
+						$this->Objects->getDatasource()->disconnect();
+						$this->childs[$id]['pid'] = $this->createChild($child['worker']);
+						$this->Objects->getDatasource()->reconnect();
+					}
+				}
+				$this->lastChildPing = time();
 			}
 
-			if(!@$this->worker->wait()){
-				if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
-					//Lost connection - lets wait a bit
-					sleep(1);
+			// do the work
+			if (@$this->worker->work() ||
+				$this->worker->returnCode() == GEARMAN_IO_WAIT ||
+				$this->worker->returnCode() == GEARMAN_NO_JOBS) {
+				if ($this->worker->returnCode() == GEARMAN_SUCCESS) continue;
+
+				// wait for new jobs
+				if (!@$this->worker->wait()){
+					if ($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
+						//Lost connection - lets wait a bit
+						sleep(1);
+					}
 				}
 			}
 		}
@@ -3284,9 +3351,8 @@ class StatusengineLegacyShell extends AppShell{
 				}
 
 				CakeLog::info('I will continue my work');
-				$this->childWork();
+				$this->workerLoop();
 			}
-
 
 			pcntl_signal_dispatch();
 			//Check if the parent process still exists
@@ -3298,54 +3364,59 @@ class StatusengineLegacyShell extends AppShell{
 		}
 	}
 
-	public function bindChildSignalHandler(){
-		pcntl_signal(SIGTERM, [$this, 'childSignalHandler']);
-		pcntl_signal(SIGUSR1, [$this, 'childSignalHandler']);
-		pcntl_signal(SIGUSR2, [$this, 'childSignalHandler']);
+	public function bindWorkerSignalHandler(){
+		pcntl_signal(SIGTERM, [$this, 'workerSignalHandler']);
+		pcntl_signal(SIGUSR1, [$this, 'workerSignalHandler']);
+		pcntl_signal(SIGUSR2, [$this, 'workerSignalHandler']);
 	}
 
-	public function childWork(){
-		while($this->work === true){
+	public function workerLoop(){
+		while ($this->work === true){
 			pcntl_signal_dispatch();
-			$this->worker->work();
-			if($this->worker->returnCode() == GEARMAN_SUCCESS){
-				continue;
+
+			// check every second if there's something left to push
+			if ($this->useBulkQueries && $this->bulkLastCheck < time()) {
+				foreach ($this->BulkRepository as $name => $repo) {
+					$repo->pushIfRequired();
+				}
+				$this->bulkLastCheck = time();
 			}
 
-			if(!@$this->worker->wait()){
-				if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
-					sleep(1);
+			// ping datasource every now and then to keep the pdo connection alive
+			// simulate mysql_ping()
+			if ($this->lastDatasourcePing + 120 < time()) {
+				try {
+					$this->Objects->getDatasource()->execute('SELECT 1');
+				} catch(PDOException $e) {
+					$this->Objects->getDatasource()->reconnect();
 				}
+				$this->lastDatasourcePing = time();
+			}
 
-				//Check if the parent process still exists
-				if($this->parentPid != posix_getppid()){
-					CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
-					exit(3);
-				}
+			// do the work
+			if (@$this->worker->work() ||
+				$this->worker->returnCode() == GEARMAN_IO_WAIT ||
+				$this->worker->returnCode() == GEARMAN_NO_JOBS) {
+				if ($this->worker->returnCode() == GEARMAN_SUCCESS) continue;
 
-				// check every second if there's something left to push
-				if($this->useBulkQueries && $this->bulkLastCheck < time()) {
-					foreach ($this->BulkRepository as $name => $repo) {
-						$repo->pushIfRequired();
+				// wait for new jobs
+				if (!@$this->worker->wait()){
+					//Lost connection - lets wait a bit
+					if($this->worker->returnCode() == GEARMAN_NO_ACTIVE_FDS){
+						sleep(1);
 					}
-					$this->bulkLastCheck = time();
-				}
 
-				// ping datasource every now and then to keep the pdo connection alive
-				// simulate mysql_ping()
-				if($this->lastDatasourcePing + 120 < time()) {
-					try {
-						$this->Objects->getDatasource()->execute('SELECT 1');
-					} catch(PDOException $e) {
-						$this->Objects->getDatasource()->reconnect();
+					//Check if the parent process still exists
+					if ($this->parentPid != posix_getppid()){
+						CakeLog::error('My parent process is gone I guess I am orphaned and will exit now!');
+						exit(3);
 					}
-					$this->lastDatasourcePing = time();
 				}
 			}
 		}
 	}
 
-	public function childSignalHandler($signo){
+	public function workerSignalHandler($signo){
 		CakeLog::info('Recived signal: '.$signo);
 		switch($signo){
 			case SIGTERM:
@@ -3372,7 +3443,6 @@ class StatusengineLegacyShell extends AppShell{
 				$this->work = false;
 				break;
 		}
-		$this->bindChildSignalHandler();
 	}
 
 	/**
@@ -3397,6 +3467,48 @@ class StatusengineLegacyShell extends AppShell{
 	}
 
 	/**
+	 * check the process signals returned by child processes (like killed, exit, etc)
+	 *
+	 * @author Daniel Hoffend <dh@dotlan.net>
+	 * @param int $signo
+	 * @param mixed|array $signinfo
+	 * @return bool
+	 **/
+	public function childSignalHandler($signo, $signinfo = null){
+		$pid = null;
+		$status = -1;
+		if(is_array($signinfo) && isset($signinfo['pid'])){
+			$pid = $signinfo['pid'];
+			if($signinfo['status']){
+				$status = $signinfo['status'];
+			}
+		}
+		
+		CakeLog::info(sprintf('Received signal %s by child %s (status %s)', $signo, $pid, $status));
+		if (!$pid){
+			$pid = pcntl_waitpid(-1, $status, WNOHANG);
+		}
+		
+		if($pid > 0) {
+			// search for the child
+			$id = null;
+			foreach ($this->childs as $id => $child){
+				if($child['pid'] === $pid){
+					$exitCode = pcntl_wexitstatus($status);
+					CakeLog::info(sprintf('Child %s exited with status: %s', $pid, $status));
+					$this->childs[$id]['pid'] = null;
+					break;
+				}
+			}
+			
+			// free pid
+			$pid = pcntl_waitpid(-1, $status, WNOHANG);
+		}
+		return true;
+	}
+
+
+	/**
 	 * This function sends a singal to every child process
 	 *
 	 * @since 1.0.0
@@ -3408,20 +3520,20 @@ class StatusengineLegacyShell extends AppShell{
 		$gmanClient = new GearmanClient();
 		$gmanClient->addServer(Configure::read('server'), Configure::read('port'));
 		if($signal !== SIGTERM){
-			foreach($this->childPids as $cpid){
-				CakeLog::info('Send signal to child pid: '.$cpid);
-				posix_kill($cpid, $signal);
+			foreach($this->childs as $child){
+				CakeLog::info('Send signal to child pid: '.$child['pid']);
+				posix_kill($child['pid'], $signal);
 			}
 		}
 
 		if($signal == SIGTERM){
-			foreach($this->childPids as $cpid){
-				CakeLog::info('Will kill pid: '.$cpid);
-				posix_kill($cpid, SIGTERM);
+			foreach($this->childs as $child){
+				CakeLog::info('Will kill pid: '.$child['pid']);
+				posix_kill($child['pid'], SIGTERM);
 			}
-			foreach($this->childPids as $cpid){
-				pcntl_waitpid($cpid, $status);
-				CakeLog::info('Child ['.$cpid.'] killed successfully');
+			foreach($this->childs as $child){
+				pcntl_waitpid($child['pid'], $status);
+				CakeLog::info('Child ['.$child['pid'].'] killed successfully');
 			}
 		}
 	}
