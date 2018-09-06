@@ -447,7 +447,7 @@ class StatusengineLegacyShell extends AppShell{
 
 		// check every second if there's something left to push
 		if($this->useBulkQueries && $this->bulkLastCheck < time()) {
-			foreach ($this->ObjectsRepository AS $repo) {
+			foreach ($this->ObjectsRepository as $repo) {
 				$repo->pushIfRequired();
 			}
 			$this->bulkLastCheck = time();
@@ -546,7 +546,7 @@ class StatusengineLegacyShell extends AppShell{
 				// flush all objects queues
 				if ($this->useBulkQueries) {
 					CakeLog::info('Force flushing all bulk queues');
-					foreach ($this->ObjectsRepository AS $repo) {
+					foreach ($this->ObjectsRepository as $repo) {
 						$repo->push();
 					}
 				}
@@ -3155,10 +3155,11 @@ class StatusengineLegacyShell extends AppShell{
 	/**
 	 * create a forks a client with given queues
 	 *
+	 * @param array $worker
 	 * @author Daniel Hoffend <dh@dotlan.net>
 	 * @return void
 	 **/
-	protected function createChild(array $worker)
+	protected function createChild($worker)
 	{
 
 		CakeLog::info('Forking a new worker child');
@@ -3243,9 +3244,9 @@ class StatusengineLegacyShell extends AppShell{
 
 			// check for dead childs every 10s and recreate if needed
 			if ($this->lastChildPing + 10 <= time()) {
-				foreach ($this->childs AS $id => $child) {
-					// send ping to child
-					if (!$child['pid']) {
+				foreach ($this->childs as $id => $child) {
+					if($child['pid'] === null){
+						//Child is dead - Recreate it
 						CakeLog::info('Found missing child');
 						$this->Objects->getDatasource()->disconnect();
 						$this->childs[$id]['pid'] = $this->createChild($child['worker']);
@@ -3470,29 +3471,36 @@ class StatusengineLegacyShell extends AppShell{
 	 *
 	 * @author Daniel Hoffend <dh@dotlan.net>
 	 * @param int $signo
-	 * @param null|int $pid
-	 * @param $status
+	 * @param mixed|array $signinfo
 	 * @return bool
 	 **/
-	public function childSignalHandler($signo, $pid=null, $status=null)
-	{
-		CakeLog::info("Received signal $signo by child $pid (status $status)");
-		if (!$pid)
+	public function childSignalHandler($signo, $signinfo = null){
+		$pid = null;
+		$status = -1;
+		if(is_array($signinfo) && isset($signinfo['pid'])){
+			$pid = $signinfo['pid'];
+			if($signinfo['status']){
+				$status = $signinfo['status'];
+			}
+		}
+		
+		CakeLog::info(sprintf('Received signal %s by child %s (status %s)', $signo, $pid, $status));
+		if (!$pid){
 			$pid = pcntl_waitpid(-1, $status, WNOHANG);
-
-		while($pid > 0) {
+		}
+		
+		if($pid > 0) {
 			// search for the child
 			$id = null;
-			foreach ($this->childs AS $k => $child) {
-				if ($child['pid'] == $pid)
-					$id = $k;
+			foreach ($this->childs as $id => $child){
+				if($child['pid'] === $pid){
+					$exitCode = pcntl_wexitstatus($status);
+					CakeLog::info(sprintf('Child %s exited with status: %s', $pid, $status));
+					$this->childs[$id]['pid'] = null;
+					break;
+				}
 			}
-			// check exit status end log it
-			if ($id !== null && isset($this->childs[$id])) {
-				$exitCode = pcntl_wexitstatus($status);
-				CakeLog::info('child '.$pid.' exited with status: '.$status);
-				$this->childs[$id]['pid'] = null;
-			}
+			
 			// free pid
 			$pid = pcntl_waitpid(-1, $status, WNOHANG);
 		}
