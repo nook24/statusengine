@@ -5,3 +5,5 @@ statusengine-nagios.o
 statusengine-naemon.o
 ._*
 .nfs*
+cakephp/app/Config/database.php.test
+

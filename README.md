@@ -108,6 +108,11 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - PHP7.2
 
 ## Changelog
+**2.3.0**
+- Backport: Processing of high traffic queues as bulk to reduce I/O wait on the queue
+- To use bulk queue messages, you need to upgrade to the new [broker module](https://github.com/statusengine/module).
+If you stay on the old version of the broker the bulk features will be disabled automatically.
+
 **2.2.0**
 - Restart dead childs in case of database errors [#44](https://github.com/nook24/statusengine/pull/44)
 - Fix restart through systemd
