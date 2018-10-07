@@ -3706,7 +3706,9 @@ class StatusengineLegacyShell extends AppShell {
     private function makePayloadToBulkObject($payload) {
         if (!property_exists($payload, 'messages')) {
             $payloadObj = new stdClass();
-            $payloadObj->messages = $payload;
+            $payloadObj->messages = [
+                $payload
+            ];
             return $payloadObj;
         }
 
