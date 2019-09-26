@@ -394,8 +394,29 @@ class StatusengineLegacyShell extends AppShell{
 	 **/
 	protected function getJobPayload(GearmanJob $job)
 	{
-		$payload = json_decode($job->workload());
+		$workload = $job->workload();
+		$payload = json_decode($workload);
 		$error = json_last_error();
+
+		if($error === JSON_ERROR_UTF8){
+			//Try to detect charset and retry to json_decode
+			
+			$enclist = [
+				'UTF-8',
+				'ISO-8859-15',
+				'ISO-8859-1', /*'ISO-8859-2', 'ISO-8859-3', 'ISO-8859-4', 'ISO-8859-5',
+				'ISO-8859-6', 'ISO-8859-7', 'ISO-8859-8', 'ISO-8859-9', 'ISO-8859-10',
+				'ISO-8859-13', 'ISO-8859-14', 'ISO-8859-15',*/ 'ISO-8859-16',
+				'Windows-1251', 'Windows-1252', 'Windows-1254',
+				'ASCII'
+			];
+			
+			$detectEncoding = mb_detect_encoding($workload, $enclist);
+			
+			$workload = iconv($detectEncoding."//TRANSLIT//IGNORE", "UTF-8", $workload);
+			$payload = json_decode($workload);
+			$error = json_last_error();
+		}
 
 		// parsing error
 		if ($error != JSON_ERROR_NONE) {
