@@ -108,8 +108,12 @@ Check the documentation for the [migration guide](https://statusengine.org/getti
 - PHP7.2
 
 ## Changelog
-**2.2.1**
+**2.2.2**
 - Try to convert non UTF-8 characters into UTF-8
+
+**2.2.2**
+- Set output length to 1024 and 2048 for performance data
+- Add CDATA section to XML file for pnp4nagios
 
 **2.2.0**
 - Restart dead childs in case of database errors [#44](https://github.com/nook24/statusengine/pull/44)
