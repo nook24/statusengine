@@ -31,7 +31,7 @@ $config = [
 	'empty_method' => 'TRUNCATE',
 
 	//If you want, Statusengine's servicestatus workers are able to
-	//process performacne data for you and save them to RRD files
+	//process performance data for you and save them to RRD files
 	//so you don't need to install any additional software to
 	//get the job done.
 	'process_perfdata' => false,
